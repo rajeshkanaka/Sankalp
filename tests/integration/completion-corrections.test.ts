@@ -296,7 +296,7 @@ describe('completion corrections and immutable history', () => {
     const completed = await confirmSession(userId, ready.session.id, {
       operationId: randomUUID(),
       baseRevision: ready.session.revision,
-      payload: { performedAt: '2026-09-05T01:00:00Z' },
+      payload: { performedAt: '2026-09-05T00:40:00Z' },
     });
     setClock(AFTER_CLOSE);
     await getSessionHistory(userId, ready.session.id);
