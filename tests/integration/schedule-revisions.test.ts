@@ -21,6 +21,15 @@ import {
   SYNTHETIC_MARKER_KEY,
   type SyntheticMarker,
 } from './local-test-runtime';
+import {
+  blockingPids,
+  bounded,
+  observedTransactions,
+  operationReceipts,
+  revisionSnapshot,
+  settled,
+  signal,
+} from './revision-test-helpers';
 
 const TEST_EMAIL = 'integration-maya-revisions@example.test';
 const TEST_MARKER = buildSyntheticMarker('activation', 'revision-maya');
@@ -290,50 +299,298 @@ describe('future schedule revisions', () => {
     expect(after.sessions).toEqual(before.sessions);
   });
 
-  it('serializes completion at the opening boundary and preserves the completed session', async () => {
-    setClock(BEFORE_SECOND_OPEN);
-    const original = await activate();
-    const second = original.sessions.find(({ practiceDate }) => practiceDate === '2026-09-06')!;
-    await withUser(userId, (client) =>
-      client.query(
-        'update app.session_practice set numeric_value=108 where session_id=$1 and practice_id=$2',
-        [second.id, FIRST_PRACTICE_ID],
-      ),
-    );
-    const revision = candidate();
-    const proposed = await preview(original.journey.id, revision);
+  it(
+    'makes revision wait for the completion lock winner at the opening boundary',
+    { timeout: 20000 },
+    async () => {
+      setClock(BEFORE_SECOND_OPEN);
+      const original = await activate();
+      const second = original.sessions.find(({ practiceDate }) => practiceDate === '2026-09-06')!;
+      await withUser(userId, (client) =>
+        client.query(
+          'update app.session_practice set numeric_value=108 where session_id=$1 and practice_id=$2',
+          [second.id, FIRST_PRACTICE_ID],
+        ),
+      );
+      const revision = candidate();
+      const proposed = await preview(original.journey.id, revision);
 
-    setClock(AT_SECOND_OPEN);
-    const [completion, application] = await Promise.allSettled([
-      confirmSession(userId, second.id, {
-        operationId: randomUUID(),
-        baseRevision: second.revision,
-        payload: { performedAt: second.opensAt },
-      }),
-      applyScheduleRevision(userId, original.journey.id, {
-        mode: 'apply',
-        operationId: randomUUID(),
+      const completionId = randomUUID();
+      const revisionId = randomUUID();
+      const locked = signal<number>();
+      const contender = signal<number>();
+      const release = signal<void>();
+      setClock(AT_SECOND_OPEN);
+      const [completion, application] = await observedTransactions(
+        {
+          before: async (query) => {
+            if (
+              query.operationId === revisionId &&
+              query.text.includes('from app.journey where id=$1 for update')
+            ) {
+              const pid = await query.run('select pg_backend_pid() as pid');
+              contender.resolve(pid.rows[0].pid);
+            }
+          },
+          after: async (query) => {
+            if (
+              query.operationId === completionId &&
+              query.text === 'select state from app.journey where id=$1 for update'
+            ) {
+              const pid = await query.run('select pg_backend_pid() as pid');
+              locked.resolve(pid.rows[0].pid);
+              await release.promise;
+            }
+          },
+        },
+        async (pool) => {
+          const completion = settled(
+            confirmSession(userId, second.id, {
+              operationId: completionId,
+              baseRevision: second.revision,
+              payload: { performedAt: second.opensAt },
+            }),
+          );
+          let application:
+            | ReturnType<typeof settled<Awaited<ReturnType<typeof applyScheduleRevision>>>>
+            | undefined;
+          try {
+            const winnerPid = await bounded(locked.promise, 'completion journey lock');
+            application = settled(
+              applyScheduleRevision(userId, original.journey.id, {
+                mode: 'apply',
+                operationId: revisionId,
+                baseRevision: original.journey.revision,
+                payload: { candidate: revision, fingerprint: proposed.fingerprint },
+              }),
+            );
+            const waitingPid = await bounded(contender.promise, 'revision lock attempt');
+            await expect
+              .poll(() => blockingPids(pool, waitingPid), { timeout: 3000, interval: 20 })
+              .toContain(winnerPid);
+            release.resolve();
+            return await Promise.all([completion, application]);
+          } finally {
+            release.resolve();
+            await Promise.allSettled([completion, ...(application ? [application] : [])]);
+          }
+        },
+      );
+
+      expect(completion.status).toBe('fulfilled');
+      expect(application).toMatchObject({
+        status: 'rejected',
+        reason: { code: 'PREVIEW_CHANGED', status: 409 },
+      });
+      const after = await getJourneyView(userId, original.journey.id);
+      expect(after.journey.activeScheduleVersionId).toBe(original.journey.activeScheduleVersionId);
+      expect(after.sessions.find(({ id }) => id === second.id)).toMatchObject({
+        id: second.id,
+        ordinal: second.ordinal,
+        scheduleVersionId: second.scheduleVersionId,
+        confirmed: true,
+        supersededAt: null,
+        practices: [expect.objectContaining({ id: FIRST_PRACTICE_ID, value: 108 })],
+      });
+      expect(await operationReceipts(userId, [completionId, revisionId])).toEqual([
+        { operation_id: completionId, operation_type: `complete:${second.id}` },
+      ]);
+    },
+  );
+
+  it(
+    'makes completion wait for a revision that tombstones its old session first',
+    { timeout: 20000 },
+    async () => {
+      setClock(BEFORE_SECOND_OPEN);
+      const original = await activate();
+      const second = original.sessions.find(({ practiceDate }) => practiceDate === '2026-09-06')!;
+      await withUser(userId, (client) =>
+        client.query(
+          'update app.session_practice set numeric_value=108 where session_id=$1 and practice_id=$2',
+          [second.id, FIRST_PRACTICE_ID],
+        ),
+      );
+      const revision = candidate();
+      const proposed = await preview(original.journey.id, revision);
+      const completionId = randomUUID();
+      const revisionId = randomUUID();
+      const superseded = signal<number>();
+      const contender = signal<number>();
+      const release = signal<void>();
+
+      const [application, completion] = await observedTransactions(
+        {
+          before: async (query) => {
+            if (
+              query.operationId === completionId &&
+              query.text === 'select state from app.journey where id=$1 for update'
+            ) {
+              const pid = await query.run('select pg_backend_pid() as pid');
+              contender.resolve(pid.rows[0].pid);
+            }
+          },
+          after: async (query, result) => {
+            if (
+              query.operationId === revisionId &&
+              query.text.startsWith('update app.session set superseded_at=')
+            ) {
+              expect(result.rows.map((row) => row.id)).toContain(second.id);
+              const pid = await query.run('select pg_backend_pid() as pid');
+              superseded.resolve(pid.rows[0].pid);
+              await release.promise;
+            }
+          },
+        },
+        async (pool) => {
+          const application = settled(
+            applyScheduleRevision(userId, original.journey.id, {
+              mode: 'apply',
+              operationId: revisionId,
+              baseRevision: original.journey.revision,
+              payload: { candidate: revision, fingerprint: proposed.fingerprint },
+            }),
+          );
+          let completion:
+            ReturnType<typeof settled<Awaited<ReturnType<typeof confirmSession>>>> | undefined;
+          try {
+            const winnerPid = await bounded(superseded.promise, 'revision supersede write');
+            // Revision has already applied its pre-opening snapshot while holding the actual row lock.
+            // The old session opens before completion arrives, but completion must see the tombstone.
+            setClock(AT_SECOND_OPEN);
+            completion = settled(
+              confirmSession(userId, second.id, {
+                operationId: completionId,
+                baseRevision: second.revision,
+                payload: { performedAt: second.opensAt },
+              }),
+            );
+            const waitingPid = await bounded(contender.promise, 'completion lock attempt');
+            await expect
+              .poll(() => blockingPids(pool, waitingPid), { timeout: 3000, interval: 20 })
+              .toContain(winnerPid);
+            release.resolve();
+            return await Promise.all([application, completion]);
+          } finally {
+            release.resolve();
+            await Promise.allSettled([application, ...(completion ? [completion] : [])]);
+          }
+        },
+      );
+
+      expect(application.status).toBe('fulfilled');
+      expect(completion).toMatchObject({
+        status: 'rejected',
+        reason: { code: 'SESSION_REPLACED', status: 409 },
+      });
+      const after = await getJourneyView(userId, original.journey.id);
+      expect(after.journey.revision).toBe(original.journey.revision + 1);
+      expect(after.journey.activeScheduleVersionId).not.toBe(
+        original.journey.activeScheduleVersionId,
+      );
+      expect(after.sessions.find(({ id }) => id === second.id)).toMatchObject({
+        confirmed: false,
+        supersededAt: new Date(BEFORE_SECOND_OPEN).toISOString(),
+        scheduleVersionId: second.scheduleVersionId,
+        practices: [expect.objectContaining({ id: FIRST_PRACTICE_ID, value: 108 })],
+      });
+      const replacement = after.sessions.find(
+        (session) => session.practiceDate === second.practiceDate && session.supersededAt === null,
+      )!;
+      expect(replacement.id).not.toBe(second.id);
+      expect(replacement).toMatchObject({
+        confirmed: false,
+        practices: [expect.objectContaining({ id: SECOND_PRACTICE_ID, target: 54, value: 0 })],
+      });
+      expect(await operationReceipts(userId, [completionId, revisionId])).toEqual([
+        { operation_id: revisionId, operation_type: `schedule-revision:${original.journey.id}` },
+      ]);
+      const amendments = await withUser(userId, (client) =>
+        client.query('select id from app.amendment where session_id=$1 and kind=$2', [
+          second.id,
+          'confirmed',
+        ]),
+      );
+      expect(amendments.rows).toEqual([]);
+    },
+  );
+
+  it.each(['supersede update', 'replacement insert'] as const)(
+    'rolls back all state after a real %s fails, then safely retries the same operation',
+    { timeout: 20000 },
+    async (stage) => {
+      setClock(BEFORE_SECOND_OPEN);
+      const original = await activate();
+      const revision = candidate();
+      const proposed = await preview(original.journey.id, revision);
+      const operationId = randomUUID();
+      const request = {
+        mode: 'apply' as const,
+        operationId,
         baseRevision: original.journey.revision,
         payload: { candidate: revision, fingerprint: proposed.fingerprint },
-      }),
-    ]);
+      };
+      const before = await revisionSnapshot(userId, original.journey.id);
+      const injected = new Error(`Injected failure after ${stage}.`);
+      let observedWrite = false;
+      await observedTransactions(
+        {
+          after: async (query, result) => {
+            const target =
+              stage === 'supersede update'
+                ? query.text.startsWith('update app.session set superseded_at=')
+                : query.text.startsWith('insert into app.session (');
+            if (query.operationId !== operationId || !target || observedWrite) return;
+            expect(result.rowCount).toBe(
+              stage === 'supersede update' ? proposed.supersededSessionIds.length : 1,
+            );
+            const changed = await query.run(
+              stage === 'supersede update'
+                ? 'select count(*)::int as count from app.session where journey_id=$1 and superseded_at is not null'
+                : 'select count(*)::int as count from app.session where journey_id=$1 and schedule_version_id<>$2',
+              stage === 'supersede update'
+                ? [original.journey.id]
+                : [original.journey.id, original.journey.activeScheduleVersionId],
+            );
+            expect(changed.rows[0].count).toBe(
+              stage === 'supersede update' ? proposed.supersededSessionIds.length : 1,
+            );
+            observedWrite = true;
+            throw injected;
+          },
+        },
+        async () => {
+          await expect(applyScheduleRevision(userId, original.journey.id, request)).rejects.toBe(
+            injected,
+          );
+        },
+      );
+      expect(observedWrite).toBe(true);
+      expect(await revisionSnapshot(userId, original.journey.id)).toEqual(before);
+      expect(await operationReceipts(userId, [operationId])).toEqual([]);
+      expect((await getJourneyView(userId, original.journey.id)).sessions).toEqual(
+        original.sessions,
+      );
 
-    expect(completion.status).toBe('fulfilled');
-    expect(application).toMatchObject({
-      status: 'rejected',
-      reason: { code: 'PREVIEW_CHANGED', status: 409 },
-    });
-    const after = await getJourneyView(userId, original.journey.id);
-    expect(after.journey.activeScheduleVersionId).toBe(original.journey.activeScheduleVersionId);
-    expect(after.sessions.find(({ id }) => id === second.id)).toMatchObject({
-      id: second.id,
-      ordinal: second.ordinal,
-      scheduleVersionId: second.scheduleVersionId,
-      confirmed: true,
-      supersededAt: null,
-      practices: [expect.objectContaining({ id: FIRST_PRACTICE_ID, value: 108 })],
-    });
-  });
+      const retry = await applyScheduleRevision(userId, original.journey.id, request);
+      expect(retry.view.journey.activeScheduleVersionId).not.toBe(
+        original.journey.activeScheduleVersionId,
+      );
+      expect(retry.view.sessions.filter((session) => session.supersededAt === null)).toHaveLength(
+        proposed.totalActive,
+      );
+      expect(retry.createdSessionIds).toHaveLength(proposed.proposed.length);
+      expect((await revisionSnapshot(userId, original.journey.id)).versions).toHaveLength(
+        before.versions.length + 1,
+      );
+      expect(await operationReceipts(userId, [operationId])).toEqual([
+        { operation_id: operationId, operation_type: `schedule-revision:${original.journey.id}` },
+      ]);
+      await expect(applyScheduleRevision(userId, original.journey.id, request)).resolves.toEqual(
+        retry,
+      );
+    },
+  );
 
   it('rejects duration reductions that would remove retained occurrence or calendar history', async () => {
     setClock(AT_SECOND_OPEN);
