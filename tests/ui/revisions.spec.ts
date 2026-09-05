@@ -1,0 +1,67 @@
+import { mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from '@playwright/test';
+
+import { setUiClock } from './helpers/clock';
+import { capturedSignIn } from './helpers/sign-in';
+
+const M1_NOW = '2026-09-05T00:45:00Z';
+const M2_NOW = '2026-09-12T04:01:00+05:30';
+
+test('@M2 @M2-revisions future changes preserve opened labels and metadata remains separate', async ({
+  page,
+}, info) => {
+  setUiClock(M2_NOW);
+  try {
+    await capturedSignIn(
+      page,
+      info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
+    );
+    await page.goto('/setup');
+    await page.getByRole('button', { name: 'Use 21-night example', exact: true }).click();
+    await page.getByLabel('Start date', { exact: true }).fill('2026-09-05');
+    await page.getByLabel('I confirm this practice timezone.').check();
+    await page.getByRole('button', { name: 'Preview journey', exact: true }).click();
+    await page.getByRole('button', { name: 'Activate journey', exact: true }).click();
+    await expect(page).toHaveURL(/\/today\?journey=/);
+    const journeyId = new URL(page.url()).searchParams.get('journey');
+    expect(journeyId).toMatch(/^[a-f0-9-]{36}$/);
+    await page.goto(`/journeys/${journeyId}`);
+
+    await page.getByLabel('Journey title', { exact: true }).fill('Revised night practice');
+    await page.getByLabel('Personal intention', { exact: true }).fill('A clearer intention.');
+    await page.getByRole('button', { name: 'Save journey details', exact: true }).click();
+    await expect(page.getByText('Journey details saved.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Revised night practice' })).toBeVisible();
+
+    await page.getByLabel('Practice 1', { exact: true }).fill('Future Kunjika');
+    await page.getByLabel('Start date', { exact: true }).fill('2026-09-12');
+    await page.getByLabel('Practice time', { exact: true }).fill('00:30');
+    await page.getByRole('button', { name: 'Preview future changes', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Review future changes' })).toBeVisible();
+    await expect(page.getByText(/8 existing sessions will stay unchanged/)).toBeVisible();
+    await expect(
+      page.getByText(/13 unopened sessions will be replaced with 13 new sessions/),
+    ).toBeVisible();
+    await expect(page.getByText(/original start remains 2026-09-05/i)).toBeVisible();
+    await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
+    await expect(page.getByText('Future schedule updated.', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Practices: Future Kunjika, Bhairav Stotra/)).toBeVisible();
+
+    await page.getByRole('link', { name: /Night 1/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Kunjika', exact: true })).toBeVisible();
+    await expect(page.getByText('Future Kunjika', { exact: true })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Your journey', exact: true }).click();
+    await page.getByRole('link', { name: /Night 9/ }).click();
+    await expect(page.getByRole('checkbox', { name: 'Future Kunjika', exact: true })).toBeVisible();
+
+    const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
+    mkdirSync(evidence, { recursive: true });
+    await page.screenshot({ path: resolve(evidence, 'revision-history.png'), fullPage: true });
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  } finally {
+    setUiClock(M1_NOW);
+  }
+});
