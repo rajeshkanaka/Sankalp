@@ -130,9 +130,26 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
 
     const complete = page.getByRole('button', { name: 'Complete this session', exact: true });
     const numeric = page.getByLabel('Meditation', { exact: true });
+    await page.route('**/api/sessions/*/practices', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'TEMPORARY_TEST_FAILURE',
+            message: 'Temporary test failure. Your entry is still here.',
+            correlationId: 'synthetic-m2-retry',
+          },
+        }),
+      });
+    });
     await numeric.fill('5');
     await expect(complete).toBeDisabled();
     await page.getByRole('button', { name: 'Save Meditation', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('Temporary test failure');
+    await expect(numeric).toHaveValue('5');
+    await page.unroute('**/api/sessions/*/practices');
+    await page.getByRole('button', { name: 'Try saving again', exact: true }).click();
     await expect(page.getByText('Saved.', { exact: true })).toBeVisible();
     await expect(page.getByText('Partial', { exact: true })).toBeVisible();
     await expect(complete).toBeDisabled();
