@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { JourneyDraft, JourneyDraftPreview, JourneyView } from '@/domain/contracts';
+import type {
+  JourneyDraft,
+  JourneyDraftPreview,
+  JourneyRecord,
+  JourneyView,
+} from '@/domain/contracts';
 import { requestJson } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import shared from '@/styles/sanctuary.module.css';
@@ -11,21 +16,34 @@ import { ScheduleEditor } from './setup/schedule-editor';
 import { ScheduleReview } from './setup/schedule-review';
 import styles from './setup/setup.module.css';
 import { blankSetupValues, twentyOneNightTemplate } from './setup/templates';
-import { createJourneyDraft, draftSignature, type SetupValues } from './setup/types';
+import {
+  createJourneyDraft,
+  draftSignature,
+  setupValuesFromDraft,
+  type SetupValues,
+} from './setup/types';
 
-export function SetupForm() {
+export function SetupForm({ initialDraft }: { initialDraft?: JourneyRecord }) {
   const router = useRouter();
-  const [values, setValues] = useState<SetupValues>(blankSetupValues);
+  const [values, setValues] = useState<SetupValues>(() =>
+    initialDraft ? setupValuesFromDraft(initialDraft) : blankSetupValues,
+  );
   const [zoneConfirmed, setZoneConfirmed] = useState(false);
   const [weekdaysError, setWeekdaysError] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [preview, setPreview] = useState<JourneyDraftPreview | null>(null);
-  const nextKey = useRef(2);
-  const activationId = useRef<string | null>(null);
-  const creationAttempt = useRef<{ signature: string; id: string; draft: JourneyDraft } | null>(
-    null,
+  const [savedDraft, setSavedDraft] = useState(() =>
+    initialDraft ? { id: initialDraft.id, revision: initialDraft.revision } : null,
   );
+  const nextKey = useRef(initialDraft ? initialDraft.practices.length + 1 : 2);
+  const activationId = useRef<string | null>(null);
+  const previewAttempt = useRef<{
+    signature: string;
+    operationId: string;
+    draft: JourneyDraft;
+    target: { id: string; baseRevision: number } | null;
+  } | null>(null);
   const previewHeading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -46,6 +64,7 @@ export function SetupForm() {
     setWeekdaysError(false);
     setError(null);
     setPreview(null);
+    previewAttempt.current = null;
   }
 
   async function previewJourney(event: FormEvent<HTMLFormElement>) {
@@ -58,17 +77,37 @@ export function SetupForm() {
     setPending(true);
     setError(null);
     const draft = createJourneyDraft(values);
-    const signature = draftSignature(draft);
-    if (!creationAttempt.current || creationAttempt.current.signature !== signature) {
-      creationAttempt.current = { signature, id: crypto.randomUUID(), draft };
+    const signature = JSON.stringify({ savedDraft, draft: draftSignature(draft) });
+    if (!previewAttempt.current || previewAttempt.current.signature !== signature) {
+      previewAttempt.current = {
+        signature,
+        operationId: crypto.randomUUID(),
+        draft,
+        target: savedDraft && { id: savedDraft.id, baseRevision: savedDraft.revision },
+      };
     }
     try {
-      const result = await requestJson<JourneyDraftPreview>(
-        '/api/journeys',
-        'POST',
-        creationAttempt.current.draft,
-        creationAttempt.current.id,
-      );
+      const attempt = previewAttempt.current;
+      const result = attempt.target
+        ? await requestJson<JourneyDraftPreview>(
+            `/api/journeys/${attempt.target.id}/draft`,
+            'PUT',
+            {
+              operationId: attempt.operationId,
+              baseRevision: attempt.target.baseRevision,
+              payload: attempt.draft,
+            },
+          )
+        : await requestJson<JourneyDraftPreview>(
+            '/api/journeys',
+            'POST',
+            attempt.draft,
+            attempt.operationId,
+          );
+      setSavedDraft({ id: result.journey.id, revision: result.journey.revision });
+      setValues(setupValuesFromDraft(result.journey));
+      nextKey.current = result.journey.practices.length + 1;
+      previewAttempt.current = null;
       activationId.current = crypto.randomUUID();
       setPreview(result);
     } catch (cause) {
@@ -116,6 +155,7 @@ export function SetupForm() {
         onEdit={() => {
           setPreview(null);
           setError(null);
+          activationId.current = null;
         }}
       />
     );

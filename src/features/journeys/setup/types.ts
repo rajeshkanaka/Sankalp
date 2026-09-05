@@ -6,6 +6,7 @@ export type Attribution = ScheduleInput['attribution'];
 
 export interface PracticeInput {
   key: number;
+  id?: string;
   label: string;
   kind: PracticeKind;
   target: string;
@@ -43,7 +44,7 @@ export function createJourneyDraft(values: SetupValues): JourneyDraft {
     intention: values.intention.trim(),
     practices: values.practices.map((practice, order) => {
       const common = {
-        id: crypto.randomUUID(),
+        id: practice.id ?? crypto.randomUUID(),
         label: practice.label.trim(),
         order,
       };
@@ -67,6 +68,32 @@ export function createJourneyDraft(values: SetupValues): JourneyDraft {
       quietHours: null,
       detailed: false,
     },
+  };
+}
+
+export function setupValuesFromDraft(draft: JourneyDraft): SetupValues {
+  return {
+    title: draft.title,
+    intention: draft.intention,
+    practices: draft.practices.map((practice, index) => ({
+      key: index + 1,
+      id: practice.id,
+      label: practice.label,
+      kind: practice.kind,
+      target: practice.target === null ? '' : String(practice.target),
+    })),
+    startDate: draft.schedule.startDate,
+    durationMode: draft.schedule.durationMode,
+    duration: String(draft.schedule.durationValue),
+    daily:
+      draft.schedule.weekdays.length === WEEKDAYS.length &&
+      WEEKDAYS.every(({ value }) => draft.schedule.weekdays.includes(value)),
+    weekdays: [...draft.schedule.weekdays],
+    localTime: draft.schedule.localTime,
+    timeZone: draft.schedule.timeZone,
+    attribution: draft.schedule.attribution,
+    windowMinutes: String(draft.schedule.windowMinutes),
+    reminderOffsets: [...draft.reminders.offsets],
   };
 }
 
