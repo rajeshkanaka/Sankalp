@@ -10,6 +10,8 @@ Base before this bounded assignment: `781d8af`
 
 Implementation commit: `dbb129a7329bf546bf72b3f357a0cb8247b5cad1`
 
+Isolation-fix commit: `9579eeea85a5b6053d7ecaec6ce619e52fd907e8`
+
 Resource slot: none. The worker did not start, stop or interact with the coordinator's production-build server or active browsers on port 3100.
 
 ## Delivered
@@ -22,6 +24,12 @@ Resource slot: none. The worker did not start, stop or interact with the coordin
 - The stateful test first calls `resetUiSignInLimits('ui-maya@example.test')`, sends one successful sign-in through the application, verifies a newly captured local Mailpit message, and asserts the immediate application retry returns 429 with a positive integer `Retry-After`.
 - An immediate direct request to local `/auth/v1/otp` uses only the same seeded UI Maya account, `create_user: false`, and the allowlisted `${UI_ORIGIN}/auth/confirm` redirect. Its independent resend-frequency 429 is asserted without claiming that the application's five-per-hour policy applies to direct Supabase Auth.
 - No response body, captured authentication link, cookie, token or key is logged or retained. The test sends at most one local captured email when the configured resend policy behaves as expected.
+
+## Full-suite isolation correction
+
+The coordinator's first integrated full UI run exposed two test-only failures. The malformed request used a JavaScript string, which Playwright serialized as valid JSON and the route correctly answered with 422. It now sends `Buffer.from('{"email":')`, preserving the invalid raw bytes and the intended 400 assertion.
+
+The stateful rate test also left its successful magic link unconsumed, so the following M1 login encountered Supabase Auth's resend interval. The test now polls for an ID absent from the pre-request Mailpit snapshot, reads only that message, verifies the link has the exact `UI_ORIGIN` and `/auth/confirm` path, consumes it through Playwright request with `maxRedirects: 0`, and safely asserts a 307 redirect to `/today`. The link and token never appear in an assertion, log or retained artifact.
 
 ## Verification evidence
 
@@ -46,4 +54,4 @@ Run the real test only when the coordinator owns a fresh local Auth email quota 
 npm run test:ui -- --project chromium --grep @SK-002
 ```
 
-The focused run starts the production build through the existing Playwright `webServer` contract. Because it deliberately sends a real local magic-link request and proves the provider cooldown, sequence broader M1 email-link workflows before this focused boundary run or after the configured provider resend window. Coordinator integration and observed runtime evidence determine task status.
+The focused run starts the production build through the existing Playwright `webServer` contract. It consumes the one generated link before completing so a following M1 login does not inherit the provider resend state. Coordinator integration and observed runtime evidence determine task status.
