@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
-import { FIXTURE_NAMESPACES, FIXTURE_PROFILE, type FixtureNamespace } from './ids';
+import { DEMO_PROFILES, FIXTURE_NAMESPACES, type DemoProfile, type FixtureNamespace } from './ids';
 
 const runtimeSchema = z
   .object({
@@ -19,7 +19,7 @@ const runtimeSchema = z
 export type LocalRuntime = z.infer<typeof runtimeSchema>;
 
 export interface SeedArguments {
-  profile: typeof FIXTURE_PROFILE;
+  profile: DemoProfile;
   namespace: FixtureNamespace;
 }
 
@@ -34,12 +34,13 @@ export function parseSeedArguments(argv: string[]): SeedArguments {
       );
     values.set(flag, value);
   }
-  if (values.get('--profile') !== FIXTURE_PROFILE)
-    throw new Error('Only the M1 synthetic seed profile is available.');
+  const profile = values.get('--profile');
+  if (!DEMO_PROFILES.includes(profile as DemoProfile))
+    throw new Error('Choose an implemented synthetic seed profile: M1 or M2.');
   const namespace = values.get('--namespace') ?? 'demo';
   if (!FIXTURE_NAMESPACES.includes(namespace as FixtureNamespace))
     throw new Error('Fixture namespace must be demo, ui, ui-http, or integration.');
-  return { profile: FIXTURE_PROFILE, namespace: namespace as FixtureNamespace };
+  return { profile: profile as DemoProfile, namespace: namespace as FixtureNamespace };
 }
 
 interface EnvironmentInput {
@@ -134,4 +135,25 @@ export function loadGuardedLocalRuntime(
     adminDatabaseUrl: environment.LOCAL_ADMIN_DATABASE_URL,
     supabaseUrl: environment.SUPABASE_URL,
   });
+}
+
+export function validateApplicationDatabaseUrl(value: string | undefined, port: number): string {
+  if (!value) throw new Error('Local environment is missing DATABASE_URL.');
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('DATABASE_URL is not a valid URL.');
+  }
+  if (
+    !['127.0.0.1', 'localhost'].includes(url.hostname) ||
+    !['postgres:', 'postgresql:'].includes(url.protocol) ||
+    Number(url.port) !== port ||
+    url.username !== 'app_api' ||
+    url.pathname !== '/postgres' ||
+    url.search ||
+    url.hash
+  )
+    throw new Error('DATABASE_URL does not match the allocated local postgres database.');
+  return url.href;
 }

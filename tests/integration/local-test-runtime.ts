@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { validateLocalSeedEnvironment, type GuardedLocalRuntime } from '../fixtures/local';
+import {
+  validateApplicationDatabaseUrl,
+  validateLocalSeedEnvironment,
+  type GuardedLocalRuntime,
+} from '../fixtures/local';
 
 interface EnvironmentInput {
   cwd: string;
@@ -30,27 +34,6 @@ export interface SyntheticUserShape {
 }
 
 export const SYNTHETIC_MARKER_KEY = 'sankalpa_fixture' as const;
-
-function validateApplicationDatabaseUrl(value: string | undefined, port: number): string {
-  if (!value) throw new Error('Integration environment is missing DATABASE_URL.');
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error('DATABASE_URL is not a valid URL.');
-  }
-  if (
-    !['127.0.0.1', 'localhost'].includes(url.hostname) ||
-    !['postgres:', 'postgresql:'].includes(url.protocol) ||
-    Number(url.port) !== port ||
-    url.username !== 'app_api' ||
-    url.pathname !== '/postgres' ||
-    url.search ||
-    url.hash
-  )
-    throw new Error('DATABASE_URL does not match the allocated local postgres database.');
-  return url.href;
-}
 
 export function validateLocalIntegrationEnvironment(
   input: EnvironmentInput,

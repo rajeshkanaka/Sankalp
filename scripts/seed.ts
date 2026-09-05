@@ -6,13 +6,17 @@ import pg from 'pg';
 import {
   FIXTURE_MARKER_KEY,
   FIXTURE_PROFILE,
-  M1_DEMO_NOW,
   fixtureAccounts,
   fixtureIdentityFileName,
   type FixtureNamespace,
   type FixturePerson,
 } from '../tests/fixtures/ids';
-import { loadGuardedLocalRuntime, parseSeedArguments } from '../tests/fixtures/local';
+import {
+  loadGuardedLocalRuntime,
+  parseSeedArguments,
+  validateApplicationDatabaseUrl,
+} from '../tests/fixtures/local';
+import { populateProfile } from './seed-profiles';
 
 interface FixtureMarker {
   version: 1;
@@ -222,8 +226,35 @@ function writeJsonAtomically(path: string, value: unknown): void {
 async function main(): Promise<void> {
   const options = parseSeedArguments(process.argv.slice(2));
   const runtime = loadGuardedLocalRuntime();
+  const applicationDatabaseUrl = validateApplicationDatabaseUrl(
+    process.env.DATABASE_URL,
+    runtime.dbPort,
+  );
   const secretKey = process.env.LOCAL_SUPABASE_SECRET_KEY;
   if (!secretKey) throw new Error('Missing LOCAL_SUPABASE_SECRET_KEY. Run npm run env:local.');
+
+  // Authenticate the restricted connection before any synthetic data is reset.
+  const application = new pg.Client({
+    connectionString: applicationDatabaseUrl,
+    connectionTimeoutMillis: 5000,
+  });
+  try {
+    await application.connect();
+    const role = await application.query(
+      'select current_user, session_user, rolsuper, rolbypassrls, exists(select from pg_auth_members where member=r.oid) as memberships from pg_roles r where rolname=current_user',
+    );
+    const identity = role.rows[0];
+    if (
+      identity?.current_user !== 'app_api' ||
+      identity?.session_user !== 'app_api' ||
+      identity.rolsuper ||
+      identity.rolbypassrls ||
+      identity.memberships
+    )
+      throw new Error('Synthetic seed requires the restricted application role.');
+  } finally {
+    await application.end();
+  }
 
   const database = new pg.Client({
     connectionString: runtime.adminDatabaseUrl,
@@ -239,17 +270,26 @@ async function main(): Promise<void> {
     });
     const provisioned = await provisionFixtureUsers(auth, options.namespace);
     await verifyFixtureUsersInDatabase(database, provisioned.users, options.namespace);
+    const localDirectory = resolve(runtime.root, '.local');
+    const identityDirectory = resolve(localDirectory, 'fixtures');
+    mkdirSync(identityDirectory, { recursive: true, mode: 0o700 });
+    const identityPath = resolve(identityDirectory, fixtureIdentityFileName(options.namespace));
+    // Once reset starts, an older ready marker cannot describe the new dataset.
+    writeJsonAtomically(identityPath, {
+      state: 'incomplete',
+      profile: options.profile,
+      namespace: options.namespace,
+    });
     const removed = await resetApplicationRows(
       database,
       provisioned.users.map((user) => user.id),
     );
+    const now = await populateProfile(options.profile, provisioned.users[0].id, runtime.root);
 
-    const localDirectory = resolve(runtime.root, '.local');
-    const identityDirectory = resolve(localDirectory, 'fixtures');
-    mkdirSync(identityDirectory, { recursive: true, mode: 0o700 });
     if (options.namespace === 'demo')
-      writeJsonAtomically(resolve(localDirectory, 'demo-clock.json'), { now: M1_DEMO_NOW });
-    writeJsonAtomically(resolve(identityDirectory, fixtureIdentityFileName(options.namespace)), {
+      writeJsonAtomically(resolve(localDirectory, 'demo-clock.json'), { now });
+    writeJsonAtomically(identityPath, {
+      state: 'ready',
       profile: options.profile,
       namespace: options.namespace,
       accounts: Object.fromEntries(

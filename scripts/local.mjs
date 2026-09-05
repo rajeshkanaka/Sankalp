@@ -317,6 +317,9 @@ switch (command) {
   case 'demo': {
     if (!existsSync(resolve(directory, 'demo-clock.json')))
       throw new Error('Seed a demonstration profile first.');
+    const fixture = JSON.parse(readFileSync(resolve(directory, 'fixtures/M1-demo.json'), 'utf8'));
+    if (fixture.state !== 'ready' || value('--profile', null) !== fixture.profile)
+      throw new Error('Seed the requested profile before launching its demonstration.');
     const run = spawnSync(
       process.execPath,
       ['--env-file=.env.local', 'scripts/run-next.mjs', 'dev'],
