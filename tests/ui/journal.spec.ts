@@ -217,6 +217,12 @@ test('@M3 @M3-journal private Unicode reflections autosave, search and resolve c
   const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
   mkdirSync(evidence, { recursive: true });
   await page.goto('/journal');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Your private journal', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Journal practice', exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: resolve(evidence, 'journal-saved.png'), fullPage: true });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
