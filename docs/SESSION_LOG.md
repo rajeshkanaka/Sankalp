@@ -21,3 +21,11 @@ Short factual handoffs only. Current checkpoint: [PROJECT_PROGRESS](PROJECT_PROG
 ## 2026-09-06 — Approval and implementation kickoff
 
 User approved the plan, authorized commits/pushes and requested continuous implementation with orchestration through completion. D10 records the override of visual-review pauses without waiving tests. Rechecked branch/worktree/Git baseline at `93384ed`; working tree was clean. Docker CLI 29.4.2 present but daemon stopped. Asked only for eventual hosting cap/domain/sender/device inputs; local development proceeds. SK-001 claimed by coordinator; exact next substep in PROJECT_PROGRESS. No application test result claimed at kickoff.
+
+## 2026-09-06 — SK-001 bootstrap checkpoint
+
+Approval commit 2c9b13c pushed to origin/main; implementation branch created. Node24.20.0/npm11.19.0 installed, exact manifest/lock installed with zero audit findings. Contracts checkpoint2ee1251; domain d76d257/dd75fa6 integrated (worker:47 unit tests, typecheck and scoped checks passed). UI worker remains isolated in SK-001-ui. Root auth, local wrappers and database services are in progress; full workflow is NOT RUN.
+
+Docker4.72 startup failed with Electron unexpected EOF from inherited large environment; clean-environment application launch recovered engine29.4.2 without data changes. [Official fix in Docker4.81](https://docs.docker.com/desktop/release-notes/#4810). Local Supabase started with Postgres17 image and Mailpit. Initial CLI start printed local service keys by default; wrapper now captures stdout, prints safe status only, and no keys were written to tracking/evidence. Do not copy raw CLI status or auth links into reports.
+
+Security review prompted immutable-table permissions, kind/owner FK strengthening and fail-closed runtime role checks. Managed postgres rejects ALTER ROLE NOSUPERUSER even for a restricted role; migration instead checks every dangerous attribute and refuses drift. Account disable will require the exclusive account advisory lock matching withUser shared lock. Resume at PROJECT_PROGRESS exact substep; no app task is DONE.

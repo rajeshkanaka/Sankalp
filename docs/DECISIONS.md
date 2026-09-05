@@ -95,6 +95,8 @@ The user requested these documents and a local planning commit on 2026-09-05. No
 
 User approved the entire plan and instructed the coordinator to commit, push, orchestrate agents and continue until the app is complete. This authorizes implementation, dependency setup, focused commits/pushes and progression across milestones without repeated visual-review pauses. Retain all technical acceptance, security, real-device and evidence gates; do not record waived visual pauses as reviews that happened. The coordinator may assign bounded substeps within a task to isolated workers while retaining single-task accountability.
 
+Follow-up user instruction: prioritize local perfection and minimum cost. Samsung S25 Ultra is available; a Gmail recipient was supplied privately. A Gmail address is not an owned sending domain. No paid provisioning is needed for local work.
+
 Deployment work is authorized in principle as part of the approved plan; actual budget cap, accounts, domain/sender, device availability and recipient consent still require concrete inputs. A concise question for those details was presented while local implementation proceeds. Do not spend without an established cap or fabricate credentials/device results. No unrelated destructive operation or shared-history rewrite is authorized. Subsequent architecture/stack changes retain the existing approval rule; compatibility corrections must be evidence-backed and recorded.
 
 ## Verification sources
