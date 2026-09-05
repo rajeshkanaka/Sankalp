@@ -46,7 +46,9 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
       });
     });
     await page.getByRole('button', { name: 'Save journey details', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('Review the latest journey');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Review the latest journey' }),
+    ).toBeVisible();
     await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue(
       'Revised night practice',
     );
@@ -71,7 +73,7 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
     await expect(page.getByText(/original start remains 2026-09-05/i)).toBeVisible();
     await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
     await expect(page.getByText('Future schedule updated.', { exact: true })).toBeVisible();
-    await expect(page.getByText(/Practices: Future Kunjika, Bhairav Stotra/)).toBeVisible();
+    await expect(page.getByText('Current practices: Future Kunjika, Bhairav Stotra')).toBeVisible();
 
     await page.getByRole('link', { name: /^Night 1\s/ }).click();
     await expect(page.getByRole('checkbox', { name: 'Kunjika', exact: true })).toBeVisible();

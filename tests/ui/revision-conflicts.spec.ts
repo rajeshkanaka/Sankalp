@@ -47,9 +47,11 @@ test('@M2 @M2-revisions stale schedule previews preserve edits and require fresh
 
     setUiClock(AT_SECOND_OPEN);
     await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText(
-      'The future schedule changed at an opening boundary',
-    );
+    await expect(
+      page
+        .getByRole('alert')
+        .filter({ hasText: 'The future schedule changed at an opening boundary' }),
+    ).toBeVisible();
     await expect(page.getByLabel('Practice 1', { exact: true })).toHaveValue(
       'Boundary-preserved Kunjika',
     );
@@ -60,7 +62,7 @@ test('@M2 @M2-revisions stale schedule previews preserve edits and require fresh
     await expect(page.getByRole('heading', { name: 'Review future changes' })).toBeVisible();
     await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
     await expect(page.getByText('Future schedule updated.', { exact: true })).toBeVisible();
-    await expect(page.getByText(/Practices: Boundary-preserved Kunjika/)).toBeVisible();
+    await expect(page.getByText(/Current practices: Boundary-preserved Kunjika/)).toBeVisible();
     expect(operationIds).toHaveLength(2);
     expect(operationIds[1]).not.toBe(operationIds[0]);
 
@@ -80,7 +82,9 @@ test('@M2 @M2-revisions stale schedule previews preserve edits and require fresh
     await expect(otherPage.getByText('Journey details saved.', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('changed on another device');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'changed on another device' }),
+    ).toBeVisible();
     await expect(page.getByLabel('Practice 1', { exact: true })).toHaveValue(
       'Other-device preserved Kunjika',
     );

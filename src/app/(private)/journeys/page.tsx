@@ -6,9 +6,7 @@ import styles from '@/styles/sanctuary.module.css';
 
 export default async function JourneysPage() {
   const user = await getPageUser();
-  const journeys = (await listJourneyViews(user.id)).filter(
-    (view) => view.journey.state !== 'draft',
-  );
+  const journeys = await listJourneyViews(user.id);
   return (
     <>
       <PageHeader
@@ -29,7 +27,14 @@ export default async function JourneysPage() {
           {journeys.map(({ journey, metrics }) => (
             <article className={`${styles.panel} ${styles.journeyCard}`} key={journey.id}>
               <h2>
-                <Link prefetch={false} href={`/journeys/${journey.id}`}>
+                <Link
+                  prefetch={false}
+                  href={
+                    journey.state === 'draft'
+                      ? `/setup?draft=${journey.id}`
+                      : `/journeys/${journey.id}`
+                  }
+                >
                   {journey.title}
                 </Link>
               </h2>
@@ -37,19 +42,29 @@ export default async function JourneysPage() {
               <p>
                 {journey.schedule.localTime} · {journey.schedule.timeZone}
               </p>
-              <div className={styles.progressBar} aria-hidden="true">
-                <span style={{ width: `${metrics.percent}%` }} />
-              </div>
-              <p>
-                {metrics.complete} of {metrics.total} sessions completed · {metrics.percent}%
-                complete
-              </p>
+              {journey.state === 'draft' ? (
+                <p>Saved draft · Review and activate when you are ready.</p>
+              ) : (
+                <>
+                  <div className={styles.progressBar} aria-hidden="true">
+                    <span style={{ width: `${metrics.percent}%` }} />
+                  </div>
+                  <p>
+                    {metrics.complete} of {metrics.total} sessions completed · {metrics.percent}%
+                    complete
+                  </p>
+                </>
+              )}
               <Link
                 prefetch={false}
                 className={`${styles.button} ${styles.secondary}`}
-                href={`/journeys/${journey.id}`}
+                href={
+                  journey.state === 'draft'
+                    ? `/setup?draft=${journey.id}`
+                    : `/journeys/${journey.id}`
+                }
               >
-                View journey
+                {journey.state === 'draft' ? 'Resume draft' : 'View journey'}
               </Link>
             </article>
           ))}

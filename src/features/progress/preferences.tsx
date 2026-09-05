@@ -14,6 +14,7 @@ export function StreakPreference({ preferences }: { preferences: ProgressPrefere
   const [checked, setChecked] = useState(preferences.hideStreaks);
   useEffect(() => setChecked(preferences.hideStreaks), [preferences.hideStreaks]);
   async function save(hideStreaks: boolean) {
+    setChecked(hideStreaks);
     setPending(true);
     setError(null);
     try {
@@ -23,6 +24,7 @@ export function StreakPreference({ preferences }: { preferences: ProgressPrefere
       setChecked(saved.hideStreaks);
       router.refresh();
     } catch (cause) {
+      setChecked(preferences.hideStreaks);
       setError(
         cause instanceof Error ? cause : new Error('Could not save your preference. Try again.'),
       );
