@@ -3,6 +3,8 @@ const config = {
   poweredByHeader: false,
   // Incoming URLs can contain sign-in tokens or private journal search text.
   logging: false,
+  // Preserve absolute canonical redirects between local loopback aliases.
+  skipProxyUrlNormalize: true,
   turbopack: { root: process.cwd() },
   outputFileTracingRoot: process.cwd(),
   async headers() {
