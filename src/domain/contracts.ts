@@ -86,6 +86,18 @@ export interface JourneyView {
   metrics: JourneyMetrics;
   now: IsoInstant;
 }
+export interface ReminderTimePreview {
+  practiceDate: PracticeDate;
+  offsetMinutes: number;
+  scheduledFor: IsoInstant;
+  isPast: boolean;
+}
+export interface JourneyDraftPreview {
+  journey: JourneyRecord;
+  preview: SchedulePreview;
+  fingerprint: string;
+  reminderTimes: ReminderTimePreview[];
+}
 export interface MutationEnvelope<T> {
   operationId: Id;
   baseRevision: Revision;

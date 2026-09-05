@@ -8,5 +8,6 @@ artifacts/
 playwright-report/
 test-results/
 *.tsbuildinfo
+next-env.d.ts
 .DS_Store
 .superpowers/
