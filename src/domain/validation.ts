@@ -128,3 +128,4 @@ export const scheduleRevisionRequestSchema = z.discriminatedUnion('mode', [
   ).extend({ mode: z.literal('apply') }),
 ]);
 export const journeyMetadataSchema = journeyDraftSchema.pick({ title: true, intention: true });
+export const progressPreferencesSchema = z.strictObject({ hideStreaks: z.boolean() });

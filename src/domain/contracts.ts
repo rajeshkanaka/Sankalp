@@ -149,6 +149,49 @@ export interface JourneyMetadata {
   title: string;
   intention: string;
 }
+export interface CompletionTiming {
+  practiceTiming: 'on_schedule' | 'practiced_late' | null;
+  recordedLater: boolean;
+}
+export interface SessionListItem extends PlannedOccurrence, CompletionTiming {
+  id: Id;
+  journeyId: Id;
+  journeyTitle: string;
+  timeZone: string;
+  attribution: ScheduleInput['attribution'];
+  status: SessionStatus;
+  windowClosed: boolean;
+  performedAt: IsoInstant | null;
+  recordedAt: IsoInstant | null;
+}
+export interface JourneyProgressItem {
+  journey: JourneyRecord;
+  metrics: JourneyMetrics;
+  current: SessionListItem | null;
+  next: SessionListItem | null;
+  timeline: SessionListItem[];
+}
+export interface ProgressPreferences {
+  hideStreaks: boolean;
+}
+export interface ProgressDashboard {
+  now: IsoInstant;
+  journeys: JourneyProgressItem[];
+  preferences: ProgressPreferences;
+}
+export interface CalendarView {
+  now: IsoInstant;
+  from: PracticeDate;
+  to: PracticeDate;
+  journeys: {
+    id: Id;
+    title: string;
+    timeZone: string;
+    attribution: ScheduleInput['attribution'];
+  }[];
+  sessions: SessionListItem[];
+  preferences: ProgressPreferences;
+}
 export interface ApiErrorBody {
   error: {
     code: string;
