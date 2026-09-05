@@ -3,6 +3,7 @@ import type pg from 'pg';
 import { z } from 'zod';
 import type {
   JourneyDraft,
+  JourneyDraftPreview,
   JourneyRecord,
   JourneyView,
   MutationEnvelope,
@@ -105,7 +106,7 @@ export async function createJourney(
   userId: string,
   input: JourneyDraft,
   operationId: string = randomUUID(),
-) {
+): Promise<JourneyDraftPreview> {
   const draft = journeyDraftSchema.parse(input);
   if (draft.reminders.enabled)
     throw new AppError(
@@ -117,6 +118,39 @@ export async function createJourney(
   return withUser(userId, (client) =>
     idempotent(client, userId, operationId, 'create-journey', draft, async () => {
       const preview = checkedPreview(draft, now);
+      const overlap = await client.query<{ overlaps: boolean }>(
+        `select exists (
+          select 1 from app.session s join app.journey j on j.id=s.journey_id
+          join jsonb_to_recordset($1::jsonb) as proposed(opens_at timestamptz, closes_at timestamptz)
+            on s.opens_at < proposed.closes_at and s.closes_at > proposed.opens_at
+          where s.superseded_at is null and j.state='active'
+        ) as overlaps`,
+        [
+          JSON.stringify(
+            preview.occurrences.map((occurrence) => ({
+              opens_at: occurrence.opensAt,
+              closes_at: occurrence.closesAt,
+            })),
+          ),
+        ],
+      );
+      if (overlap.rows[0].overlaps)
+        preview.warnings.push(
+          'Some practice windows overlap another active journey of yours. You can keep both schedules or adjust the time.',
+        );
+      const reminderTimes = preview.occurrences.flatMap((occurrence) =>
+        draft.reminders.offsets.map((offsetMinutes) => {
+          const scheduledFor = new Date(
+            Date.parse(occurrence.opensAt) + offsetMinutes * 60_000,
+          ).toISOString();
+          return {
+            practiceDate: occurrence.practiceDate,
+            offsetMinutes,
+            scheduledFor,
+            isPast: Date.parse(scheduledFor) <= Date.parse(now),
+          };
+        }),
+      );
       await client.query('select pg_advisory_xact_lock(hashtextextended($1, 1))', [userId]);
       const count = await client.query(
         "select count(*)::int as total from app.journey where state <> 'archived'",
@@ -131,7 +165,12 @@ export async function createJourney(
         'insert into app.journey(id,owner_id,title,intention,draft,created_at) values($1,$2,$3,$4,$5,$6) returning *',
         [randomUUID(), userId, draft.title, draft.intention, JSON.stringify(draft), now],
       );
-      return { journey: toJourney(result.rows[0]), preview, fingerprint: fingerprint(draft) };
+      return {
+        journey: toJourney(result.rows[0]),
+        preview,
+        fingerprint: fingerprint(draft),
+        reminderTimes,
+      };
     }),
   );
 }
