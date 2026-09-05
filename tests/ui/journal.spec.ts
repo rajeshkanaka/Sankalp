@@ -185,9 +185,11 @@ test('@M3 @M3-journal private Unicode reflections autosave, search and resolve c
       losingEditor.getByRole('alert').filter({ hasText: 'Another device saved' }),
     ).toBeVisible();
     await expect(
-      losingEditor.getByRole('region', { name: 'Your unsaved reflection' }),
+      losingEditor.getByRole('region', { name: 'Your unsaved reflection', exact: true }),
     ).toContainText(losingText);
-    await expect(losingEditor.getByRole('region', { name: 'Saved reflection' })).toBeVisible();
+    await expect(
+      losingEditor.getByRole('region', { name: 'Saved reflection', exact: true }),
+    ).toBeVisible();
     const winningEditor = winningPage.getByRole('region', { name: 'Private reflection' });
     await winningEditor.getByLabel('Your reflection', { exact: true }).fill(losingText);
     await winningEditor.getByRole('button', { name: 'Save reflection', exact: true }).click();
