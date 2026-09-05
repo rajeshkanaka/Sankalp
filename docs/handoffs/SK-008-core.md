@@ -1,0 +1,22 @@
+# SK-008 core implementation handoff
+
+2026-09-06. Worker branch `task/SK-008-core`, worktree `/Users/rajesh/sankalpa-worktrees/SK-008-core`, base `b3e4a27`. Shared status remains in [TASKS](../TASKS.md). Core ownership is `src/offline/core/**`, focused offline tests, and this report. Coordinator owns actual app/SW/API integration and runtime.
+
+## Frozen integration interface
+
+`src/offline/core/index.ts` will export `createOfflineCore(options?)`, the same methods bound to a lazy default instance, all types from `types.ts`, and `OfflineError` with a safe `code`. The types are the concrete integration contract. Import only this entry point in UI; no server imports.
+
+- After a verified identity, `bindAccount(accountId)` returns `{accountId,generation}`. A new account with pending old work quarantines it and throws `ACCOUNT_CHANGE_PENDING`; show generic recovery/discard options. Explicit `bindAccount(newId,{discardPrevious:true})` clears the previous private namespace. `getDeviceState()` exposes counts and a scope only when local data may be shown. It does not authenticate a browser cookie.
+- `saveSnapshot(scope,{session,journeyTitle,reflection,preferences,lastSyncedAt})` stores explicit visited data. `read(scope,sessionId)` returns `snapshot` (canonical), `projectedSession`/`projectedReflection` (pending local feedback), `draft`, `draftRevision`, ordered operations and separate `heads.session`/`heads.reflection`. Never calculate canonical progress from the projection.
+- `saveDraft(scope,sessionId,draft,expectedRevision)` preserves raw numeric/note input; returns the new draft revision. Null explicitly clears the draft. Compare-and-swap prevents stale tabs silently replacing text. UI keeps its in-memory text when any call fails.
+- `enqueue(scope,{operationId,sessionId,scheduleVersionId,baseRevision,expectedLocalHead,intent})`: allocate one UUID per user action, preserve it on enqueue retries; use `heads.session` or `.reflection` and the matching canonical revision (reflection absence = 0). Intent kinds are practices/completion/completion_undo/reflection with the frozen domain payloads. A success means transaction commit completed, not server acknowledgment.
+- `flush(scope,signal?)` is bounded, foreground, one Web Lock leader. UI schedules another foreground attempt at `retryAt`, and on online/focus/reopen/explicit Retry. `not_leader` also returns a retry time. No automatic background service. `subscribe` emits only invalidations; reread before rendering and clear React private state if the scope is invalid.
+- Conflicts retain both versions. `refreshConflict` obtains an authorized comparison without changing queue payloads. `resolve` needs the exact reviewed stream operation IDs and draft revision, then either explicitly chooses server or submits one reviewed replacement intent/new UUID against the displayed current revision. Descendants in that stream are discarded only as part of that explicit reviewed choice; the other revision stream remains untouched. Session/version identity cannot change. Resolution also clears only the reviewed stream's raw draft fields.
+- `clearAccount(scope,'synced'|'discard_confirmed')` invalidates every existing scope and purges private stores. Synced refuses outstanding drafts/operations. `setSharedDevice(scope,true,action)` performs the same pending-work gate and purge; every tab checks the durable preference before private writes. Disabling returns a fresh scope. Local clearing is never a claim of server logout.
+- `getDeviceState/listSavedSessions` support the public offline shell. Feature failures reject with `OfflineError`; no in-memory persistence fallback. Limits: 500 pending operations, 50 unpinned saved sessions; pinned drafts/pending operations are not evicted. Over-30-day operations require review.
+
+Read D15 and root D16. Base reflection validation is older than coordinator's verbatim Unicode fix; core consumes the shared validator and must be integrated onto that corrected source. No duplicate reflection normalization policy is introduced.
+
+## Verification checkpoint
+
+Types/API only at this checkpoint. Implementation, unit and real IndexedDB/browser checks: NOT RUN. No root database/environment/runtime was accessed. Next: implement storage, pure queue policy, fixed-route transport and replay, then run scoped static/unit checks and an isolated real-browser IndexedDB harness if available.
