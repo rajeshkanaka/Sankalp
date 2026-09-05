@@ -188,6 +188,7 @@ export interface CalendarView {
     title: string;
     timeZone: string;
     attribution: ScheduleInput['attribution'];
+    metrics: JourneyMetrics;
   }[];
   sessions: SessionListItem[];
   preferences: ProgressPreferences;
