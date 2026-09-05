@@ -110,10 +110,21 @@ function syncConfig() {
   writeFileSync(resolve(backend, 'supabase/config.toml'), config);
 }
 function cli(parts, capture = false) {
+  const executable = execFileSync('/usr/bin/which', ['docker'], { encoding: 'utf8' }).trim();
+  if (!executable.startsWith('/') || executable.startsWith(directory))
+    throw new Error('Cannot resolve the real Docker executable.');
+  const bin = resolve(directory, 'docker-bin');
+  mkdirSync(bin, { recursive: true, mode: 0o700 });
+  cpSync(resolve(root, 'scripts/docker-loopback.mjs'), resolve(bin, 'docker'));
+  chmodSync(resolve(bin, 'docker'), 0o700);
   return execFileSync(
     resolve(root, 'node_modules/.bin/supabase'),
     ['--workdir', backend, ...parts],
-    { encoding: 'utf8', stdio: ['ignore', 'pipe', capture ? 'pipe' : 'inherit'] },
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', capture ? 'pipe' : 'inherit'],
+      env: { ...process.env, SANKALPA_REAL_DOCKER: executable, PATH: `${bin}:${process.env.PATH}` },
+    },
   );
 }
 function status() {
