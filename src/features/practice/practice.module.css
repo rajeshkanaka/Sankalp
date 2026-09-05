@@ -1,0 +1,75 @@
+.valueRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr);
+  gap: 20px;
+  align-items: center;
+  min-height: 100px;
+  padding: 19px 0;
+}
+
+.valueInfo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.valueInfo strong {
+  display: block;
+  font-weight: 600;
+}
+
+.valueInfo small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.numericForm {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.numericForm input {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  color: var(--parchment);
+  background: var(--deep-night);
+  border: 1px solid #5c607b;
+  border-radius: 6px;
+}
+
+.saveButton {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--brass);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--brass);
+  font-weight: 600;
+}
+
+.saveButton:disabled {
+  opacity: 0.55;
+}
+
+.unit {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 620px) {
+  .valueRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .numericForm {
+    grid-template-columns: 1fr;
+  }
+}

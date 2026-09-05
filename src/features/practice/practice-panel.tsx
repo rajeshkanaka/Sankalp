@@ -8,15 +8,29 @@ import { deriveStatus, targetsMet } from '@/domain/status';
 import { requestJson, RequestError } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import { formatInstant, StatusBadge } from '@/components/presentation';
+import { PracticeValueInput } from './practice-value-input';
 import { countdownLabel, usePracticeClock } from './use-practice-clock';
 import styles from '@/styles/sanctuary.module.css';
 
-type PracticeMutation = MutationEnvelope<{ values: Record<string, boolean> }>;
+type PracticeValue = boolean | number;
+type PracticeMutation = MutationEnvelope<{ values: Record<string, PracticeValue> }>;
 type CompletionMutation = MutationEnvelope<{ performedAt: string }>;
 
-function checkboxValues(session: SessionRecord) {
+interface PendingPracticeSave {
+  practiceId: string;
+  value: PracticeValue;
+  mutation: PracticeMutation;
+}
+
+function savedValues(session: SessionRecord): Record<string, PracticeValue> {
+  return Object.fromEntries(session.practices.map((practice) => [practice.id, practice.value]));
+}
+
+function numericDrafts(session: SessionRecord) {
   return Object.fromEntries(
-    session.practices.map((practice) => [practice.id, practice.value === true]),
+    session.practices
+      .filter((practice) => practice.kind !== 'checkbox')
+      .map((practice) => [practice.id, String(practice.value)]),
   );
 }
 
@@ -31,55 +45,100 @@ export function PracticePanel({
 }) {
   const router = useRouter();
   const [session, setSession] = useState(initialSession);
-  const [values, setValues] = useState(() => checkboxValues(initialSession));
+  const [values, setValues] = useState<Record<string, PracticeValue>>(() =>
+    savedValues(initialSession),
+  );
+  const [drafts, setDrafts] = useState<Record<string, string>>(() => numericDrafts(initialSession));
+  const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set());
   const [pending, setPending] = useState<'save' | 'complete' | null>(null);
-  const [unsaved, setUnsaved] = useState(false);
   const [message, setMessage] = useState('Changes are saved individually.');
   const [error, setError] = useState<Error | null>(null);
-  const pendingSave = useRef<PracticeMutation | null>(null);
+  const pendingSave = useRef<PendingPracticeSave | null>(null);
   const pendingCompletion = useRef<CompletionMutation | null>(null);
   const now = usePracticeClock(initialNow, demo);
   const status = deriveStatus(session, now);
   const beforeOpening = Date.parse(now) < Date.parse(session.opensAt);
   const closed = Date.parse(now) >= Date.parse(session.closesAt);
+  const unsaved = dirtyIds.size > 0;
   const canEdit = !beforeOpening && !closed && !session.confirmed && !pending;
   const canConfirm = canEdit && !unsaved && targetsMet(session);
   const conflict =
     error instanceof RequestError &&
     (error.code.includes('CONFLICT') || error.code.includes('REVISION'));
 
-  async function saveValues(nextValues: Record<string, boolean>, retry = false) {
-    setValues(nextValues);
-    setUnsaved(true);
+  function markDirty(practiceId: string) {
+    setDirtyIds((current) => new Set(current).add(practiceId));
+  }
+
+  function editNumeric(practiceId: string, value: string) {
+    setDrafts((current) => ({ ...current, [practiceId]: value }));
+    markDirty(practiceId);
+    if (pendingSave.current?.practiceId === practiceId) pendingSave.current = null;
+    setError(null);
+    setMessage('Not saved. Your entry is still on this page.');
+  }
+
+  async function savePractice(practiceId: string, value: PracticeValue, retry = false) {
     setPending('save');
     setError(null);
     setMessage('Saving your practice…');
     pendingCompletion.current = null;
-    if (!retry || !pendingSave.current)
+    if (!retry || !pendingSave.current) {
       pendingSave.current = {
-        operationId: crypto.randomUUID(),
-        baseRevision: session.revision,
-        payload: { values: nextValues },
+        practiceId,
+        value,
+        mutation: {
+          operationId: crypto.randomUUID(),
+          baseRevision: session.revision,
+          payload: { values: { [practiceId]: value } },
+        },
       };
+    }
+    const attempt = pendingSave.current;
     try {
       const result = await requestJson<{ session: SessionRecord }>(
         `/api/sessions/${session.id}/practices`,
         'PUT',
-        pendingSave.current,
+        attempt.mutation,
       );
       setSession(result.session);
-      setValues(checkboxValues(result.session));
-      setUnsaved(false);
+      const serverValues = savedValues(result.session);
+      setValues((current) => {
+        for (const dirtyId of dirtyIds) {
+          if (dirtyId !== attempt.practiceId) serverValues[dirtyId] = current[dirtyId];
+        }
+        return serverValues;
+      });
+      if (typeof attempt.value === 'number') {
+        setDrafts((current) => ({ ...current, [attempt.practiceId]: String(attempt.value) }));
+      }
+      setDirtyIds((current) => {
+        const next = new Set(current);
+        next.delete(attempt.practiceId);
+        return next;
+      });
       pendingSave.current = null;
       setMessage('Saved.');
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause : new Error('Could not save. Your choices are still here.'),
+        cause instanceof Error ? cause : new Error('Could not save. Your entry is still here.'),
       );
-      setMessage('Not saved. Your choices are still on this page.');
+      setMessage('Not saved. Your entry is still on this page.');
     } finally {
       setPending(null);
     }
+  }
+
+  function saveNumeric(practiceId: string) {
+    const raw = drafts[practiceId] ?? '';
+    const value = Number(raw);
+    if (raw.trim() === '' || !Number.isInteger(value) || value < 0 || value > 1_000_000) {
+      setError(new Error('Enter a whole number from 0 to 1,000,000. Your entry is still here.'));
+      setMessage('Not saved. Check the number and try again.');
+      return;
+    }
+    setValues((current) => ({ ...current, [practiceId]: value }));
+    void savePractice(practiceId, value);
   }
 
   async function confirm() {
@@ -139,36 +198,36 @@ export function PracticePanel({
       <ul className={styles.checklist}>
         {session.practices.map((practice) => (
           <li key={practice.id}>
-            <label className={styles.practiceCheck}>
-              <input
-                type="checkbox"
-                aria-label={practice.label}
-                checked={values[practice.id] ?? false}
-                disabled={!canEdit || practice.kind !== 'checkbox'}
-                onChange={(event) =>
-                  void saveValues({ ...values, [practice.id]: event.target.checked })
-                }
-              />
-              <span>
-                {practice.label}
-                <small>
-                  {session.confirmed ? 'Recorded complete' : 'Mark when your practice is complete'}
-                </small>
-              </span>
-            </label>
+            <PracticeValueInput
+              practice={practice}
+              value={values[practice.id] ?? (practice.kind === 'checkbox' ? false : 0)}
+              numericDraft={drafts[practice.id] ?? ''}
+              disabled={!canEdit}
+              dirty={dirtyIds.has(practice.id)}
+              onCheckboxChange={(checked) => {
+                setValues((current) => ({ ...current, [practice.id]: checked }));
+                markDirty(practice.id);
+                void savePractice(practice.id, checked);
+              }}
+              onNumericChange={(value) => editNumeric(practice.id, value)}
+              onNumericSave={() => saveNumeric(practice.id)}
+            />
           </li>
         ))}
       </ul>
       <p className={styles.saveState} role="status" aria-live="polite">
-        {pending ? message : unsaved ? 'Not saved. Your choices are still on this page.' : message}
+        {message}
       </p>
       <RequestErrorMessage error={error} />
-      {unsaved && !conflict && (
+      {unsaved && pendingSave.current && !conflict && (
         <button
           type="button"
           className={`${styles.button} ${styles.secondary}`}
           disabled={Boolean(pending) || beforeOpening || closed}
-          onClick={() => void saveValues(values, true)}
+          onClick={() => {
+            const attempt = pendingSave.current;
+            if (attempt) void savePractice(attempt.practiceId, attempt.value, true);
+          }}
         >
           Try saving again
         </button>
@@ -176,14 +235,14 @@ export function PracticePanel({
       {conflict && (
         <div>
           <p className={styles.muted}>
-            Another change may have been saved. Your local choices remain visible above.
+            Another change may have been saved. Your local entries remain visible above.
           </p>
           <button
             type="button"
             className={`${styles.button} ${styles.secondary}`}
             onClick={() => window.location.reload()}
           >
-            Discard local choices and load saved practice
+            Discard local entries and load saved practice
           </button>
         </div>
       )}
