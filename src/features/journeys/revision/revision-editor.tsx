@@ -235,8 +235,8 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
         label and recorded values.
       </p>
       <p className={shared.quietNote}>
-        In this editor, Start date means the first practice date the change may affect. The
-        journey’s original start date remains {view.journey.schedule.startDate}.
+        The original start date remains {view.journey.schedule.startDate}. Existing opened and
+        earlier sessions stay unchanged.
       </p>
       <div aria-busy={pending} className={styles.editorFields}>
         <PracticeEditor
@@ -257,6 +257,7 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
           setZoneConfirmed={setZoneConfirmed}
           weekdaysError={weekdaysError}
           disabled={pending}
+          startDateLabel="Change from practice date"
         />
       </div>
       {saved && <p className={shared.success}>Future schedule updated.</p>}

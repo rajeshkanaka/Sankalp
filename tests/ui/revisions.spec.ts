@@ -60,7 +60,7 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
     await expect(page.getByRole('heading', { name: 'Revised night practice' })).toBeVisible();
 
     await page.getByLabel('Practice 1', { exact: true }).fill('Future Kunjika');
-    await page.getByLabel('Start date', { exact: true }).fill('2026-09-12');
+    await page.getByLabel('Change from practice date', { exact: true }).fill('2026-09-12');
     await page.getByLabel('Practice time', { exact: true }).fill('00:30');
     await page.getByRole('button', { name: 'Preview future changes', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Review future changes' })).toBeVisible();
