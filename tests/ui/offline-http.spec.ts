@@ -194,11 +194,6 @@ async function signInOther(browser: Browser) {
 }
 
 test.describe('@M3 @M3-offline offline replay HTTP boundaries', () => {
-  test.skip(
-    ({ browserName }) => browserName !== 'chromium',
-    'HTTP transport boundaries are browser-neutral.',
-  );
-
   test('keeps identity, owner reads and replay mutations account scoped', async ({
     browser,
     page,
@@ -228,6 +223,16 @@ test.describe('@M3 @M3-offline offline replay HTTP boundaries', () => {
         headers: { 'X-Sankalpa-Account': other.accountId },
       });
       await expectError(crossOwnerRead, 404, 'NOT_FOUND');
+
+      const staleAccountSessionRead = await other.page.request.get(`/api/sessions/${original.id}`, {
+        headers: { 'X-Sankalpa-Account': ownerId },
+      });
+      await expectError(staleAccountSessionRead, 409, 'ACCOUNT_CHANGED');
+      const staleAccountReflectionRead = await other.page.request.get(
+        `/api/sessions/${original.id}/reflection`,
+        { headers: { 'X-Sankalpa-Account': ownerId } },
+      );
+      await expectError(staleAccountReflectionRead, 409, 'ACCOUNT_CHANGED');
 
       const staleAccountHeaders = ownerId;
       const practiceEnvelope = {
