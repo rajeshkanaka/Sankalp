@@ -147,6 +147,61 @@ afterAll(async () => {
   delete process.env.DEMO_CLOCK_FILE;
 });
 
+describe('journey draft creation', () => {
+  it('returns one persisted journey for an exact operation retry and rejects changed input', async () => {
+    const operationId = randomUUID();
+    const input = draft('Draft idempotence');
+    const created = await createJourney(userId, input, operationId);
+    const retried = await createJourney(userId, input, operationId);
+
+    expect(retried).toEqual(created);
+    const persisted = await withUser(userId, async (client) => {
+      const journeys = await client.query(
+        'select count(*)::int as total from app.journey where id=$1',
+        [created.journey.id],
+      );
+      const receipts = await client.query(
+        'select count(*)::int as total from app.operation_receipt where operation_id=$1',
+        [operationId],
+      );
+      return { journeys: journeys.rows[0]?.total, receipts: receipts.rows[0]?.total };
+    });
+    expect(persisted).toEqual({ journeys: 1, receipts: 1 });
+
+    await expect(
+      createJourney(userId, { ...input, title: 'Changed draft input' }, operationId),
+    ).rejects.toMatchObject({ status: 409, code: 'OPERATION_REUSED' } satisfies Partial<AppError>);
+  });
+
+  it.each([
+    {
+      name: 'all occurrence windows have already opened',
+      schedule: {
+        startDate: '2026-09-04',
+        durationMode: 'occurrences' as const,
+        durationValue: 1,
+        weekdays: [1, 2, 3, 4, 5, 6, 7],
+      },
+    },
+    {
+      name: 'the calendar range contains no selected weekday',
+      schedule: {
+        startDate: '2026-09-06',
+        durationMode: 'calendar_days' as const,
+        durationValue: 1,
+        weekdays: [1],
+      },
+    },
+  ])('maps an invalid schedule to AppError 422 when $name', async ({ schedule }) => {
+    const input = draft('Invalid schedule');
+    input.schedule = { ...input.schedule, ...schedule };
+    await expect(createJourney(userId, input, randomUUID())).rejects.toMatchObject({
+      status: 422,
+      code: 'INVALID_SCHEDULE',
+    } satisfies Partial<AppError>);
+  });
+});
+
 describe('journey activation', () => {
   it('activates exactly 21 persisted sessions and returns the same records on an idempotent retry', async () => {
     const { created, activated, envelope } = await createActivatedJourney('Activation idempotence');
