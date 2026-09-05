@@ -33,10 +33,15 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
         <Icon name="journey" />
         Journeys
       </Link>
-      <span className={styles.navUnavailable} aria-disabled="true">
+      <Link
+        prefetch={false}
+        className={styles.navLink}
+        href="/calendar"
+        aria-current={path === '/calendar' ? 'page' : undefined}
+      >
         <Icon name="calendar" />
-        Calendar<small>Not available yet</small>
-      </span>
+        Calendar
+      </Link>
       <span className={styles.navUnavailable} aria-disabled="true">
         <Icon name="journal" />
         Journal<small>Not available yet</small>

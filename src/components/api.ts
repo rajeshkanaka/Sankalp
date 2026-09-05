@@ -6,6 +6,7 @@ export class RequestError extends Error {
     public code: string,
     public correlationId?: string,
     public fields?: Record<string, string[]>,
+    public current?: unknown,
   ) {
     super(message);
     this.name = 'RequestError';
@@ -51,6 +52,7 @@ export async function requestJson<T>(
       error?.code ?? 'REQUEST_ERROR',
       error?.correlationId,
       error?.fields,
+      error?.current,
     );
   }
   return data as T;
