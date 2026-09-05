@@ -180,7 +180,7 @@ describe('private reflections', () => {
     });
     await expect(save(maya, sessionId, { text, moods }, 0, operationId)).resolves.toEqual(saved);
     await expect(
-      save(maya, sessionId, { text: `${text}changed`, moods }, 0, operationId),
+      save(maya, sessionId, { text: `x${text.slice('🙏'.length)}`, moods }, 0, operationId),
     ).rejects.toMatchObject({ status: 409, code: 'OPERATION_REUSED' });
 
     const receipt = await withUser(maya, (client) =>
