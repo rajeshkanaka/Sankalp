@@ -32,7 +32,12 @@ export async function capturedSignIn(page: Page, email: string) {
   const target = new URL(href);
   if (target.origin !== process.env.UI_ORIGIN || target.pathname !== '/auth/confirm')
     throw new Error('Captured link has an unexpected destination.');
-  // Never log or retain authentication links, cookies or browser traces.
-  await page.goto(target.href);
-  await expect(page).toHaveURL(/\/today$/);
+  // Raw browser reports stay local: their step metadata includes this URL.
+  try {
+    await page.goto(target.href);
+  } catch {
+    throw new Error('Captured local sign-in navigation failed; authentication URL omitted.');
+  }
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/today');
+  expect(new URL(page.url()).origin).toBe(process.env.UI_ORIGIN);
 }

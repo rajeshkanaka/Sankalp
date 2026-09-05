@@ -20,7 +20,7 @@ export default defineConfig({
   timeout: 60000,
   expect: { timeout: 10000 },
   outputDir: 'artifacts/ui/results',
-  reporter: [['list'], ['html', { outputFolder: 'artifacts/ui/report', open: 'never' }]],
+  reporter: [['list'], ['./scripts/safe-ui-reporter.ts']],
   use: { baseURL: origin, trace: 'off', screenshot: 'only-on-failure', video: 'off' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

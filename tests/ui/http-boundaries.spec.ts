@@ -124,8 +124,13 @@ async function consumeCapturedSignIn(
   if (target.origin !== appOrigin() || target.pathname !== '/auth/confirm')
     throw new Error('Captured link has an unexpected destination.');
 
-  // The link and its token stay local to this request and are never logged or retained.
-  const callback = await request.get(target.href, { maxRedirects: 0 });
+  // Raw browser reports stay local; the CI summary omits request step metadata.
+  let callback: APIResponse;
+  try {
+    callback = await request.get(target.href, { maxRedirects: 0 });
+  } catch {
+    throw new Error('Captured local sign-in request failed; authentication URL omitted.');
+  }
   expect(callback.status()).toBe(307);
   const location = callback.headers().location;
   if (!location) throw new Error('Successful authentication omitted its redirect.');

@@ -34,8 +34,9 @@ jobs:
         with:
           name: verification-evidence
           path: |
-            artifacts/ui/report
-            docs/evidence/M1
+            artifacts/ui/summary.json
+            docs/evidence/M*/**/*.png
+            docs/evidence/M*/**/manifest.md
           retention-days: 14
       - if: always()
         run: npm run db:stop
