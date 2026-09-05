@@ -36,7 +36,12 @@ test('@SK003 a saved draft resumes and every later preview updates the same jour
   const created = (await (await createdResponse).json()) as JourneyDraftPreview;
   await expect(page.getByRole('heading', { name: 'Review your journey' })).toBeVisible();
 
-  await page.goto(`/setup?draft=${created.journey.id}`);
+  await page.goto('/journeys');
+  const resume = page.getByRole('link', { name: 'Resume draft', exact: true });
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(page).toHaveURL(`/setup?draft=${created.journey.id}`);
+  await expect(page.getByRole('heading', { name: 'Resume your draft', exact: true })).toBeVisible();
   await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue('Saved draft');
   await expect(page.getByLabel('Personal intention (optional)', { exact: true })).toHaveValue(
     'Resume this later',
