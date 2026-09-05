@@ -135,7 +135,7 @@ Shared-device mode is a device/origin preference, checked before any private IDB
 
 **Limits resolved without redesign:** “Cache recent data” means explicit IDB records, not cached authenticated responses (D03/§3). Offline display is access to previously authorized browser data on this device; it cannot verify revocation while disconnected. Browser eviction and unavailable storage are disclosed failures, not guarantees. The static public entry is required because the existing dynamic authenticated root cannot be replayed safely from Cache Storage. The full task remains gated by SK-006/007 and integrated tests; preflight does not mark it DONE.
 
-Required new tests, using real auth/database and the existing guarded M3 fixture:
+Required new tests, using real auth/database and the planned M3 fixture added through the existing guarded fixture runtime:
 
 1. Chromium/WebKit/Firefox: visit Morning grounding, await offline-ready, disconnect, check twice and confirm, reload the **actual session URL**, retain values/pending count and reminder caveat, reconnect, acknowledge in order, reload once more; one completion and amendment set in DB. Retain synthetic `offline-pending.png` and acknowledgment evidence.
 2. Same-browser two pages: competing enqueue/head conflict, one flushing leader, close leader after request dispatch/before acknowledgment, successor replays exact envelope; never two confirmations. Separate authenticated browser contexts test genuine two-device server conflicts and preserve both note texts.
