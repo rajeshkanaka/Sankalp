@@ -87,7 +87,7 @@ async function activate(ownerId: string): Promise<JourneyView> {
     schedule: {
       startDate: '2026-09-05',
       durationMode: 'occurrences',
-      durationValue: 2,
+      durationValue: 3,
       weekdays: [1, 2, 3, 4, 5, 6, 7],
       localTime: '05:00',
       timeZone: 'Asia/Kolkata',
