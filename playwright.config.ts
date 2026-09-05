@@ -26,12 +26,12 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     {
       name: 'webkit',
-      testIgnore: '**/http-boundaries.spec.ts',
+      testIgnore: ['**/http-boundaries.spec.ts', '**/offline-http.spec.ts'],
       use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'firefox',
-      testIgnore: '**/http-boundaries.spec.ts',
+      testIgnore: ['**/http-boundaries.spec.ts', '**/offline-http.spec.ts'],
       use: {
         ...devices['Desktop Firefox'],
         launchOptions: { env: { ...process.env, MOZ_APP_DATA: firefoxAppData } },

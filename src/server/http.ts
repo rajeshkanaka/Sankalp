@@ -12,6 +12,15 @@ export function assertSameOrigin(request: Request) {
   if (request.headers.get('content-type')?.split(';')[0] !== 'application/json')
     throw new AppError(415, 'JSON_REQUIRED', 'Expected a JSON request.');
 }
+export function assertExpectedAccount(request: Request, userId: string) {
+  const expected = request.headers.get('X-Sankalpa-Account');
+  if (expected !== null && expected !== userId)
+    throw new AppError(
+      409,
+      'ACCOUNT_CHANGED',
+      'The signed-in account changed. Sign in to the original account before syncing.',
+    );
+}
 export async function readJson<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
   const reader = request.body?.getReader();
   if (!reader) throw new AppError(400, 'BODY_REQUIRED', 'The request is empty.');
@@ -59,7 +68,7 @@ export async function handleApi(operation: () => Promise<unknown>) {
             code: error.code,
             message: error.message,
             correlationId,
-            ...(error.current ? { current: error.current } : {}),
+            ...(error.current !== undefined ? { current: error.current } : {}),
           },
         },
         {
@@ -93,6 +102,7 @@ export async function authenticated<T>(
   return handleApi(async () => {
     assertSameOrigin(request);
     const user = await getApiUser();
+    assertExpectedAccount(request, user.id);
     await consumeLimit('write-minute', user.id);
     return operation(user.id, await readJson(request, schema));
   });

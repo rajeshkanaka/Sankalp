@@ -13,9 +13,9 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-003.md`; M2 evidence |
 | SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-004.md`; M2 evidence |
 | SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-005.md`; M2 evidence |
-| SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | W-practice | TODO | `docs/handoffs/SK-006.md`; M3 evidence |
-| SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | W-journal | TODO | `docs/handoffs/SK-007.md`; M3 evidence |
-| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | W-offline | TODO | `docs/handoffs/SK-008.md`; M3 evidence |
+| SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
+| SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
+| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | C (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-008.md`; M3 evidence |
 | SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review | C | TODO | `docs/handoffs/SK-009.md`; M4 evidence |
 | SK-010 | M4 | PWA install, permission and device controls | SK-009 | W-device | TODO | `docs/handoffs/SK-010.md`; M4 evidence |
 | SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009 | W-reminders | TODO | `docs/handoffs/SK-011.md`; M4 evidence |
@@ -128,6 +128,8 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 **Verification/evidence:** `npm run test:integration -- tests/integration/reflections.test.ts`; `npm run verify`; `npm run test:ui -- --grep @M3-journal`. Save synthetic Unicode fixtures, conflict output, `journal-saved.png`, `SK-007.md`; synchronize contract with SK-006 before offline work starts.
 
 ### SK-008 — Offline replay without silent data loss
+
+**Active ownership (2026-09-06):** coordinator owns integration, app/API hooks, shared config and service-worker source/build. `/root/platform_verification` owns `src/offline/core/**`, core tests and its handoff on task/SK-008-core; `/root/bootstrap_audit` owns `src/offline/ui/**`, offline browser workflows and its handoff on task/SK-008-ui; `/root/m1_domain` owns tests/ui/offline-http.spec.ts and its handoff on task/SK-008-http, followed by read-only cache review. All use separate worktrees, with no root runtime access. D12 permits preparation while B06 remains; D17 freezes the actual interfaces.
 
 **Outcome/owner/files:** W-offline owns `src/offline/`, offline-specific feature controls and tests; C integrates app/session/signout hooks and script/SW build config. Consume SK-006/007 versioned mutations; provide enqueue/read/flush/resolve/clear-account interfaces and explicit pending state. Static service-worker shell source starts here; SK-010 adds push without changing private-data caching policy.
 

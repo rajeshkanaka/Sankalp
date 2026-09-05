@@ -171,9 +171,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     ).toContainText('The choice is still here');
     await expect(checkbox).toBeChecked();
     await expect(numeric).toBeDisabled();
-    await expect(page.getByRole('status')).toContainText(
-      'Retry Closing breath before changing another practice',
-    );
+    await expect(
+      page.getByRole('region', { name: 'Practice checklist', exact: true }).getByRole('status'),
+    ).toContainText('Retry Closing breath before changing another practice');
     await page.unroute('**/api/sessions/*/practices');
     await page.getByRole('button', { name: 'Try saving again', exact: true }).click();
     await expect(page.getByText('Saved.', { exact: true })).toBeVisible();

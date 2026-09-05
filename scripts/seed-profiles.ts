@@ -3,8 +3,8 @@ import { renameSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getPool } from '../src/server/db/client';
 import { activateJourney, createJourney } from '../src/server/journeys/service';
-import { confirmSession, savePractices } from '../src/server/sessions/service';
-import { M1_DEMO_NOW, M2_DEMO_NOW, type DemoProfile } from '../tests/fixtures/ids';
+import { confirmSession, getSessionHistory, savePractices } from '../src/server/sessions/service';
+import { M1_DEMO_NOW, M2_DEMO_NOW, M3_DEMO_NOW, type DemoProfile } from '../tests/fixtures/ids';
 
 // Called only after seed.ts verifies the local runtime and exact synthetic account marker.
 export async function populateProfile(profile: DemoProfile, userId: string, root: string) {
@@ -46,6 +46,45 @@ export async function populateProfile(profile: DemoProfile, userId: string, root
       baseRevision: draft.journey.revision,
       payload: { fingerprint: draft.fingerprint },
     });
+    if (profile === 'M3') {
+      const session = activated.sessions[0];
+      setClock(new Date(Date.parse(session.opensAt) + 15 * 60_000).toISOString());
+      await savePractices(userId, session.id, {
+        operationId: randomUUID(),
+        baseRevision: session.revision,
+        payload: { values: { [session.practices[0].id]: true } },
+      });
+      setClock(M3_DEMO_NOW);
+      await getSessionHistory(userId, session.id);
+      const morning = await createJourney(userId, {
+        title: 'Morning grounding',
+        intention: 'Make space for a quiet beginning.',
+        practices: ['Sit quietly', 'Set an intention'].map((label, order) => ({
+          id: randomUUID(),
+          label,
+          order,
+          kind: 'checkbox' as const,
+          target: null,
+        })),
+        schedule: {
+          startDate: '2026-09-06',
+          durationMode: 'occurrences',
+          durationValue: 21,
+          weekdays: [1, 2, 3, 4, 5, 6, 7],
+          localTime: '05:00',
+          timeZone: 'Asia/Kolkata',
+          attribution: 'civil',
+          windowMinutes: 60,
+        },
+        reminders: { enabled: false, offsets: [], quietHours: null, detailed: false },
+      });
+      await activateJourney(userId, morning.journey.id, {
+        operationId: randomUUID(),
+        baseRevision: morning.journey.revision,
+        payload: { fingerprint: morning.fingerprint },
+      });
+      return M3_DEMO_NOW;
+    }
     for (const session of activated.sessions.slice(0, 7)) {
       const performedAt = new Date(Date.parse(session.opensAt) + 15 * 60_000).toISOString();
       setClock(performedAt);

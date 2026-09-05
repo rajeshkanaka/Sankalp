@@ -130,16 +130,23 @@ export const scheduleRevisionRequestSchema = z.discriminatedUnion('mode', [
 export const journeyMetadataSchema = journeyDraftSchema.pick({ title: true, intention: true });
 export const progressPreferencesSchema = z.strictObject({ hideStreaks: z.boolean() });
 
-const unicodeText = (maximum: number) =>
+const unicodeValue = (maximum: number) =>
   z
     .string()
-    .trim()
+    .refine(
+      // PostgreSQL text rejects NUL; lone UTF-16 surrogates must not be silently replaced.
+      (value) =>
+        !value.includes('\0') &&
+        /^(?:[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff])*$/.test(value),
+      'Use valid Unicode text without null characters',
+    )
     .refine(
       (value) => Array.from(value).length <= maximum,
       `Use no more than ${maximum} characters`,
     );
+const unicodeText = (maximum: number) => z.string().trim().pipe(unicodeValue(maximum));
 export const reflectionPayloadSchema = z.strictObject({
-  text: unicodeText(20_000),
+  text: unicodeValue(20_000),
   moods: z
     .array(unicodeText(40).refine((value) => value.length > 0, 'Enter a mood'))
     .max(5)

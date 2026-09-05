@@ -116,7 +116,7 @@ The milestone recipes below are extended by their feature owners; §5.1 distingu
 
 Demo fixture accounts are `maya@example.test` and `arun@example.test`, authenticated through the local captured email-link flow. No shared real credentials. Fixed logical clock is part of each fixture; page shows “Demo data · simulated clock,” and M4+ also shows “Simulated reminder transport.” Fixture identities/namespaces are declared in `tests/fixtures/ids.ts`; Supabase-generated synthetic account UUIDs are resolved into ignored `.local/fixtures/` manifests after marker verification. Never copy a real account UUID. Use an explicit “New journey” action to demonstrate creation rather than relying solely on prefilled screenshots.
 
-For each milestone retain `docs/evidence/M<n>/<run-id>/manifest.md` with integrated commit SHA, dirty-diff hash if any, commands/exit results, machine/browser versions, seed/clock/timezone, URLs, screenshot names and test report links. Store synthetic successful-workflow screenshots in that directory, plus failures where useful. Keep secret-bearing browser traces/auth state out of Git. Raw Playwright HTML reports can contain auth callback URLs in step metadata and must stay in ignored local artifacts. CI retains only the allowlisted aggregate/test summary and synthetic workflow screenshots/manifests for14 days; request steps, errors, attachments and browser state are excluded. Manifests and safe synthetic screenshots/task reports are versioned. Never capture auth links/tokens or real reflections. A screenshot must come from the launched application, never a design mock/image generator.
+For each milestone retain `docs/evidence/M<n>/<run-id>/manifest.md` with integrated commit SHA, dirty-diff hash if any, commands/exit results, machine/browser versions, seed/clock/timezone, URLs, screenshot names and test report links. Store synthetic successful-workflow screenshots in that directory, plus failures where useful. Keep secret-bearing browser traces/auth state out of Git. The configured safe reporter does not generate raw Playwright HTML; older reports can contain auth callback URLs and remain private ignored artifacts. CI retains only the allowlisted aggregate/test summary and synthetic workflow screenshots/manifests for14 days; request steps, errors, attachments and browser state are excluded. Manifests and safe synthetic screenshots/task reports are versioned. Never capture auth links/tokens or real reflections. A screenshot must come from the launched application, never a design mock/image generator.
 
 ### M1 — Create and record a private daily practice
 
@@ -206,7 +206,7 @@ git log -5 --oneline
 cd /Users/rajesh/sankalpa
 fnm use 24.20.0
 npm ci
-npm run workspace:prepare -- --slot 0
+npm run workspace:prepare -- --slot 0 # Fresh checkout only; existing root uses slot1 (D16).
 npm run db:start
 npm run db:migrate
 npm run env:local

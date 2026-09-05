@@ -88,7 +88,7 @@ export function JourneyProgress({
         <ProgressTimeline sessions={item.timeline} />
       </section>
       <p className={shared.quietNote}>
-        Reflections and PDF export are not available yet. Your saved practice records remain here.
+        Open a session to add a private reflection. PDF export is not available yet.
       </p>
     </>
   );

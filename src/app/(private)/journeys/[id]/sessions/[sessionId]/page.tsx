@@ -6,6 +6,9 @@ import { getRuntimeInfo } from '@/server/config';
 import { PageHeader, formatPracticeDate } from '@/components/presentation';
 import { Icon } from '@/components/icons';
 import { PracticePanel } from '@/features/practice/practice-panel';
+import { ReflectionEditor } from '@/features/journal';
+import { getReflection, getReflectionPreferences } from '@/server/journal';
+import { getSessionHistory } from '@/server/sessions/service';
 import styles from '@/styles/sanctuary.module.css';
 
 export default async function SessionPage({
@@ -21,6 +24,11 @@ export default async function SessionPage({
     (record) => record.id === sessionId && record.journeyId === id && !record.supersededAt,
   );
   if (!session) notFound();
+  const [reflection, preferences, history] = await Promise.all([
+    getReflection(user.id, sessionId),
+    getReflectionPreferences(user.id),
+    getSessionHistory(user.id, sessionId),
+  ]);
   const runtime = getRuntimeInfo();
   return (
     <div className={styles.practicePage}>
@@ -33,7 +41,20 @@ export default async function SessionPage({
         description={`${session.attribution === 'previous_evening' ? 'Night' : 'Session'} ${session.ordinal} of ${view.metrics.total} · ${formatPracticeDate(session.practiceDate)} · ${session.timeZone}`}
       />
       {view.journey.intention && <p className={styles.intention}>{view.journey.intention}</p>}
-      <PracticePanel initialSession={session} initialNow={view.now} demo={runtime.demo} />
+      <PracticePanel
+        key={`practice-${session.id}`}
+        initialSession={session}
+        initialNow={view.now}
+        demo={runtime.demo}
+        initialHistory={history}
+      />
+      <ReflectionEditor
+        key={`reflection-${session.id}`}
+        session={session}
+        initialReflection={reflection}
+        preferences={preferences}
+        now={view.now}
+      />
     </div>
   );
 }

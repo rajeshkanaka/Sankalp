@@ -58,7 +58,7 @@ create table app.reflection_mood (
   journey_id uuid not null,
   owner_id uuid not null,
   position smallint not null check(position between 0 and 4),
-  label text not null check(length(label) between 1 and 40 and label=btrim(label)),
+  label text not null check(length(label) between 1 and 40 and label=btrim(label,U&' \0009\000A\000B\000C\000D\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')),
   primary key(session_id,position),
   unique(session_id,label),
   foreign key(session_id,schedule_version_id,journey_id,owner_id)

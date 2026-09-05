@@ -1,10 +1,11 @@
 export const FIXTURE_PROFILE = 'M1' as const;
 // The identity marker remains stable when a named demo profile changes.
-export const DEMO_PROFILES = ['M1', 'M2'] as const;
+export const DEMO_PROFILES = ['M1', 'M2', 'M3'] as const;
 export type DemoProfile = (typeof DEMO_PROFILES)[number];
 export const FIXTURE_MARKER_KEY = 'sankalpa_fixture' as const;
 export const M1_DEMO_NOW = '2026-09-05T00:45:00Z' as const;
 export const M2_DEMO_NOW = '2026-09-11T22:31:00Z' as const;
+export const M3_DEMO_NOW = '2026-09-05T23:30:00Z' as const;
 
 export const FIXTURE_NAMESPACES = ['demo', 'ui', 'ui-http', 'integration'] as const;
 export type FixtureNamespace = (typeof FIXTURE_NAMESPACES)[number];

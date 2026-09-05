@@ -231,21 +231,33 @@ describe('personalized target persistence', () => {
     });
   });
 
-  it('persists an explicit zero-only save as open rather than partial or complete', async () => {
+  it('rejects unchanged zero values and resetting progress to zero restores open status', async () => {
     const input = personalizedDraft('Zero values');
     const { activated } = await activatePersonalized(input);
     const first = activated.sessions[0]!;
-    await savePractices(userId, first.id, {
+    const zeroValues = Object.fromEntries(
+      input.practices.map((practice) => [practice.id, practice.kind === 'checkbox' ? false : 0]),
+    );
+    await expect(
+      savePractices(userId, first.id, {
+        operationId: randomUUID(),
+        baseRevision: first.revision,
+        payload: { values: zeroValues },
+      }),
+    ).rejects.toMatchObject({ status: 409, code: 'NO_CHANGE' });
+    const unchanged = await getJourneyView(userId, activated.journey.id);
+    expect(unchanged.sessions[0].revision).toBe(first.revision);
+    const practice = first.practices.find((item) => item.kind !== 'checkbox')!;
+    const partial = await savePractices(userId, first.id, {
       operationId: randomUUID(),
       baseRevision: first.revision,
-      payload: {
-        values: Object.fromEntries(
-          input.practices.map((practice) => [
-            practice.id,
-            practice.kind === 'checkbox' ? false : 0,
-          ]),
-        ),
-      },
+      payload: { values: { [practice.id]: 1 } },
+    });
+    expect(deriveStatus(partial.session, NOW)).toBe('partial');
+    await savePractices(userId, first.id, {
+      operationId: randomUUID(),
+      baseRevision: partial.session.revision,
+      payload: { values: zeroValues },
     });
     const reloaded = await getJourneyView(userId, activated.journey.id);
     expect(deriveStatus(reloaded.sessions[0]!, NOW)).toBe('open');

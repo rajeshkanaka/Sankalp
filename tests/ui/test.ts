@@ -8,7 +8,11 @@ export const test = base.extend<{ syntheticData: void }>({
     async ({ baseURL }, use, info) => {
       if (baseURL !== process.env.UI_ORIGIN)
         throw new Error('UI fixtures require the allocated test origin.');
-      if (!info.file.endsWith('http-boundaries.spec.ts')) {
+      if (
+        !['http-boundaries.spec.ts', 'offline-http.spec.ts'].some((file) =>
+          info.file.endsWith(file),
+        )
+      ) {
         try {
           execFileSync(
             process.execPath,

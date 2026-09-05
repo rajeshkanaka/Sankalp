@@ -42,10 +42,15 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
         <Icon name="calendar" />
         Calendar
       </Link>
-      <span className={styles.navUnavailable} aria-disabled="true">
+      <Link
+        prefetch={false}
+        className={styles.navLink}
+        href="/journal"
+        aria-current={path === '/journal' ? 'page' : undefined}
+      >
         <Icon name="journal" />
-        Journal<small>Not available yet</small>
-      </span>
+        Journal
+      </Link>
     </nav>
   );
 }

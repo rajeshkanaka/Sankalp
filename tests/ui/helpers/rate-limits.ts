@@ -8,7 +8,12 @@ export async function resetUiSignInLimits(email: string) {
   const origin = process.env.UI_ORIGIN;
   if (
     origin !== `http://localhost:${runtime.testPort}` ||
-    !['ui-maya@example.test', 'ui-arun@example.test', 'ui-http-maya@example.test'].includes(email)
+    ![
+      'ui-maya@example.test',
+      'ui-arun@example.test',
+      'ui-http-maya@example.test',
+      'ui-http-arun@example.test',
+    ].includes(email)
   )
     throw new Error('Only allocated synthetic UI sign-in counters can be reset.');
   const secret = process.env.RATE_LIMIT_SECRET;

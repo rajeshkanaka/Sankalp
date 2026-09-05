@@ -94,16 +94,19 @@ async function verifyLocalDatabase(client: pg.Client): Promise<void> {
   const expected = [
     'amendment',
     'journey',
+    'notification_event',
     'operation_receipt',
     'practice_version',
     'profile',
     'rate_bucket',
+    'reflection',
+    'reflection_mood',
     'schedule_version',
     'session',
     'session_practice',
   ];
   if (JSON.stringify(tables.rows.map((row) => row.name)) !== JSON.stringify(expected))
-    throw new Error('Local application schema is not the expected M1 schema.');
+    throw new Error('Local application schema is not the expected M3 schema.');
 }
 
 async function verifyFixtureUsersInDatabase(
@@ -181,6 +184,9 @@ async function countApplicationRows(client: pg.Client, userIds: string[]): Promi
       union all select count(*) from app.session where owner_id = any($1::uuid[])
       union all select count(*) from app.session_practice where owner_id = any($1::uuid[])
       union all select count(*) from app.amendment where owner_id = any($1::uuid[])
+      union all select count(*) from app.notification_event where owner_id = any($1::uuid[])
+      union all select count(*) from app.reflection where owner_id = any($1::uuid[])
+      union all select count(*) from app.reflection_mood where owner_id = any($1::uuid[])
       union all select count(*) from app.operation_receipt where owner_id = any($1::uuid[])
     ) rows`,
     [userIds],

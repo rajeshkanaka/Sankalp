@@ -1,0 +1,609 @@
+{
+  "sourceSha": "a65b68fbefecc9aae2a28f905b6529a4e7ca47ce",
+  "generatedAt": "2026-09-05T21:36:50.130Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 21,
+      "project": "chromium",
+      "title": "@SK003 a saved draft resumes and every later preview updates the same journey",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2900,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 162,
+      "project": "chromium",
+      "title": "redirects the loopback alias to the configured local origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 174,
+      "project": "chromium",
+      "title": "rejects a missing sign-in Origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 49,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 174,
+      "project": "chromium",
+      "title": "rejects a wrong sign-in Origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 15,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 185,
+      "project": "chromium",
+      "title": "requires JSON for sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 17,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 193,
+      "project": "chromium",
+      "title": "returns a safe structured error for malformed JSON",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 34,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 201,
+      "project": "chromium",
+      "title": "rejects JSON bodies larger than 128 KiB",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 12,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 209,
+      "project": "chromium",
+      "title": "returns field validation for an invalid email",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 10,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 219,
+      "project": "chromium",
+      "title": "rejects missing and tampered journey authentication cookies",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 37,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 233,
+      "project": "chromium",
+      "title": "sets private cache, referrer and fresh CSP nonce headers",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 54,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 259,
+      "project": "chromium",
+      "title": "keeps application and direct Auth sign-in limits distinct",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 452,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "chromium",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5936,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "chromium",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 353,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "chromium",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6929,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 12,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5017,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4560,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 13,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3244,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "chromium",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 596,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "chromium",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 514,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "chromium",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 538,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "chromium",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 485,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 21,
+      "project": "webkit",
+      "title": "@SK003 a saved draft resumes and every later preview updates the same journey",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3011,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "webkit",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5851,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "webkit",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 530,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "webkit",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6649,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 12,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5054,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4060,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 13,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3593,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "webkit",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 833,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "webkit",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 559,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "webkit",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 582,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "webkit",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 542,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 21,
+      "project": "firefox",
+      "title": "@SK003 a saved draft resumes and every later preview updates the same journey",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3358,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "firefox",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 7017,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "firefox",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 498,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "firefox",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6948,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 12,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5045,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4130,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 13,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3405,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "firefox",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 954,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "firefox",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1133,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "firefox",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 544,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "firefox",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 497,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}
