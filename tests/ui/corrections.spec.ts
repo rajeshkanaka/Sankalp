@@ -256,7 +256,9 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
       page.getByRole('button', { name: 'Record historical completion', exact: true }),
     ).toBeEnabled();
     await expect(
-      page.getByText('Completion removed; saved practice values kept.', { exact: true }),
+      page
+        .getByRole('list', { name: 'Session history', exact: true })
+        .getByText('Completion was removed after closing.', { exact: true }),
     ).toBeVisible();
 
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
