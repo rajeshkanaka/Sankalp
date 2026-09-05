@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { requestJson } from '@/components/api';
+import { requestJson, RequestError } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import styles from '@/styles/sanctuary.module.css';
 
@@ -20,6 +20,7 @@ export function SignInForm({
     event.preventDefault();
     setPending(true);
     setError(null);
+    setSent(false);
     try {
       await requestJson('/api/auth/sign-in', 'POST', { email: email.trim() });
       setSent(true);
@@ -39,7 +40,7 @@ export function SignInForm({
           ? 'Follow the link to open your private practice space.'
           : 'Sign in with an email link. No password to remember.'}
       </p>
-      {invalidLink && (
+      {invalidLink && !sent && (
         <div className={styles.error} role="alert">
           That sign-in link is invalid or has expired. Request a new link below.
         </div>
@@ -57,13 +58,15 @@ export function SignInForm({
           onChange={(event) => {
             setEmail(event.target.value);
             setSent(false);
+            setError(null);
           }}
           disabled={pending}
-          aria-describedby="email-help"
+          aria-invalid={error instanceof RequestError && Boolean(error.fields?.email)}
+          aria-describedby={error ? 'email-help sign-in-error' : 'email-help'}
         />
         <small id="email-help">Your journeys are private to your account.</small>
       </div>
-      <RequestErrorMessage error={error} />
+      <RequestErrorMessage error={error} id="sign-in-error" />
       {sent && (
         <div className={styles.success} role="status">
           <p>

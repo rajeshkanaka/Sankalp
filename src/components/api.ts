@@ -5,6 +5,7 @@ export class RequestError extends Error {
     message: string,
     public code: string,
     public correlationId?: string,
+    public fields?: Record<string, string[]>,
   ) {
     super(message);
     this.name = 'RequestError';
@@ -45,6 +46,7 @@ export async function requestJson<T>(
       error?.message ?? 'This change could not be saved. Your entries are still here.',
       error?.code ?? 'REQUEST_ERROR',
       error?.correlationId,
+      error?.fields,
     );
   }
   return data as T;

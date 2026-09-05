@@ -89,7 +89,7 @@ export function AppShell({
         </div>
       </aside>
       <div className={styles.main}>
-        <div className={styles.topbar}>
+        <header className={styles.topbar}>
           <div className={styles.mobileBrand}>{brand}</div>
           <span className={styles.topbarTitle}>Your personal practice space</span>
           <div className={styles.topbarTools}>
@@ -104,8 +104,8 @@ export function AppShell({
             </button>
           </div>
           {demo && <span className={styles.demo}>Demo data · simulated clock</span>}
-        </div>
-        <main id="main-content" className={styles.content}>
+        </header>
+        <main id="main-content" className={styles.content} tabIndex={-1}>
           <RequestErrorMessage error={error} />
           {children}
         </main>

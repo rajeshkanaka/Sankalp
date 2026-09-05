@@ -93,3 +93,16 @@ svg {
     animation: none !important;
   }
 }
+
+@media (max-width: 720px) {
+  html {
+    scroll-padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    scroll-margin-bottom: 100px;
+  }
+}
