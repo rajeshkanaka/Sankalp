@@ -24,6 +24,7 @@ export interface Snapshot {
   reflection: ReflectionRecord | null;
   preferences: ReflectionPreferences;
   lastSyncedAt: IsoInstant;
+  clock: { serverNow: IsoInstant; capturedAt: IsoInstant; simulated: boolean };
 }
 /** Invalid/incomplete input is stored verbatim, separately from validated intents. */
 export interface RawDraft {
