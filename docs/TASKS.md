@@ -1,6 +1,6 @@
 # Sankalpa authoritative task register
 
-**This is the only source of task status.** Allowed statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `DONE`. Every application task is initialized below; none is complete. Plan/milestone approvals and the compact checkpoint live in [PROJECT_PROGRESS](PROJECT_PROGRESS.md), not this status column. [PROJECT_PLAN](PROJECT_PLAN.md) supplies shared interfaces, command definitions, demo/evidence recipes and parallel rules; [DECISIONS](DECISIONS.md) supplies the fixed stack and boundaries.
+**This is the only source of task status.** Allowed statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `DONE`. The register records integrated technical completion; milestone/user approvals remain separate. Plan/milestone approvals and the compact checkpoint live in [PROJECT_PROGRESS](PROJECT_PROGRESS.md), not this status column. [PROJECT_PLAN](PROJECT_PLAN.md) supplies shared interfaces, command definitions, demo/evidence recipes and parallel rules; [DECISIONS](DECISIONS.md) supplies the fixed stack and boundaries.
 
 ## 1. Register and assignment rules
 
@@ -8,11 +8,11 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 
 | ID | Milestone | Concrete outcome | Depends on | Responsible owner | Status | Evidence/report |
 |---|---|---|---|---|---|---|
-| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-001.md`; M1 evidence |
-| SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-002.md`; M1 evidence |
+| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | DONE | `docs/handoffs/SK-001.md`; M1 evidence |
+| SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | /root coordinator | BLOCKED | `docs/handoffs/SK-002.md`; M1 evidence |
 | SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root/m1_domain | IN_PROGRESS | `docs/handoffs/SK-003.md`; M2 evidence |
-| SK-004 | M2 | Future revisions preserve original history | SK-003 | W-revisions | TODO | `docs/handoffs/SK-004.md`; M2 evidence |
-| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003 | W-progress | TODO | `docs/handoffs/SK-005.md`; M2 evidence |
+| SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root/bootstrap_audit | IN_PROGRESS | `docs/handoffs/SK-004.md`; M2 evidence |
+| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root/platform_verification | IN_PROGRESS | `docs/handoffs/SK-005.md`; M2 evidence |
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | W-practice | TODO | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | W-journal | TODO | `docs/handoffs/SK-007.md`; M3 evidence |
 | SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | W-offline | TODO | `docs/handoffs/SK-008.md`; M3 evidence |
@@ -38,6 +38,7 @@ Genuine external blockers (dependency waiting alone does not require BLOCKED):
 | B02 | SK-016 | Owned sending domain/DNS, verified Resend SMTP and explicit test-mail recipients; no real mail authorization assumed. |
 | B03 | SK-016 | Verified provider retention/deletion/backup terms compatible with D08 and a disclosed actual policy; regional capacity and selected compute quote. |
 | B04 | SK-017 | Access to a supported real iPhone Home Screen install and Android install, plus explicit consent to send test pushes to those devices. Browser emulation cannot resolve this. |
+| B06 | SK-002 | VoiceOver announcements and authenticated manual checks remain unverified. Public native200% reflow/keyboard passed in SK-002-manual-retry; settings restored. Automated axe and browser checks do not close the remaining gate. |
 | B05 | SK-019 | Deployment authorization is recorded in D10; still require verified release revision/domain/budget, production credentials and M6 technical gates. |
 
 ## 2. Execution and checkpoint sequence
