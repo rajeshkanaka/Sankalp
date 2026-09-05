@@ -92,7 +92,7 @@ Preserve the specification §8 route contract; add only these required details. 
 | `POST` / `DELETE /api/push-subscriptions` | Bind validated device registration to authenticated account; removal targets its own subscription only. Registration generation invalidates obsolete jobs. |
 | `POST /api/sessions/:id/snooze`, `POST /api/notifications/:id/opened` | Snooze replaces pending reminders in the next ten minutes and must precede close. Click report deduplicates an authorized event; reading history is a different event. |
 | `POST /api/push-subscriptions/:id/test` | Explicit rate-limited test for this account/device; fake result labeled; real sending requires configured authorized environment. |
-| `GET /api/notifications`, `GET /api/journal` | Owner-only paginated filters; journal text/mood/date/journey search; no public search index. |
+| `GET /api/notifications`, `POST /api/journal/query` | Owner-only paginated filters; journal text/mood/date/journey search; no public search index. |
 | `POST /api/exports` | Validate range/fields, take one repeatable-read authorized snapshot, release transaction before bounded render, return private PDF attachment. |
 | `POST /api/journeys/:id/archive`, `DELETE /api/journeys/:id`, `DELETE /api/account` | Explicit confirmation; account deletion requires fresh reauthentication; disable access/sends before durable cleanup and auth deletion. |
 

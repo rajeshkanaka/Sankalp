@@ -10,9 +10,9 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 |---|---|---|---|---|---|---|
 | SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | DONE | `docs/handoffs/SK-001.md`; M1 evidence |
 | SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | /root coordinator | BLOCKED | `docs/handoffs/SK-002.md`; M1 evidence |
-| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root/m1_domain | IN_PROGRESS | `docs/handoffs/SK-003.md`; M2 evidence |
-| SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root/bootstrap_audit | IN_PROGRESS | `docs/handoffs/SK-004.md`; M2 evidence |
-| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root/platform_verification | IN_PROGRESS | `docs/handoffs/SK-005.md`; M2 evidence |
+| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-003.md`; M2 evidence |
+| SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-004.md`; M2 evidence |
+| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-005.md`; M2 evidence |
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | W-practice | TODO | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | W-journal | TODO | `docs/handoffs/SK-007.md`; M3 evidence |
 | SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | W-offline | TODO | `docs/handoffs/SK-008.md`; M3 evidence |
@@ -119,7 +119,7 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 
 ### SK-007 — Private reflections and journal
 
-**Outcome/owner/files:** W-journal owns `src/server/journal/`, `src/features/journal/`, journal/reflection tests; C supplies table/RLS/index/route integration. Consume session identity and MutationEnvelope; one Reflection per session with text, optional mood tags and revision. `GET /api/journal` filters by journey/date/mood/text with bounded cursor pagination.
+**Outcome/owner/files:** W-journal owns `src/server/journal/`, `src/features/journal/`, journal/reflection tests; C supplies table/RLS/index/route integration. Consume session identity and MutationEnvelope; one Reflection per session with text, optional mood tags and revision. `POST /api/journal/query` (D15) filters by journey/date/mood/text with bounded cursor pagination.
 
 **Scope/substeps:** test one-row ownership/Unicode/20,000-char boundary; implement debounced autosave plus explicit Save and visible saved/pending/error states; allow missed/partial-session notes; add recoverable two-device conflict view preserving both texts; implement journal search/list/detail and configurable optional reflection prompts. No rich text/HTML/AI interpretation/public search service.
 

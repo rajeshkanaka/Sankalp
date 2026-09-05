@@ -202,3 +202,94 @@ export interface ApiErrorBody {
     current?: unknown;
   };
 }
+
+export type AmendmentKind =
+  'values_saved' | 'confirmed' | 'completion_corrected' | 'completion_removed';
+export interface SessionAmendment {
+  id: Id;
+  sessionId: Id;
+  scheduleVersionId: Id;
+  kind: AmendmentKind;
+  sessionRevision: Revision;
+  recordedAt: IsoInstant;
+  detail: Record<string, unknown>;
+}
+export type SessionHistoryEvent = {
+  id: Id;
+  sessionId: Id;
+  journeyId: Id;
+  occurredAt: IsoInstant;
+  recordedAt: IsoInstant;
+  sessionRevision: Revision;
+} & (
+  | { kind: 'session_closed'; detail: { status: 'complete' | 'partial' | 'missed' } }
+  | {
+      kind: 'session_corrected';
+      amendmentId: Id;
+      detail: {
+        action: AmendmentKind;
+        beforeStatus: SessionStatus;
+        afterStatus: SessionStatus;
+        beforeTiming: CompletionTiming;
+        afterTiming: CompletionTiming;
+      };
+    }
+);
+export interface SessionMutationResult {
+  session: SessionRecord;
+  amendment: SessionAmendment;
+  historyEvents: SessionHistoryEvent[];
+}
+export interface SessionHistory {
+  amendments: SessionAmendment[];
+  events: SessionHistoryEvent[];
+}
+export interface ReflectionRecord {
+  sessionId: Id;
+  journeyId: Id;
+  scheduleVersionId: Id;
+  text: string;
+  moods: string[];
+  revision: Revision;
+  createdAt: IsoInstant;
+  updatedAt: IsoInstant;
+}
+export interface ReflectionPayload {
+  text: string;
+  moods: string[];
+}
+/** Safe receipt acknowledgement. Never persist reflection text/moods in receipts. */
+export interface ReflectionMutationResult {
+  sessionId: Id;
+  revision: Revision;
+  updatedAt: IsoInstant;
+}
+export type ReflectionPromptId = 'noticed' | 'carry_tomorrow';
+export interface ReflectionPreferences {
+  prompts: ReflectionPromptId[];
+}
+export interface JournalQuery {
+  journeyId?: Id;
+  from?: PracticeDate;
+  to?: PracticeDate;
+  mood?: string;
+  text?: string;
+  cursor?: string;
+  limit?: number;
+}
+export interface JournalEntry {
+  sessionId: Id;
+  journeyId: Id;
+  journeyTitle: string;
+  practiceDate: PracticeDate;
+  status: SessionStatus;
+  completionTiming: CompletionTiming;
+  textPreview: string;
+  moods: string[];
+  reflectionRevision: Revision;
+  updatedAt: IsoInstant;
+}
+export interface CursorPage<T> {
+  items: T[];
+  nextCursor: string | null;
+}

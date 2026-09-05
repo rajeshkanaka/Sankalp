@@ -62,9 +62,9 @@ test('@SK003 a saved draft resumes and every later preview updates the same jour
     { times: 1 },
   );
   await page.getByRole('button', { name: 'Preview journey', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText(
-    'Could not connect. Your entries are still here.',
-  );
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Could not connect. Your entries are still here.' }),
+  ).toBeVisible();
   await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue('Saved draft edited');
 
   const updatedResponse = page.waitForResponse(

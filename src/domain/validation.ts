@@ -129,3 +129,44 @@ export const scheduleRevisionRequestSchema = z.discriminatedUnion('mode', [
 ]);
 export const journeyMetadataSchema = journeyDraftSchema.pick({ title: true, intention: true });
 export const progressPreferencesSchema = z.strictObject({ hideStreaks: z.boolean() });
+
+const unicodeText = (maximum: number) =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => Array.from(value).length <= maximum,
+      `Use no more than ${maximum} characters`,
+    );
+export const reflectionPayloadSchema = z.strictObject({
+  text: unicodeText(20_000),
+  moods: z
+    .array(unicodeText(40).refine((value) => value.length > 0, 'Enter a mood'))
+    .max(5)
+    .refine(uniqueArray, 'Mood tags must be unique'),
+});
+export const reflectionPreferencesSchema = z.strictObject({
+  prompts: z
+    .array(z.enum(['noticed', 'carry_tomorrow']))
+    .max(2)
+    .refine(uniqueArray, 'Prompts must be unique'),
+});
+export const journalQuerySchema = z
+  .strictObject({
+    journeyId: uuidSchema.optional(),
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+    mood: unicodeText(40).optional(),
+    text: unicodeText(200).optional(),
+    cursor: z
+      .string()
+      .max(512)
+      .regex(/^[A-Za-z0-9_-]+$/)
+      .optional(),
+    limit: z.int().min(1).max(100).optional(),
+  })
+  .refine(
+    (query) => !query.from || !query.to || query.from <= query.to,
+    'Start date must precede end date',
+  );
+export const completionUndoSchema = z.strictObject({});
