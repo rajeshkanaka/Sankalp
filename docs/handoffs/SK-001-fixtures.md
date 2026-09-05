@@ -8,7 +8,7 @@ Branch: `task/SK-001-fixtures`
 
 Base: `acf32ba7c3f299b47420fe9c2fb7d54c50e3dff9`
 
-Implementation commit: `ca3284063a70b80632b112c7fe58cce0fa7d5e42`
+Implementation commit: `ca328402427948f3251b8202aefb4ed93a0238f1`
 
 Resource slot: none. This worker did not copy another worktree's runtime or start services.
 
