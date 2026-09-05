@@ -199,8 +199,8 @@ export async function activateJourney(
         throw new AppError(422, 'EMPTY_SCHEDULE', 'Choose a schedule with at least one practice.');
       const versionId = randomUUID();
       await client.query(
-        'insert into app.schedule_version(id,journey_id,owner_id,definition,created_at) values($1,$2,$3,$4,$5)',
-        [versionId, id, userId, JSON.stringify(draft), now],
+        'insert into app.schedule_version(id,journey_id,owner_id,definition,created_at,version,effective_practice_date) values($1,$2,$3,$4,$5,1,$6)',
+        [versionId, id, userId, JSON.stringify(draft), now, draft.schedule.startDate],
       );
       for (const practice of draft.practices)
         await client.query(

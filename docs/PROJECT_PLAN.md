@@ -44,7 +44,7 @@ flowchart LR
 
 ### 2.1 Planned source boundaries
 
-Only the documentation files exist at planning completion. **Every application/test/config path below is planned**, to be created by the owning task. Do not report it as present until inspected.
+These boundaries were selected at planning approval. The foundation now exists; §5.1 records verified command/module availability. Later feature paths remain planned until their task creates them. Inspect the repository before claiming a path or capability exists.
 
 | Path/module | Responsibility and allowed dependencies |
 |---|---|
@@ -65,11 +65,11 @@ Only the documentation files exist at planning completion. **Every application/t
 
 ### 2.2 Shared contract checkpoint
 
-SK-001 establishes initial types before any dependent delegation; subsequent additions follow the same contract module and are coordinator-serialized. These are **planned interface definitions**, not existing symbols:
+SK-001 established the initial contracts in `src/domain/contracts.ts`; subsequent additions are coordinator-serialized. The following describes the selected boundaries. Push/offline/export interfaces remain planned until their owning tasks implement them:
 
-- `Clock.now(): IsoInstant`; service/domain calls receive `now` explicitly. `IsoInstant` is an ISO UTC string, `PracticeDate` an ISO calendar date, `LocalTime` HH:mm, `Id` a UUID, `Revision` a nonnegative integer. Normal mode uses server time; test mode uses D05's guarded fixture clock.
+- Server `getRuntimeInfo()` supplies the clock value; pure domain calls receive `now` explicitly. `IsoInstant` is an ISO UTC string, `PracticeDate` an ISO calendar date, `LocalTime` HH:mm, `Id` a UUID, `Revision` a nonnegative integer. Normal mode uses server time; test mode uses D05's guarded fixture clock.
 - `JourneyDraft`: `title`, `intention`, ordered `practices`, `schedule`, `reminders`. `PracticeDefinition` discriminates `checkbox` (no numeric target), `repetitions` or `minutes` (positive integer `target`). `ScheduleInput`: `startDate`, `durationMode: calendar_days | occurrences`, `durationValue`, ISO `weekdays` 1–7, `localTime`, IANA `timeZone`, `attribution: civil | previous_evening`, `windowMinutes`.
-- `previewSchedule(input, now): SchedulePreview` returns proposed session IDs only at activation, practice dates, ordinals, UTC opens/closes, adjustment warnings, skipped reminder times, total count and a fingerprint of validated inputs. `generateSchedule(input, retainedSessions, now): PlannedOccurrence[]` is server authoritative. Preview is never proof that a client-supplied schedule is trusted.
+- `previewSchedule(input, now): SchedulePreview` returns practice dates, ordinals, UTC opens/closes, adjustment warnings and total count; session IDs are allocated only at activation. `createJourney` returns `JourneyDraftPreview`, adding the validated-input fingerprint and proposed reminder times with `isPast`. Those times are disabled suggestions until reminder implementation. `generateSchedule(input, retainedSessions, now): PlannedOccurrence[]` is server authoritative. Activation regenerates the schedule rather than trusting client rows.
 - `SessionRecord`: immutable `id`, `journeyId`, `scheduleVersionId`, `practiceDate`, resolved `opensAt/closesAt`, original practice definitions; mutable values, `confirmed`, `performedAt`, `recordedAt`, `revision`, `supersededAt`. Recomputed future ordinals must not renumber historical rows.
 - `deriveStatus(session, now): upcoming | open | partial | complete | missed` follows D04 and specification §5; completion has independent `on_schedule | practiced_late` and `recorded_later` labels. `computeMetrics(sessions, now): JourneyMetrics` returns exact counts, rounded percent, on-schedule ratio, current/longest streak and ended/fully-completed flags; excludes superseded rows.
 - `MutationEnvelope<T>`: `operationId`, `baseRevision`, `payload: T`; authenticated owner comes from the session. `ApiError`: `code`, safe `message`, optional field errors, `correlationId`; conflicts include authorized current revision/value for deliberate recovery, never another account's content.
@@ -87,6 +87,7 @@ Preserve the specification §8 route contract; add only these required details. 
 | `POST` / `DELETE /api/sessions/:id/completion` | Lock session; authorize; validate targets, reported time and revision; write/undo one confirmation, amendment and cancellation atomically. Reject future performed times and pre-opening completion. |
 | `PUT /api/sessions/:id/reflection` | Store one text/moods record with revision; return recoverable conflict. Autosave is debounced and explicit Save remains available. |
 | `POST /api/journeys/:id/schedule-revisions` | `mode: preview | apply`; fingerprint + current revision on apply; retain opened/history rows; supersede only unopened future rows; insert new versions and cancel/regenerate applicable jobs in one transaction. |
+| `PUT /api/journeys/:id/metadata` | Revisioned title/intention mutation only; preserve the original schedule and historical practice definitions (D14). |
 | `PUT /api/journeys/:id/reminders` | New preference revision; cancel obsolete jobs, generate only eligible future jobs. Offset changes never replay past sends. |
 | `POST` / `DELETE /api/push-subscriptions` | Bind validated device registration to authenticated account; removal targets its own subscription only. Registration generation invalidates obsolete jobs. |
 | `POST /api/sessions/:id/snooze`, `POST /api/notifications/:id/opened` | Snooze replaces pending reminders in the next ten minutes and must precede close. Click report deduplicates an authorized event; reading history is a different event. |
@@ -113,7 +114,7 @@ Milestone membership is fixed below; task status lives only in TASKS. Every mile
 
 All following commands/fixtures are **planned**, implemented first in SK-001 and extended by their feature owners. Use §5 setup then `npm run demo:seed -- --profile M1` (substitute milestone) and `npm run dev:demo -- --profile M1`. Seed/reset is permitted only against that worktree's disposable local database; scripts reject hosted URLs, unknown schemas and production mode. It destroys only the named synthetic fixture namespace, never a personal dataset. UI tests use their own reset namespace and run separately from the user's live demo.
 
-Fixture accounts are `maya@example.test` and `arun@example.test`, authenticated through the local captured email-link flow. No shared real credentials. Fixed logical clock is part of each fixture; page shows “Demo data · simulated clock,” and M4+ also shows “Simulated reminder transport.” Store stable UUIDs in `tests/fixtures/ids.ts`, never copy a real account. Use an explicit “New journey” action to demonstrate creation rather than relying solely on prefilled screenshots.
+Demo fixture accounts are `maya@example.test` and `arun@example.test`, authenticated through the local captured email-link flow. No shared real credentials. Fixed logical clock is part of each fixture; page shows “Demo data · simulated clock,” and M4+ also shows “Simulated reminder transport.” Fixture identities/namespaces are declared in `tests/fixtures/ids.ts`; Supabase-generated synthetic account UUIDs are resolved into ignored `.local/fixtures/` manifests after marker verification. Never copy a real account UUID. Use an explicit “New journey” action to demonstrate creation rather than relying solely on prefilled screenshots.
 
 For each milestone retain `docs/evidence/M<n>/<run-id>/manifest.md` with integrated commit SHA, dirty-diff hash if any, commands/exit results, machine/browser versions, seed/clock/timezone, URLs, screenshot names and test report links. Store synthetic successful-workflow screenshots in that directory, plus failures where useful. Keep secret-bearing browser traces/auth state out of Git; retain sanitized HTML/JUnit/trace artifacts in ignored `artifacts/<run-id>/` and CI artifact storage (14-day retention), referenced by durable manifests. Manifests and safe synthetic screenshots/task reports are versioned. Never capture auth links/tokens or real reflections. A screenshot must come from the launched application, never a design mock/image generator.
 
@@ -177,9 +178,11 @@ For each milestone retain `docs/evidence/M<n>/<run-id>/manifest.md` with integra
 
 ### 5.1 Current verified baseline versus planned commands
 
-At inspection: documentation-only repository on `main`, base `b223f50`, one worktree, initially clean. macOS 27.0; Git 2.55.0; local Node 24.11.1, npm 11.12.1, Docker CLI 29.4.2. Docker daemon readiness, free ports, disk/RAM capacity and installed browsers were not tested. There is no package manifest, lockfile, source, test suite, app process or configured remote service. See SESSION_LOG for planning verification. These are dated observations, not permanent environment assumptions.
+Planning inspection found a documentation-only repository at `b223f50`; that historical snapshot is preserved in SESSION_LOG. As verified on **2026-09-06**, the repository now has a pinned npm manifest/lock, Next app, real local Supabase authentication/PostgreSQL services, domain logic, migrations, setup/practice UI, test suites, local wrappers and CI workflow. Source/task checkpoints and remaining manual gates are in PROJECT_PROGRESS/TASKS, without duplicating task status here.
 
-Existing documentation-only commands:
+Verified environment: macOS 27.0, Node 24.20.0/npm 11.19.0 via existing fnm; Docker engine 29.4.2; local PostgreSQL 17.6; Playwright 1.63.0 with Chromium, WebKit and Firefox installed. Docker Desktop's initial inherited-environment startup failure and Firefox app-data issue have documented, project-safe recoveries in the task reports. The app listens on loopback; the local backend wrapper verifies explicit loopback publication of API, DB and captured mail.
+
+Available and exercised: `workspace:prepare`, `db:start`, `db:migrate`, `env:local`, `db:status`, `db:stop`, `demo:seed` M1, `dev:demo` M1, format/lint/typecheck, unit/integration, build, smoke/UI, npm ls/audits. M2 seed support is being verified as SK-003; later worker/PDF/container/staging/canary scripts below remain **planned** until their owners add them. CI has run; its exact current result is in PROJECT_PROGRESS and evidence, not assumed from local success.
 
 ```sh
 pwd
@@ -188,14 +191,11 @@ git diff --check
 git branch --show-current
 git worktree list
 git log -5 --oneline
-rg --files
 ```
-
-**All npm/script/container commands below are planned contracts and NOT RUN during planning.** SK-001 must implement and verify the M1 wrappers/gates before presenting M1; later commands become available and required when their listed first owner implements them. Fresh agents must not execute nonexistent scripts and then claim an application failure or success.
 
 ### 5.2 First bootstrap, only after plan approval
 
-1. Coordinator creates integration branch `implementation/sankalpa` from the approved planning checkpoint; record actual worktree and clean/dirty state. No branch is claimed to exist now.
+1. Coordinator creates integration branch `implementation/sankalpa` from the approved planning checkpoint; record actual worktree and clean/dirty state. This branch now exists; check its recorded checkpoint before resuming.
 2. Ensure Node 24.20.0 (official macOS installation; use existing version manager if present), its npm 11.19.0, running Docker and sufficient space. Confirm `node --version`, `npm --version`, `docker info`. Do not print Docker/env credentials. Missing resources block SK-001.
 3. Manually create the minimal package/config/scripts from D02 and the SK-001 scope; keep repository docs/license. Set exact versions, strict TS, flat ESLint and formatting config. Use `npm install` once to create the lockfile; inspect `npm ls` and advisories. No forced peer resolution.
 4. Create canonical Supabase config/migrations and safe script wrappers, then use standard setup below. First installation must prove real Node/Next/React/TS/lint compatibility before broad feature work.
@@ -204,6 +204,7 @@ rg --files
 
 ```sh
 cd /Users/rajesh/sankalpa
+fnm use 24.20.0
 npm ci
 npm run workspace:prepare -- --slot 0
 npm run db:start
@@ -214,7 +215,7 @@ npm run demo:seed -- --profile M1
 npm run dev:demo -- --profile M1
 ```
 
-For a different worktree, use its recorded path and slot. `workspace:prepare` only allocates/validates selected ports/project IDs and writes ignored `.local/runtime.json` plus generated local config; it never needs service credentials. `db:start` uses the pinned CLI with generated `--workdir .local/backend`; copies canonical `supabase/` config/migrations into that ignored isolated workdir, verifies major 17 and starts only the allocated stack. `db:migrate` resynchronizes newly added canonical migrations on every run and applies pending local migrations, not a reset; it creates restricted runtime roles using local administrative access. After that, `env:local` writes `.env.local` from actual local URLs/generated runtime-role credentials without printing secret values or overwriting unrelated existing values. Conflicting existing values cause a clear stop, not silent replacement. Hosted target URLs are rejected by local helpers. Browser install is a future download authorized with implementation, not performed now.
+For a different worktree, use its recorded path and slot. `workspace:prepare` only allocates/validates selected ports/project IDs and writes ignored `.local/runtime.json` plus generated local config; it never needs service credentials. `db:start` uses the pinned CLI with generated `--workdir .local/backend`, a guarded per-worktree loopback network and an invocation-local Docker publication adapter (D13); copies canonical `supabase/` config/migrations into that ignored isolated workdir, verifies major 17 and starts only the allocated stack. `db:migrate` resynchronizes newly added canonical migrations on every run and applies pending local migrations, not a reset; it creates restricted runtime roles using local administrative access. After that, `env:local` writes `.env.local` from actual local URLs/generated runtime-role credentials without printing secret values or overwriting unrelated existing values. Conflicting existing values cause a clear stop, not silent replacement. Hosted target URLs are rejected by local helpers. All three browser engines have been installed locally; repeat this command after a fresh checkout or browser-version update.
 
 `demo:seed` loads the named versioned synthetic profile without starting the app. `dev:demo` launches Next with `APP_ENV=local`, a visible profile badge and domain clock read from the worktree's ignored `.local/demo-clock.json`; `demo:clock -- --at <ISO-with-offset>` atomically updates that file for both app and worker. The same seed/clock names are versioned test fixtures. `worker:demo` reads that file and forces fake push/ledger transports; `worker:once -- --transport fake` processes one deterministic batch and exits. No HTTP clock setter or fake-auth bypass is shipped. SK-001 creates the M1 helpers; SK-009/011 extend profiles/worker helpers. M5 must also label the simulated local deletion ledger; real S3 is verified in M6.
 
@@ -228,7 +229,7 @@ The `dev` wrapper invokes `next dev` bound to loopback at the allocated port; `s
 |---|---|---|
 | `npm run format:check` | Prettier check source/config/docs; no reformatting unrelated files. | SK-001 |
 | `npm run lint` | ESLint flat config with directly configured Next, React Hooks and TS plugins from D02; zero warnings/errors. | SK-001 |
-| `npm run typecheck` | `tsc --noEmit` for app, worker, scripts, tests; zero diagnostics. | SK-001 |
+| `npm run typecheck` | `next typegen` then `tsc --noEmit` for app, scripts, tests and later worker; zero diagnostics. | SK-001 |
 | `npm run test:unit -- <path>` | `vitest run` unit project; nonzero if no matching required tests. | SK-001 |
 | `npm run test:integration -- <path>` | Vitest integration project with real disposable local Postgres/Auth/API, role/transaction assertions; never in-memory DB substitutes. | SK-001 |
 | `npm run build` | Next production build + separately checked/compiled worker/service-worker artifacts; no lint omission. | SK-001; extend SK-010/011 |
@@ -245,7 +246,7 @@ Standard `npm run test:ui` runs all implemented workflows on Chromium, WebKit an
 
 Launch support policy: current and previous stable desktop Chrome/Edge/Firefox/Safari within Next's supported browser floor; current and previous supported iOS releases with Safari Home Screen installation (platform floor iOS 16.4) and current stable Chrome on supported Android for push. Record actual tested versions in M6 instead of inventing a device inventory. Older/unsupported browsers receive an honest notification-unavailable state where tracking can still function; no full compatibility claim without testing. Device/browser emulation supports UI checks, not real push qualification.
 
-CI in GitHub Actions (planned): pinned action commit SHAs, Node/npm pins, `npm ci`, Linux runner/local Supabase service startup, install Playwright browsers with required Linux dependencies, `npm run verify`, full `test:ui`, worker/PDF gates once introduced and security audit. Minimal read permissions, no production secrets, no deploy job; never expose secrets to fork PRs or execute untrusted PR code through privileged `pull_request_target`. Upload sanitized reports/screenshots even on failure. Save commit SHA, lockfile hash and database/browser versions. If hosted CI cannot run, execute available local gates but leave CI validation NOT RUN and release blocked until verified.
+CI in GitHub Actions (implemented foundation, extended by later tasks): pinned action commit SHAs, Node/npm pins, `npm ci`, Linux runner/local Supabase service startup, install Playwright browsers with required Linux dependencies, `npm run verify`, full `test:ui`, worker/PDF gates once introduced and security audit. Minimal read permissions, no production secrets, no deploy job; never expose secrets to fork PRs or execute untrusted PR code through privileged `pull_request_target`. Upload sanitized reports/screenshots even on failure. Save commit SHA, lockfile hash and database/browser versions. If hosted CI cannot run, execute available local gates but leave CI validation NOT RUN and release blocked until verified.
 
 ## 6. Deployment and operations runbook to implement
 

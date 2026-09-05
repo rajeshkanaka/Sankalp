@@ -103,6 +103,52 @@ export interface MutationEnvelope<T> {
   baseRevision: Revision;
   payload: T;
 }
+export type ScheduleRevisionSettings = Omit<ScheduleInput, 'startDate'>;
+export interface ScheduleRevisionCandidate {
+  effectivePracticeDate: PracticeDate;
+  practices: PracticeDefinition[];
+  schedule: ScheduleRevisionSettings;
+}
+export type ScheduleRevisionRequest =
+  | { mode: 'preview'; baseRevision: Revision; payload: ScheduleRevisionCandidate }
+  | ({ mode: 'apply' } & MutationEnvelope<{
+      candidate: ScheduleRevisionCandidate;
+      fingerprint: string;
+    }>);
+export interface RetainedSessionPreview extends Omit<PlannedOccurrence, 'adjustment'> {
+  id: Id;
+  scheduleVersionId: Id;
+  reason: 'opened' | 'before_effective';
+}
+export interface RevisionTimestampChange {
+  practiceDate: PracticeDate;
+  previous: { id: Id; opensAt: IsoInstant; closesAt: IsoInstant } | null;
+  proposed: PlannedOccurrence | null;
+}
+export interface ScheduleRevisionPreview {
+  currentRevision: Revision;
+  currentScheduleVersionId: Id;
+  originalStartDate: PracticeDate;
+  effectivePracticeDate: PracticeDate;
+  retained: RetainedSessionPreview[];
+  supersededSessionIds: Id[];
+  proposed: PlannedOccurrence[];
+  timestampChanges: RevisionTimestampChange[];
+  remainingAllowance: number;
+  totalActive: number;
+  warnings: string[];
+  fingerprint: string;
+}
+export interface ScheduleRevisionResult {
+  view: JourneyView;
+  retainedSessionIds: Id[];
+  supersededSessionIds: Id[];
+  createdSessionIds: Id[];
+}
+export interface JourneyMetadata {
+  title: string;
+  intention: string;
+}
 export interface ApiErrorBody {
   error: {
     code: string;

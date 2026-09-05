@@ -206,8 +206,15 @@ describe('authenticated ownership boundaries', () => {
     await expect(
       withUser(arunId, (client) =>
         client.query(
-          'insert into app.schedule_version(id,journey_id,owner_id,definition,created_at) values($1,$2,$3,$4,$5)',
-          [randomUUID(), journeyId, arunId, JSON.stringify(draft()), NOW],
+          'insert into app.schedule_version(id,journey_id,owner_id,definition,created_at,version,effective_practice_date) values($1,$2,$3,$4,$5,2,$6)',
+          [
+            randomUUID(),
+            journeyId,
+            arunId,
+            JSON.stringify(draft()),
+            NOW,
+            draft().schedule.startDate,
+          ],
         ),
       ),
     ).rejects.toMatchObject({ code: '23503' });

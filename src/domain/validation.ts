@@ -108,3 +108,23 @@ export const practiceValuesSchema = z
 export const completionSchema = z
   .object({ performedAt: z.iso.datetime({ offset: true }) })
   .strict();
+
+export const scheduleRevisionCandidateSchema = z.strictObject({
+  effectivePracticeDate: z.iso.date(),
+  practices: journeyDraftSchema.shape.practices,
+  schedule: scheduleInputSchema.omit({ startDate: true }),
+});
+export const scheduleRevisionRequestSchema = z.discriminatedUnion('mode', [
+  z.strictObject({
+    mode: z.literal('preview'),
+    baseRevision: z.int().nonnegative(),
+    payload: scheduleRevisionCandidateSchema,
+  }),
+  mutationEnvelopeSchema(
+    z.strictObject({
+      candidate: scheduleRevisionCandidateSchema,
+      fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+    }),
+  ).extend({ mode: z.literal('apply') }),
+]);
+export const journeyMetadataSchema = journeyDraftSchema.pick({ title: true, intention: true });
