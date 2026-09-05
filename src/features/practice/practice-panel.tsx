@@ -51,6 +51,7 @@ export function PracticePanel({
   const [drafts, setDrafts] = useState<Record<string, string>>(() => numericDrafts(initialSession));
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set());
   const [pending, setPending] = useState<'save' | 'complete' | null>(null);
+  const [failedPracticeId, setFailedPracticeId] = useState<string | null>(null);
   const [message, setMessage] = useState('Changes are saved individually.');
   const [error, setError] = useState<Error | null>(null);
   const pendingSave = useRef<PendingPracticeSave | null>(null);
@@ -60,7 +61,7 @@ export function PracticePanel({
   const beforeOpening = Date.parse(now) < Date.parse(session.opensAt);
   const closed = Date.parse(now) >= Date.parse(session.closesAt);
   const unsaved = dirtyIds.size > 0;
-  const canEdit = !beforeOpening && !closed && !session.confirmed && !pending;
+  const canEdit = !beforeOpening && !closed && !session.confirmed && !pending && !failedPracticeId;
   const canConfirm = canEdit && !unsaved && targetsMet(session);
   const conflict =
     error instanceof RequestError &&
@@ -79,6 +80,10 @@ export function PracticePanel({
   }
 
   async function savePractice(practiceId: string, value: PracticeValue, retry = false) {
+    if (!retry && failedPracticeId && pendingSave.current) {
+      setMessage('Retry the failed save before changing another practice.');
+      return;
+    }
     setPending('save');
     setError(null);
     setMessage('Saving your practice…');
@@ -118,12 +123,21 @@ export function PracticePanel({
         return next;
       });
       pendingSave.current = null;
-      setMessage('Saved.');
+      setFailedPracticeId(null);
+      setMessage(
+        [...dirtyIds].some((dirtyId) => dirtyId !== attempt.practiceId)
+          ? 'Saved this value. Other entries are not saved.'
+          : 'Saved.',
+      );
     } catch (cause) {
+      const label = session.practices.find((practice) => practice.id === attempt.practiceId)?.label;
+      setFailedPracticeId(attempt.practiceId);
       setError(
         cause instanceof Error ? cause : new Error('Could not save. Your entry is still here.'),
       );
-      setMessage('Not saved. Your entry is still on this page.');
+      setMessage(
+        `Not saved. Retry ${label ?? 'this practice'} before changing another practice. Your entry is still here.`,
+      );
     } finally {
       setPending(null);
     }
@@ -219,7 +233,7 @@ export function PracticePanel({
         {message}
       </p>
       <RequestErrorMessage error={error} />
-      {unsaved && pendingSave.current && !conflict && (
+      {unsaved && failedPracticeId && pendingSave.current && !conflict && (
         <button
           type="button"
           className={`${styles.button} ${styles.secondary}`}

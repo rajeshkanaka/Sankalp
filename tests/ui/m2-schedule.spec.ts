@@ -7,6 +7,7 @@ import { capturedSignIn } from './helpers/sign-in';
 
 const M1_NOW = '2026-09-05T00:45:00Z';
 const M2_NOW = '2026-09-12T04:01:00+05:30';
+const LONG_PRACTICE = 'M'.repeat(120);
 
 test('@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion', async ({
   page,
@@ -68,7 +69,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await page.getByLabel('Journey title', { exact: true }).fill('Monday Thursday meditation');
     await page.getByLabel('Practice 1', { exact: true }).fill('Meditation');
     await page.getByRole('button', { name: 'Remove practice 2', exact: true }).click();
-    await page.getByLabel('Target type for Practice 1', { exact: true }).selectOption('minutes');
+    const measurement = page.getByLabel('How it is measured for Practice 1', { exact: true });
+    await expect(measurement).toHaveAccessibleName('How it is measured for Practice 1');
+    await measurement.selectOption('minutes');
     await page.getByLabel('Target for Practice 1', { exact: true }).fill('20');
     await page.getByLabel('Start date', { exact: true }).fill('2026-09-07');
     await page.getByLabel('Number of sessions', { exact: true }).fill('12');
@@ -117,6 +120,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
 
     await page.getByRole('button', { name: 'Edit details', exact: true }).click();
     await page.getByLabel('Journey title', { exact: true }).fill('Open numeric meditation');
+    await page.getByLabel('Practice 1', { exact: true }).fill(LONG_PRACTICE);
+    await page.getByRole('button', { name: 'Add practice', exact: true }).click();
+    await page.getByLabel('Practice 2', { exact: true }).fill('Closing breath');
     await page.getByLabel('Duration counts', { exact: true }).selectOption('occurrences');
     await page.getByLabel('Number of sessions', { exact: true }).fill('2');
     await page.getByLabel('Start date', { exact: true }).fill('2026-09-12');
@@ -129,7 +135,33 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await page.getByRole('link', { name: 'Open practice', exact: true }).click();
 
     const complete = page.getByRole('button', { name: 'Complete this session', exact: true });
-    const numeric = page.getByLabel('Meditation', { exact: true });
+    const numeric = page.getByLabel(LONG_PRACTICE, { exact: true });
+    const checkbox = page.getByRole('checkbox', { name: 'Closing breath', exact: true });
+    await page.route('**/api/sessions/*/practices', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'TEMPORARY_TEST_FAILURE',
+            message: 'Temporary checkbox failure. The choice is still here.',
+            correlationId: 'synthetic-m2-checkbox-retry',
+          },
+        }),
+      });
+    });
+    await checkbox.check();
+    await expect(page.getByRole('alert')).toContainText('Temporary checkbox failure');
+    await expect(checkbox).toBeChecked();
+    await expect(numeric).toBeDisabled();
+    await expect(page.getByRole('status')).toContainText(
+      'Retry Closing breath before changing another practice',
+    );
+    await page.unroute('**/api/sessions/*/practices');
+    await page.getByRole('button', { name: 'Try saving again', exact: true }).click();
+    await expect(page.getByText('Saved.', { exact: true })).toBeVisible();
+    await expect(numeric).toBeEnabled();
+
     await page.route('**/api/sessions/*/practices', async (route) => {
       await route.fulfill({
         status: 503,
@@ -145,7 +177,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     });
     await numeric.fill('5');
     await expect(complete).toBeDisabled();
-    await page.getByRole('button', { name: 'Save Meditation', exact: true }).click();
+    await page
+      .getByRole('button', { name: `Save value for ${LONG_PRACTICE}`, exact: true })
+      .click();
     await expect(page.getByRole('alert')).toContainText('Temporary test failure');
     await expect(numeric).toHaveValue('5');
     await page.unroute('**/api/sessions/*/practices');
@@ -155,7 +189,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await expect(complete).toBeDisabled();
     await numeric.fill('20');
     await expect(complete).toBeDisabled();
-    await page.getByRole('button', { name: 'Save Meditation', exact: true }).click();
+    await page
+      .getByRole('button', { name: `Save value for ${LONG_PRACTICE}`, exact: true })
+      .click();
     await expect(page.getByText('Saved.', { exact: true })).toBeVisible();
     await expect(complete).toBeEnabled();
     await complete.click();
@@ -165,6 +201,17 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
 
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.setViewportSize({ width: 320, height: 800 });
+    await expect(page.getByText(LONG_PRACTICE, { exact: true })).toBeVisible();
+    const saveValue = page.getByRole('button', {
+      name: `Save value for ${LONG_PRACTICE}`,
+      exact: true,
+    });
+    await expect(saveValue).toBeVisible();
+    await expect(saveValue).toHaveText('Save value');
+    await expect(saveValue).toHaveAccessibleName(`Save value for ${LONG_PRACTICE}`);
+    const saveBox = await saveValue.boundingBox();
+    expect(saveBox).not.toBeNull();
+    expect(saveBox!.x + saveBox!.width).toBeLessThanOrEqual(320);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

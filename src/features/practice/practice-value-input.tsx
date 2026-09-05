@@ -65,10 +65,11 @@ export function PracticeValueInput({
         <button
           type="button"
           className={styles.saveButton}
+          aria-label={`Save value for ${practice.label}`}
           disabled={disabled || !dirty}
           onClick={onNumericSave}
         >
-          Save {practice.label}
+          Save value
         </button>
         <span id={`practice-unit-${practice.id}`} className={styles.unit}>
           Whole {unit}; target {practice.target?.toLocaleString('en')}.

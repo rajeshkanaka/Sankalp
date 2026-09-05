@@ -61,7 +61,7 @@ export function PracticeEditor({
                 <label htmlFor={`practice-kind-${practice.key}`}>How it is measured</label>
                 <select
                   id={`practice-kind-${practice.key}`}
-                  aria-label={`Target type for Practice ${index + 1}`}
+                  aria-label={`How it is measured for Practice ${index + 1}`}
                   value={practice.kind}
                   onChange={(event) =>
                     update(practice.key, {
