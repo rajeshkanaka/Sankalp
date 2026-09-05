@@ -1,7 +1,12 @@
 import { Temporal } from '@js-temporal/polyfill';
 
-import type { PlannedOccurrence, ScheduleInput, SchedulePreview } from './contracts';
-import { scheduleInputSchema } from './validation';
+import type {
+  PlannedOccurrence,
+  ScheduleInput,
+  SchedulePreview,
+  ScheduleRevisionCandidate,
+} from './contracts';
+import { scheduleInputSchema, scheduleRevisionCandidateSchema } from './validation';
 
 interface ResolvedWallTime {
   instant: Temporal.Instant;
@@ -166,5 +171,87 @@ export function previewSchedule(schedule: ScheduleInput, now: string): ScheduleP
     occurrences,
     total: occurrences.length,
     warnings: occurrences.flatMap(({ adjustment }) => (adjustment ? [adjustment] : [])),
+  };
+}
+
+export interface ScheduleRevisionGeneration {
+  proposed: PlannedOccurrence[];
+  remainingAllowance: number;
+  warnings: string[];
+}
+
+export function generateScheduleRevision(
+  originalStartDate: string,
+  input: ScheduleRevisionCandidate,
+  retained: PlannedOccurrence[],
+  now: string,
+): ScheduleRevisionGeneration {
+  const candidate = scheduleRevisionCandidateSchema.parse(input) as ScheduleRevisionCandidate;
+  const originalStart = Temporal.PlainDate.from(originalStartDate);
+  const effectiveDate = Temporal.PlainDate.from(candidate.effectivePracticeDate);
+  if (Temporal.PlainDate.compare(effectiveDate, originalStart) < 0) {
+    throw new RangeError('The effective date cannot be before the original start date');
+  }
+
+  const schedule = scheduleInputSchema.parse({
+    ...candidate.schedule,
+    startDate: originalStart.toString(),
+  }) as ScheduleInput;
+  const retainedDates = new Set(retained.map(({ practiceDate }) => practiceDate));
+  const weekdays = new Set(schedule.weekdays);
+  const selectedDates: Temporal.PlainDate[] = [];
+  const generationStart =
+    Temporal.PlainDate.compare(effectiveDate, originalStart) > 0 ? effectiveDate : originalStart;
+
+  let remainingAllowance: number;
+  if (schedule.durationMode === 'occurrences') {
+    remainingAllowance = schedule.durationValue - retained.length;
+    if (remainingAllowance < 0) {
+      throw new RangeError('The duration cannot remove retained occurrences');
+    }
+    for (let offset = 0; selectedDates.length < remainingAllowance; offset += 1) {
+      const date = generationStart.add({ days: offset });
+      if (weekdays.has(date.dayOfWeek) && !retainedDates.has(date.toString())) {
+        selectedDates.push(date);
+      }
+    }
+  } else {
+    const end = originalStart.add({ days: schedule.durationValue });
+    if (
+      retained.some(({ practiceDate }) => {
+        const date = Temporal.PlainDate.from(practiceDate);
+        return (
+          Temporal.PlainDate.compare(date, originalStart) < 0 ||
+          Temporal.PlainDate.compare(date, end) >= 0
+        );
+      })
+    ) {
+      throw new RangeError('The calendar duration cannot remove retained occurrences');
+    }
+    for (
+      let date = generationStart;
+      Temporal.PlainDate.compare(date, end) < 0;
+      date = date.add({ days: 1 })
+    ) {
+      if (weekdays.has(date.dayOfWeek) && !retainedDates.has(date.toString())) {
+        selectedDates.push(date);
+      }
+    }
+    remainingAllowance = selectedDates.length;
+  }
+
+  let nextOrdinal =
+    retained.reduce((maximum, occurrence) => Math.max(maximum, occurrence.ordinal), 0) + 1;
+  const proposed = selectedDates.map((date) => createOccurrence(schedule, date, nextOrdinal++));
+  const current = Temporal.Instant.from(now);
+  if (proposed.some(({ opensAt }) => Temporal.Instant.compare(opensAt, current) <= 0)) {
+    throw new RangeError('A proposed practice window has already opened');
+  }
+  assertNonoverlapping([...retained, ...proposed]);
+
+  return {
+    proposed,
+    remainingAllowance,
+    warnings: proposed.flatMap(({ adjustment }) => (adjustment ? [adjustment] : [])),
   };
 }
