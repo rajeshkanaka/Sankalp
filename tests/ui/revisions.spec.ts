@@ -32,6 +32,29 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
 
     await page.getByLabel('Journey title', { exact: true }).fill('Revised night practice');
     await page.getByLabel('Personal intention', { exact: true }).fill('A clearer intention.');
+    await page.route('**/api/journeys/*/metadata', async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: {
+            code: 'REVISION_CONFLICT',
+            message: 'Review the latest journey before trying again.',
+            correlationId: 'synthetic-m2-metadata-conflict',
+          },
+        }),
+      });
+    });
+    await page.getByRole('button', { name: 'Save journey details', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('Review the latest journey');
+    await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue(
+      'Revised night practice',
+    );
+    await expect(page.getByLabel('Personal intention', { exact: true })).toHaveValue(
+      'A clearer intention.',
+    );
+    await page.unroute('**/api/journeys/*/metadata');
+    await page.getByRole('button', { name: 'Reload latest journey', exact: true }).click();
     await page.getByRole('button', { name: 'Save journey details', exact: true }).click();
     await expect(page.getByText('Journey details saved.', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Revised night practice' })).toBeVisible();
@@ -41,20 +64,20 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
     await page.getByLabel('Practice time', { exact: true }).fill('00:30');
     await page.getByRole('button', { name: 'Preview future changes', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Review future changes' })).toBeVisible();
-    await expect(page.getByText(/8 existing sessions will stay unchanged/)).toBeVisible();
+    await expect(page.getByText(/7 existing sessions will stay unchanged/)).toBeVisible();
     await expect(
-      page.getByText(/13 unopened sessions will be replaced with 13 new sessions/),
+      page.getByText(/14 unopened sessions will be replaced with 14 new sessions/),
     ).toBeVisible();
     await expect(page.getByText(/original start remains 2026-09-05/i)).toBeVisible();
     await page.getByRole('button', { name: 'Apply future change', exact: true }).click();
     await expect(page.getByText('Future schedule updated.', { exact: true })).toBeVisible();
     await expect(page.getByText(/Practices: Future Kunjika, Bhairav Stotra/)).toBeVisible();
 
-    await page.getByRole('link', { name: /Night 1/ }).click();
+    await page.getByRole('link', { name: /^Night 1\s/ }).click();
     await expect(page.getByRole('checkbox', { name: 'Kunjika', exact: true })).toBeVisible();
     await expect(page.getByText('Future Kunjika', { exact: true })).toHaveCount(0);
     await page.getByRole('link', { name: 'Your journey', exact: true }).click();
-    await page.getByRole('link', { name: /Night 9/ }).click();
+    await page.getByRole('link', { name: /^Night 8\s/ }).click();
     await expect(page.getByRole('checkbox', { name: 'Future Kunjika', exact: true })).toBeVisible();
 
     const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);

@@ -3,7 +3,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { requestJson } from '@/components/api';
+import { RequestError, requestJson } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import type { JourneyView } from '@/domain/contracts';
 import shared from '@/styles/sanctuary.module.css';
@@ -82,6 +82,18 @@ export function MetadataEditor({ view }: { view: JourneyView }) {
       </p>
       {saved && <p className={shared.success}>Journey details saved.</p>}
       <RequestErrorMessage error={error} />
+      {error instanceof RequestError && error.code === 'REVISION_CONFLICT' && (
+        <button
+          type="button"
+          className={`${shared.button} ${shared.secondary}`}
+          onClick={() => {
+            setError(null);
+            router.refresh();
+          }}
+        >
+          Reload latest journey
+        </button>
+      )}
       <button type="submit" className={shared.button} disabled={pending}>
         {pending ? 'Saving details…' : 'Save journey details'}
       </button>

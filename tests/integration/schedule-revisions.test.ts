@@ -241,7 +241,9 @@ describe('future schedule revisions', () => {
         .filter(({ id }) => id !== opened.id)
         .every(({ practices }) => practices[0]?.label === 'Evening japa'),
     ).toBe(true);
-    expect(applied.supersededSessionIds.sort()).toEqual(proposed.supersededSessionIds.sort());
+    expect([...applied.supersededSessionIds].sort()).toEqual(
+      [...proposed.supersededSessionIds].sort(),
+    );
     expect(applied.createdSessionIds).toHaveLength(3);
     expect(applied.view.journey).toMatchObject({
       revision: original.journey.revision + 1,
