@@ -3,12 +3,18 @@
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { MutationEnvelope, SessionRecord } from '@/domain/contracts';
+import type {
+  MutationEnvelope,
+  SessionHistory,
+  SessionMutationResult,
+  SessionRecord,
+} from '@/domain/contracts';
 import { deriveStatus, targetsMet } from '@/domain/status';
 import { requestJson, RequestError } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import { formatInstant, StatusBadge } from '@/components/presentation';
 import { PracticeValueInput } from './practice-value-input';
+import { CompletionControls, HistoryTimeline } from './corrections';
 import { countdownLabel, usePracticeClock } from './use-practice-clock';
 import styles from '@/styles/sanctuary.module.css';
 
@@ -20,6 +26,11 @@ interface PendingPracticeSave {
   practiceId: string;
   value: PracticeValue;
   mutation: PracticeMutation;
+}
+
+interface PendingCompletion {
+  performedAt: string;
+  mutation: CompletionMutation;
 }
 
 function savedValues(session: SessionRecord): Record<string, PracticeValue> {
@@ -34,14 +45,60 @@ function numericDrafts(session: SessionRecord) {
   );
 }
 
+function isSessionRecord(value: unknown, expectedId: string): value is SessionRecord {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const candidate = value as Partial<SessionRecord>;
+  const validInstant = (instant: unknown) =>
+    typeof instant === 'string' && Number.isFinite(Date.parse(instant));
+  const validOptionalInstant = (instant: unknown) => instant === null || validInstant(instant);
+  return (
+    candidate.id === expectedId &&
+    typeof candidate.journeyId === 'string' &&
+    typeof candidate.scheduleVersionId === 'string' &&
+    typeof candidate.practiceDate === 'string' &&
+    typeof candidate.timeZone === 'string' &&
+    (candidate.attribution === 'civil' || candidate.attribution === 'previous_evening') &&
+    Number.isInteger(candidate.ordinal) &&
+    Number.isInteger(candidate.revision) &&
+    typeof candidate.confirmed === 'boolean' &&
+    validInstant(candidate.opensAt) &&
+    validInstant(candidate.closesAt) &&
+    validOptionalInstant(candidate.performedAt) &&
+    validOptionalInstant(candidate.recordedAt) &&
+    validOptionalInstant(candidate.supersededAt) &&
+    Array.isArray(candidate.practices) &&
+    candidate.practices.every(
+      (practice) =>
+        practice &&
+        typeof practice.id === 'string' &&
+        typeof practice.label === 'string' &&
+        Number.isInteger(practice.order) &&
+        (practice.kind === 'checkbox'
+          ? practice.target === null && typeof practice.value === 'boolean'
+          : (practice.kind === 'repetitions' || practice.kind === 'minutes') &&
+            typeof practice.target === 'number' &&
+            Number.isInteger(practice.target) &&
+            typeof practice.value === 'number' &&
+            Number.isInteger(practice.value)),
+    )
+  );
+}
+
+function currentSessionFromNoChange(cause: unknown, sessionId: string) {
+  if (!(cause instanceof RequestError) || cause.code !== 'NO_CHANGE') return null;
+  return isSessionRecord(cause.current, sessionId) ? cause.current : null;
+}
+
 export function PracticePanel({
   initialSession,
   initialNow,
   demo,
+  initialHistory = { amendments: [], events: [] },
 }: {
   initialSession: SessionRecord;
   initialNow: string;
   demo: boolean;
+  initialHistory?: SessionHistory;
 }) {
   const router = useRouter();
   const [session, setSession] = useState(initialSession);
@@ -50,25 +107,43 @@ export function PracticePanel({
   );
   const [drafts, setDrafts] = useState<Record<string, string>>(() => numericDrafts(initialSession));
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set());
-  const [pending, setPending] = useState<'save' | 'complete' | null>(null);
+  const [history, setHistory] = useState(initialHistory);
+  const [pending, setPending] = useState<'save' | 'complete' | 'undo' | null>(null);
   const [failedPracticeId, setFailedPracticeId] = useState<string | null>(null);
   const [message, setMessage] = useState('Changes are saved individually.');
   const [error, setError] = useState<Error | null>(null);
   const pendingSave = useRef<PendingPracticeSave | null>(null);
-  const pendingCompletion = useRef<CompletionMutation | null>(null);
+  const pendingCompletion = useRef<PendingCompletion | null>(null);
+  const pendingRemoval = useRef<MutationEnvelope<Record<string, never>> | null>(null);
   const now = usePracticeClock(initialNow, demo);
   const status = deriveStatus(session, now);
   const beforeOpening = Date.parse(now) < Date.parse(session.opensAt);
   const closed = Date.parse(now) >= Date.parse(session.closesAt);
   const unsaved = dirtyIds.size > 0;
-  const canEdit = !beforeOpening && !closed && !session.confirmed && !pending && !failedPracticeId;
-  const canConfirm = canEdit && !unsaved && targetsMet(session);
+  const canEdit = !beforeOpening && !session.confirmed && !pending && !failedPracticeId;
+  const canConfirm = canEdit && !closed && !unsaved && targetsMet(session);
   const conflict =
     error instanceof RequestError &&
     (error.code.includes('CONFLICT') || error.code.includes('REVISION'));
 
   function markDirty(practiceId: string) {
     setDirtyIds((current) => new Set(current).add(practiceId));
+  }
+
+  function addHistory(result: SessionMutationResult) {
+    setHistory((current) => ({
+      amendments: current.amendments.some(({ id }) => id === result.amendment.id)
+        ? current.amendments
+        : [...current.amendments, result.amendment].sort(
+            (left, right) => left.sessionRevision - right.sessionRevision,
+          ),
+      events: [
+        ...current.events,
+        ...result.historyEvents.filter(
+          (event) => !current.events.some(({ id }) => id === event.id),
+        ),
+      ],
+    }));
   }
 
   function editNumeric(practiceId: string, value: string) {
@@ -101,12 +176,13 @@ export function PracticePanel({
     }
     const attempt = pendingSave.current;
     try {
-      const result = await requestJson<{ session: SessionRecord }>(
+      const result = await requestJson<SessionMutationResult>(
         `/api/sessions/${session.id}/practices`,
         'PUT',
         attempt.mutation,
       );
       setSession(result.session);
+      addHistory(result);
       const serverValues = savedValues(result.session);
       setValues((current) => {
         for (const dirtyId of dirtyIds) {
@@ -130,6 +206,33 @@ export function PracticePanel({
           : 'Saved.',
       );
     } catch (cause) {
+      const currentSession = currentSessionFromNoChange(cause, session.id);
+      if (currentSession) {
+        setSession(currentSession);
+        const serverValues = savedValues(currentSession);
+        setValues((current) => {
+          for (const dirtyId of dirtyIds) {
+            if (dirtyId !== attempt.practiceId) serverValues[dirtyId] = current[dirtyId];
+          }
+          return serverValues;
+        });
+        if (typeof attempt.value === 'number') {
+          setDrafts((current) => ({
+            ...current,
+            [attempt.practiceId]: String(serverValues[attempt.practiceId]),
+          }));
+        }
+        setDirtyIds((current) => {
+          const next = new Set(current);
+          next.delete(attempt.practiceId);
+          return next;
+        });
+        pendingSave.current = null;
+        setFailedPracticeId(null);
+        setError(null);
+        setMessage('This value is already saved.');
+        return;
+      }
       const label = session.practices.find((practice) => practice.id === attempt.practiceId)?.label;
       setFailedPracticeId(attempt.practiceId);
       setError(
@@ -151,37 +254,114 @@ export function PracticePanel({
       setMessage('Not saved. Check the number and try again.');
       return;
     }
+    if (session.practices.find(({ id }) => id === practiceId)?.value === value) {
+      setDirtyIds((current) => {
+        const next = new Set(current);
+        next.delete(practiceId);
+        return next;
+      });
+      setError(null);
+      setMessage('This value is already saved.');
+      return;
+    }
     setValues((current) => ({ ...current, [practiceId]: value }));
     void savePractice(practiceId, value);
   }
 
-  async function confirm() {
-    if (!canConfirm) return;
+  async function recordCompletion(performedAt: string) {
     setPending('complete');
     setError(null);
     setMessage('Recording your session…');
-    pendingCompletion.current ??= {
-      operationId: crypto.randomUUID(),
-      baseRevision: session.revision,
-      payload: { performedAt: now },
-    };
+    if (!pendingCompletion.current || pendingCompletion.current.performedAt !== performedAt) {
+      pendingCompletion.current = {
+        performedAt,
+        mutation: {
+          operationId: crypto.randomUUID(),
+          baseRevision: session.revision,
+          payload: { performedAt },
+        },
+      };
+    }
     try {
-      const result = await requestJson<{ session: SessionRecord }>(
+      const result = await requestJson<SessionMutationResult>(
         `/api/sessions/${session.id}/completion`,
         'POST',
-        pendingCompletion.current,
+        pendingCompletion.current.mutation,
       );
       setSession(result.session);
-      setMessage('Session recorded.');
+      addHistory(result);
+      setValues(savedValues(result.session));
+      setDrafts(numericDrafts(result.session));
+      setDirtyIds(new Set());
+      setMessage(session.confirmed ? 'Practice time corrected.' : 'Session recorded.');
       pendingCompletion.current = null;
       router.refresh();
     } catch (cause) {
+      const currentSession = currentSessionFromNoChange(cause, session.id);
+      if (currentSession) {
+        setSession(currentSession);
+        setValues(savedValues(currentSession));
+        setDrafts(numericDrafts(currentSession));
+        setDirtyIds(new Set());
+        pendingCompletion.current = null;
+        setError(null);
+        setMessage('This practice time is already recorded.');
+        return;
+      }
       setError(
         cause instanceof Error ? cause : new Error('Could not record this session. Try again.'),
       );
       setMessage(
-        'Session has not been confirmed on this page. Try again to check and record it safely.',
+        session.confirmed
+          ? 'The practice-time correction was not saved. Your original record remains.'
+          : 'Session has not been confirmed on this page. Try again to record it safely.',
       );
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function removeRecordedCompletion() {
+    setPending('undo');
+    setError(null);
+    setMessage('Removing the completion record…');
+    pendingRemoval.current ??= {
+      operationId: crypto.randomUUID(),
+      baseRevision: session.revision,
+      payload: {},
+    };
+    try {
+      const result = await requestJson<SessionMutationResult>(
+        `/api/sessions/${session.id}/completion`,
+        'DELETE',
+        pendingRemoval.current,
+      );
+      setSession(result.session);
+      addHistory(result);
+      setValues(savedValues(result.session));
+      setDrafts(numericDrafts(result.session));
+      setDirtyIds(new Set());
+      setMessage('Completion removed. Your saved practice values remain.');
+      pendingRemoval.current = null;
+      pendingCompletion.current = null;
+      router.refresh();
+    } catch (cause) {
+      const currentSession = currentSessionFromNoChange(cause, session.id);
+      if (currentSession) {
+        setSession(currentSession);
+        setValues(savedValues(currentSession));
+        setDrafts(numericDrafts(currentSession));
+        setDirtyIds(new Set());
+        pendingRemoval.current = null;
+        pendingCompletion.current = null;
+        setError(null);
+        setMessage('The completion is already removed. Your saved practice values remain.');
+        return;
+      }
+      setError(
+        cause instanceof Error ? cause : new Error('Could not remove this completion. Try again.'),
+      );
+      setMessage('Completion was not removed. Your record remains saved.');
     } finally {
       setPending(null);
     }
@@ -205,8 +385,9 @@ export function PracticePanel({
       )}
       {closed && !session.confirmed && (
         <p className={styles.quietNote}>
-          This practice window has closed. Your saved progress remains visible. Historical
-          corrections will be available in a later update.
+          This practice window has closed. Update the saved values, then enter when you actually
+          practiced. The record will distinguish an in-window practice entered later from a late
+          practice.
         </p>
       )}
       <ul className={styles.checklist}>
@@ -237,7 +418,7 @@ export function PracticePanel({
         <button
           type="button"
           className={`${styles.button} ${styles.secondary}`}
-          disabled={Boolean(pending) || beforeOpening || closed}
+          disabled={Boolean(pending) || beforeOpening}
           onClick={() => {
             const attempt = pendingSave.current;
             if (attempt) void savePractice(attempt.practiceId, attempt.value, true);
@@ -271,9 +452,14 @@ export function PracticePanel({
               </p>
             )}
           </div>
-          <p className={`${styles.small} ${styles.muted}`}>
-            Private reflections and corrections are not available yet.
-          </p>
+          <CompletionControls
+            key={`${session.id}-${session.revision}`}
+            session={session}
+            now={now}
+            pending={Boolean(pending) || conflict}
+            onRecord={(performedAt) => void recordCompletion(performedAt)}
+            onRemove={() => void removeRecordedCompletion()}
+          />
           <Link
             prefetch={false}
             className={styles.button}
@@ -283,28 +469,42 @@ export function PracticePanel({
           </Link>
         </>
       ) : (
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.button}
-            disabled={!canConfirm}
-            onClick={() => void confirm()}
-          >
-            {pending === 'complete' ? 'Recording…' : 'Complete this session'}
-          </button>
-          <span className={`${styles.small} ${styles.muted}`}>
-            {unsaved
-              ? 'Save your changes before confirming.'
-              : beforeOpening
-                ? 'Available when your practice opens.'
-                : closed
-                  ? 'The completion window is closed.'
-                  : targetsMet(session)
-                    ? 'Confirm that you have completed your practice.'
-                    : 'Complete every practice before confirming.'}
-          </span>
-        </div>
+        <>
+          {closed && !unsaved && targetsMet(session) ? (
+            <CompletionControls
+              key={`${session.id}-${session.revision}`}
+              session={session}
+              now={now}
+              pending={Boolean(pending) || conflict}
+              onRecord={(performedAt) => void recordCompletion(performedAt)}
+              onRemove={() => void removeRecordedCompletion()}
+            />
+          ) : (
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.button}
+                disabled={!canConfirm}
+                onClick={() => void recordCompletion(now)}
+              >
+                {pending === 'complete' ? 'Recording…' : 'Complete this session'}
+              </button>
+              <span className={`${styles.small} ${styles.muted}`}>
+                {unsaved
+                  ? 'Save your changes before confirming.'
+                  : beforeOpening
+                    ? 'Available when your practice opens.'
+                    : closed
+                      ? 'Complete every practice, then enter when you practiced.'
+                      : targetsMet(session)
+                        ? 'Confirm that you have completed your practice.'
+                        : 'Complete every practice before confirming.'}
+              </span>
+            </div>
+          )}
+        </>
       )}
+      <HistoryTimeline history={history} timeZone={session.timeZone} />
     </section>
   );
 }
