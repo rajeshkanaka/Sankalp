@@ -109,7 +109,9 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
     );
     await numeric.fill('1');
     await saveNumeric.click();
-    await expect(page.getByRole('status')).toContainText('This value is already saved.');
+    await expect(
+      page.getByRole('status').filter({ hasText: /^This value is already saved\.$/ }),
+    ).toBeVisible();
     await expect(
       page.getByRole('alert').filter({ hasText: 'These practice values are already saved.' }),
     ).toHaveCount(0);
@@ -118,9 +120,9 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
 
     await numeric.fill('3');
     await saveNumeric.click();
-    await expect(page.getByText('Saved.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
     await checkbox.check();
-    await expect(page.getByText('Saved.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
 
     const actualTime = page.getByLabel('Actual practice time in Asia/Kolkata', { exact: true });
     await actualTime.fill('2026-09-05T06:15');
@@ -198,7 +200,9 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
       { times: 1 },
     );
     await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('This practice time is already recorded.');
+    await expect(
+      page.getByRole('status').filter({ hasText: /^This practice time is already recorded\.$/ }),
+    ).toBeVisible();
     await expect(
       page.getByRole('alert').filter({ hasText: 'This practice time is already recorded.' }),
     ).toHaveCount(0);
@@ -228,7 +232,9 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
       { times: 1 },
     );
     await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('The completion is already removed.');
+    await expect(
+      page.getByRole('status').filter({ hasText: /^The completion is already removed\./ }),
+    ).toBeVisible();
     await expect(
       page.getByRole('alert').filter({ hasText: 'This session is not recorded as complete.' }),
     ).toHaveCount(0);
@@ -239,9 +245,11 @@ test('@M3 @M3-corrections preserves factual chronology through correction and un
     await page.reload();
     await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
     await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText(
-      'Completion removed. Your saved practice values remain.',
-    );
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: /^Completion removed\. Your saved practice values remain\.$/ }),
+    ).toBeVisible();
     await expect(checkbox).toBeChecked();
     await expect(numeric).toHaveValue('3');
     await expect(
