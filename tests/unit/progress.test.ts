@@ -71,24 +71,51 @@ const journey: JourneyRecord = {
 };
 
 describe('progress timing and projection', () => {
-  it('keeps practiced-late and recorded-later independent at the closing boundary', () => {
-    expect(deriveCompletionTiming(complete(1, { recordedAt: '2026-09-01T04:00:00Z' }))).toEqual({
-      practiceTiming: 'on_schedule',
-      recordedLater: true,
-    });
+  it('separates in-window recording delay from practice at or after the closing boundary', () => {
+    expect(
+      deriveCompletionTiming(
+        complete(1, {
+          performedAt: '2026-09-01T03:59:59.999Z',
+          recordedAt: '2026-09-01T04:00:00Z',
+        }),
+      ),
+    ).toEqual({ practiceTiming: 'on_schedule', recordedLater: true });
     expect(
       deriveCompletionTiming(
         complete(1, { performedAt: '2026-09-01T04:00:00Z', recordedAt: '2026-09-01T05:00:00Z' }),
       ),
-    ).toEqual({ practiceTiming: 'practiced_late', recordedLater: true });
-    expect(deriveCompletionTiming(complete(1, { recordedAt: '2026-09-01T03:59:59Z' }))).toEqual({
-      practiceTiming: 'on_schedule',
-      recordedLater: false,
-    });
+    ).toEqual({ practiceTiming: 'practiced_late', recordedLater: false });
+    expect(
+      deriveCompletionTiming(
+        complete(1, {
+          performedAt: '2026-09-01T04:00:00.001Z',
+          recordedAt: '2026-09-01T05:00:00Z',
+        }),
+      ),
+    ).toEqual({ practiceTiming: 'practiced_late', recordedLater: false });
+    expect(
+      deriveCompletionTiming(
+        complete(1, {
+          performedAt: '2026-09-01T03:59:59.999Z',
+          recordedAt: '2026-09-01T03:59:59.999Z',
+        }),
+      ),
+    ).toEqual({ practiceTiming: 'on_schedule', recordedLater: false });
+  });
+
+  it('does not classify unconfirmed or impossible pre-opening completion records', () => {
     expect(deriveCompletionTiming(session(1))).toEqual({
       practiceTiming: null,
       recordedLater: false,
     });
+    expect(
+      deriveCompletionTiming(
+        complete(1, {
+          performedAt: '2026-08-31T23:59:59.999Z',
+          recordedAt: '2026-09-01T05:00:00Z',
+        }),
+      ),
+    ).toEqual({ practiceTiming: null, recordedLater: false });
   });
 
   it('projects an overnight session onto its stored practice date regardless of civil time', () => {

@@ -6,12 +6,13 @@ export function deriveCompletionTiming(session: SessionRecord): CompletionTiming
   if (!session.confirmed || !targetsMet(session) || !session.performedAt)
     return { practiceTiming: null, recordedLater: false };
   const performed = Temporal.Instant.from(session.performedAt);
-  const withinWindow =
-    Temporal.Instant.compare(performed, session.opensAt) >= 0 &&
-    Temporal.Instant.compare(performed, session.closesAt) < 0;
+  if (Temporal.Instant.compare(performed, session.opensAt) < 0)
+    return { practiceTiming: null, recordedLater: false };
+  const withinWindow = Temporal.Instant.compare(performed, session.closesAt) < 0;
   return {
     practiceTiming: withinWindow ? 'on_schedule' : 'practiced_late',
     recordedLater:
+      withinWindow &&
       session.recordedAt !== null &&
       Temporal.Instant.compare(session.recordedAt, session.closesAt) >= 0,
   };
