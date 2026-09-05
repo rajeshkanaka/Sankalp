@@ -10,15 +10,16 @@ export async function proxy(request: NextRequest) {
     ['GET', 'HEAD'].includes(request.method)
   ) {
     const canonical = new URL(getOrigin());
+    // Next normalizes loopback aliases in nextUrl; compare the original authority.
+    const host = request.headers.get('host');
     if (
-      ['localhost', '127.0.0.1'].includes(request.nextUrl.hostname) &&
       ['localhost', '127.0.0.1'].includes(canonical.hostname) &&
-      request.nextUrl.port === canonical.port &&
-      request.nextUrl.origin !== canonical.origin
+      [`localhost:${canonical.port}`, `127.0.0.1:${canonical.port}`].includes(host ?? '') &&
+      host !== canonical.host
     )
       return NextResponse.redirect(
         new URL(request.nextUrl.pathname + request.nextUrl.search, canonical),
-        308,
+        { status: 308, headers: privateHeaders },
       );
   }
   const nonce = randomBytes(24).toString('base64');
