@@ -95,6 +95,46 @@ async function capturedMessageIds(request: APIRequestContext, mail: URL): Promis
   );
 }
 
+async function consumeCapturedSignIn(
+  request: APIRequestContext,
+  mail: URL,
+  priorIds: Set<string>,
+): Promise<void> {
+  let messageId = '';
+  await expect
+    .poll(
+      async () => {
+        const currentIds = await capturedMessageIds(request, mail);
+        messageId = [...currentIds].find((id) => !priorIds.has(id)) ?? '';
+        return Boolean(messageId);
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(true);
+
+  const messageResponse = await request.get(
+    new URL(`/api/v1/message/${encodeURIComponent(messageId)}`, mail).href,
+  );
+  expect(messageResponse.ok()).toBe(true);
+  const message = await safeJson(messageResponse);
+  if (typeof message.HTML !== 'string') throw new Error('Captured email omitted its HTML body.');
+  const href = message.HTML.match(/href="([^"]+)"/)?.[1]?.replaceAll('&amp;', '&');
+  if (!href) throw new Error('Captured email omitted the sign-in link.');
+  const target = new URL(href);
+  if (target.origin !== appOrigin() || target.pathname !== '/auth/confirm')
+    throw new Error('Captured link has an unexpected destination.');
+
+  // The link and its token stay local to this request and are never logged or retained.
+  const callback = await request.get(target.href, { maxRedirects: 0 });
+  expect(callback.status()).toBe(307);
+  const location = callback.headers().location;
+  if (!location) throw new Error('Successful authentication omitted its redirect.');
+  const redirect = new URL(location, appOrigin());
+  expect(redirect.origin).toBe(appOrigin());
+  expect(redirect.pathname).toBe('/today');
+  expect(redirect.search).toBe('');
+}
+
 function tamperedAuthCookie(): string {
   const supabase = localService('SUPABASE_URL');
   const storageKey = `sb-${supabase.hostname.split('.')[0]}-auth-token`;
@@ -140,7 +180,7 @@ test.describe('@M1 @SK-002 real HTTP boundaries', () => {
   test('returns a safe structured error for malformed JSON', async ({ request }) => {
     const response = await request.post('/api/auth/sign-in', {
       headers: jsonHeaders(),
-      data: '{"email":',
+      data: Buffer.from('{"email":'),
     });
     await expectApiError(response, 400, 'INVALID_JSON');
   });
@@ -250,11 +290,6 @@ test.describe('@M1 @SK-002 real HTTP boundaries', () => {
     // route's five-per-hour policy does not protect this directly reachable endpoint.
     expect(directAuth.status()).toBe(429);
 
-    await expect
-      .poll(async () => {
-        const currentIds = await capturedMessageIds(request, mail);
-        return [...currentIds].some((id) => !priorIds.has(id));
-      })
-      .toBe(true);
+    await consumeCapturedSignIn(request, mail, priorIds);
   });
 });
