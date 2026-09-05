@@ -2,7 +2,7 @@ export const FIXTURE_PROFILE = 'M1' as const;
 export const FIXTURE_MARKER_KEY = 'sankalpa_fixture' as const;
 export const M1_DEMO_NOW = '2026-09-05T00:45:00Z' as const;
 
-export const FIXTURE_NAMESPACES = ['demo', 'ui', 'integration'] as const;
+export const FIXTURE_NAMESPACES = ['demo', 'ui', 'ui-http', 'integration'] as const;
 export type FixtureNamespace = (typeof FIXTURE_NAMESPACES)[number];
 
 export const FIXTURE_PEOPLE = ['maya', 'arun'] as const;

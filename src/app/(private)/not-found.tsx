@@ -7,7 +7,7 @@ export default function NotFound() {
       <p className={styles.muted}>
         It may have been removed, or it may belong to a different account.
       </p>
-      <Link className={styles.button} href="/today">
+      <Link prefetch={false} className={styles.button} href="/today">
         Return to Today
       </Link>
     </section>

@@ -79,7 +79,7 @@ export function EmptyJourney() {
       <p>
         Give your intention a place and a time. Your first journey begins with what matters to you.
       </p>
-      <Link className={styles.button} href="/setup">
+      <Link prefetch={false} className={styles.button} href="/setup">
         New journey
       </Link>
     </div>

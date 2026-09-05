@@ -29,14 +29,16 @@ export function parseSeedArguments(argv: string[]): SeedArguments {
     const flag = argv[index];
     const value = argv[index + 1];
     if (!['--profile', '--namespace'].includes(flag) || !value || values.has(flag))
-      throw new Error('Usage: npm run demo:seed -- --profile M1 [--namespace demo|ui|integration]');
+      throw new Error(
+        'Usage: npm run demo:seed -- --profile M1 [--namespace demo|ui|ui-http|integration]',
+      );
     values.set(flag, value);
   }
   if (values.get('--profile') !== FIXTURE_PROFILE)
     throw new Error('Only the M1 synthetic seed profile is available.');
   const namespace = values.get('--namespace') ?? 'demo';
   if (!FIXTURE_NAMESPACES.includes(namespace as FixtureNamespace))
-    throw new Error('Fixture namespace must be demo, ui, or integration.');
+    throw new Error('Fixture namespace must be demo, ui, ui-http, or integration.');
   return { profile: FIXTURE_PROFILE, namespace: namespace as FixtureNamespace };
 }
 

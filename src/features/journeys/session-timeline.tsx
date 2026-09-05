@@ -12,6 +12,7 @@ export function SessionTimeline({ sessions, now }: { sessions: SessionRecord[]; 
         .map((session) => (
           <li key={session.id}>
             <Link
+              prefetch={false}
               className={styles.timelineLink}
               href={`/journeys/${session.journeyId}/sessions/${session.id}`}
             >

@@ -14,7 +14,9 @@ test.describe('Welcome usability with simulated transport responses', () => {
     await expect(
       page.getByRole('heading', { name: 'A quiet space for your daily practice.' }),
     ).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText('invalid or has expired');
+    await expect(page.getByRole('region', { name: 'Sign in' }).getByRole('alert')).toContainText(
+      'invalid or has expired',
+    );
     const email = page.getByRole('textbox', { name: 'Email address' });
     await page.keyboard.press('Tab');
     await expect(email).toBeFocused();
@@ -59,13 +61,15 @@ test.describe('Welcome usability with simulated transport responses', () => {
     await email.fill('usability@example.test');
     await page.getByRole('button', { name: 'Send sign-in link', exact: true }).click();
     await expect(email).toHaveAttribute('aria-invalid', 'true');
-    await expect(page.getByRole('alert')).toContainText(
+    await expect(page.getByRole('region', { name: 'Sign in' }).getByRole('alert')).toContainText(
       'Email address: Use a valid email address.',
     );
-    await expect(page.getByRole('alert')).not.toContainText('highlighted');
+    await expect(
+      page.getByRole('region', { name: 'Sign in' }).getByRole('alert'),
+    ).not.toContainText('highlighted');
     await email.fill('corrected@example.test');
     await expect(email).toHaveAttribute('aria-invalid', 'false');
-    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Sign in' }).getByRole('alert')).toHaveCount(0);
   });
 
   test('@M1 @M1-usability a failed resend does not keep claiming the new request succeeded', async ({
@@ -94,7 +98,7 @@ test.describe('Welcome usability with simulated transport responses', () => {
     await page.getByRole('textbox', { name: 'Email address' }).fill('usability@example.test');
     await page.getByRole('button', { name: 'Send sign-in link', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('No email was sent outside this device');
-    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Sign in' }).getByRole('alert')).toHaveCount(0);
     await page.getByRole('button', { name: 'Send another link' }).click();
     await expect(page.locator('#sign-in-error')).toContainText('Please wait a little');
     await expect(page.getByRole('status')).toHaveCount(0);

@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type APIResponse } from '@playwright/test';
 import { resetUiSignInLimits } from './helpers/rate-limits';
 
-const UI_MAYA_EMAIL = 'ui-maya@example.test';
+const UI_MAYA_EMAIL = 'ui-http-maya@example.test';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface ApiError {

@@ -93,6 +93,7 @@ async function verifyLocalDatabase(client: pg.Client): Promise<void> {
     'operation_receipt',
     'practice_version',
     'profile',
+    'rate_bucket',
     'schedule_version',
     'session',
     'session_practice',

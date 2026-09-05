@@ -30,7 +30,7 @@ export default async function WelcomePage({
       </section>
       <section className={styles.welcomeForm} aria-label="Sign in">
         <SignInForm
-          localMail={runtime.appEnv === 'local' || runtime.appEnv === 'test'}
+          localMail={runtime.appEnv === 'local' || runtime.appEnv === 'ci'}
           invalidLink={Boolean(error)}
         />
       </section>

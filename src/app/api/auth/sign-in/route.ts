@@ -4,12 +4,14 @@ import { createAuthClient, privateHeaders } from '@/server/auth/server';
 import { getOrigin } from '@/server/config';
 import { AppError } from '@/server/errors';
 import { assertSameOrigin, handleApi, readJson } from '@/server/http';
+import { limitSignIn } from '@/server/rate-limit';
 
 export async function POST(request: Request) {
   let authResponse: NextResponse | undefined;
   const result = await handleApi(async () => {
     assertSameOrigin(request);
     const { email } = await readJson(request, z.strictObject({ email: z.email().max(254) }));
+    await limitSignIn(email);
     authResponse = NextResponse.json({ ok: true }, { headers: privateHeaders });
     const auth = await createAuthClient(authResponse);
     const { error } = await auth.auth.signInWithOtp({

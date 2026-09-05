@@ -16,7 +16,7 @@ export default async function JourneysPage() {
         description="Each intention has its own rhythm and history."
         action={
           journeys.length > 0 ? (
-            <Link className={styles.button} href="/setup">
+            <Link prefetch={false} className={styles.button} href="/setup">
               New journey
             </Link>
           ) : undefined
@@ -29,7 +29,9 @@ export default async function JourneysPage() {
           {journeys.map(({ journey, metrics }) => (
             <article className={`${styles.panel} ${styles.journeyCard}`} key={journey.id}>
               <h2>
-                <Link href={`/journeys/${journey.id}`}>{journey.title}</Link>
+                <Link prefetch={false} href={`/journeys/${journey.id}`}>
+                  {journey.title}
+                </Link>
               </h2>
               <p>{journey.intention || 'A personal commitment, one practice at a time.'}</p>
               <p>
@@ -43,6 +45,7 @@ export default async function JourneysPage() {
                 complete
               </p>
               <Link
+                prefetch={false}
                 className={`${styles.button} ${styles.secondary}`}
                 href={`/journeys/${journey.id}`}
               >

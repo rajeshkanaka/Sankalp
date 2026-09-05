@@ -34,6 +34,9 @@ export function SetupForm() {
   const [error, setError] = useState<Error | null>(null);
   const [preview, setPreview] = useState<DraftPreview | null>(null);
   const activationId = useRef<string | null>(null);
+  const creationAttempt = useRef<{ signature: string; id: string; draft: JourneyDraft } | null>(
+    null,
+  );
   const previewHeading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -69,8 +72,24 @@ export function SetupForm() {
       },
       reminders: { enabled: false, offsets: [], quietHours: null, detailed: false },
     };
+    const signature = JSON.stringify({
+      ...draft,
+      practices: draft.practices.map(({ label, order, kind, target }) => ({
+        label,
+        order,
+        kind,
+        target,
+      })),
+    });
+    if (!creationAttempt.current || creationAttempt.current.signature !== signature)
+      creationAttempt.current = { signature, id: crypto.randomUUID(), draft };
     try {
-      const result = await requestJson<DraftPreview>('/api/journeys', 'POST', draft);
+      const result = await requestJson<DraftPreview>(
+        '/api/journeys',
+        'POST',
+        creationAttempt.current.draft,
+        creationAttempt.current.id,
+      );
       activationId.current = crypto.randomUUID();
       setPreview(result);
     } catch (cause) {
@@ -99,7 +118,6 @@ export function SetupForm() {
         },
       );
       router.push(`/today?journey=${view.journey.id}`);
-      router.refresh();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause : new Error('Could not activate this journey. Try again.'),

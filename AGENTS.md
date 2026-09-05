@@ -53,3 +53,13 @@ For every milestone, launch the actual integrated app, exercise the specified wo
 - Update task handoff, then have the coordinator update TASKS, PROJECT_PROGRESS and SESSION_LOG. Include restart/verification commands and any required seed profile. Stop owned processes if appropriate and record it; assume none survive.
 - Recover unexpected interruptions from Git, saved task reports and fresh smoke checks. Never discard uncommitted work or promote an unverified task to DONE.
 - Review the final diff for unrelated edits and sensitive data before committing. State what changed, checks actually run, limitations and pending approvals in the final handoff.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

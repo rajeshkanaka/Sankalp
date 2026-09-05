@@ -16,13 +16,17 @@ export async function requestJson<T>(
   url: string,
   method: 'POST' | 'PUT' | 'DELETE',
   body: unknown,
+  operationId?: string,
 ): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
       method,
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(operationId ? { 'Idempotency-Key': operationId } : {}),
+      },
       body: JSON.stringify(body),
     });
   } catch {

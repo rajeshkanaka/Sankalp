@@ -1,7 +1,18 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  cpSync,
+  chmodSync,
+  renameSync,
+  rmdirSync,
+} from 'node:fs';
 import { resolve } from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
+import { parseEnv } from 'node:util';
+import { createServer } from 'node:net';
 import pg from 'pg';
 
 const root = process.cwd();
@@ -15,6 +26,15 @@ const value = (flag, fallback) =>
 if (process.env.APP_ENV && !['local', 'ci'].includes(process.env.APP_ENV))
   throw new Error('Local tools refuse hosted environments.');
 mkdirSync(directory, { recursive: true, mode: 0o700 });
+async function assertPortFree(port) {
+  const server = createServer();
+  await new Promise((done, reject) => {
+    server.once('error', () =>
+      reject(new Error(`Port ${port} is already occupied. Choose another worktree slot.`)),
+    );
+    server.listen(port, '127.0.0.1', () => server.close(done));
+  });
+}
 if (!existsSync(runtimeFile)) {
   if (command !== 'prepare')
     throw new Error(
@@ -22,6 +42,12 @@ if (!existsSync(runtimeFile)) {
     );
   const slot = Number(value('--slot', '0'));
   if (!Number.isInteger(slot) || slot < 0 || slot > 50) throw new Error('Slot must be 0–50.');
+  for (const port of [
+    3000 + slot,
+    3100 + slot,
+    ...Array.from({ length: 20 }, (_, index) => 54320 + slot * 100 + index),
+  ])
+    await assertPortFree(port);
   writeFileSync(
     runtimeFile,
     JSON.stringify(
@@ -44,6 +70,28 @@ if (!existsSync(runtimeFile)) {
 const runtime = JSON.parse(readFileSync(runtimeFile, 'utf8'));
 if (runtime.root !== root)
   throw new Error('Runtime belongs to another worktree; allocate an independent slot.');
+const gitDirectory = resolve(
+  root,
+  execFileSync('git', ['rev-parse', '--git-common-dir'], { encoding: 'utf8' }).trim(),
+);
+const registryPath = resolve(gitDirectory, 'sankalpa-runtime-slots.json');
+const registryLock = resolve(gitDirectory, 'sankalpa-runtime-slots.lock');
+try {
+  mkdirSync(registryLock);
+} catch {
+  throw new Error('Another worktree is allocating resources. Retry after that command finishes.');
+}
+try {
+  const registry = existsSync(registryPath) ? JSON.parse(readFileSync(registryPath, 'utf8')) : {};
+  if (registry[runtime.slot] && registry[runtime.slot] !== root)
+    throw new Error(
+      `Slot ${runtime.slot} belongs to another worktree. Choose an independent slot.`,
+    );
+  registry[runtime.slot] = root;
+  writeFileSync(registryPath, JSON.stringify(registry, null, 2), { mode: 0o600 });
+} finally {
+  rmdirSync(registryLock);
+}
 function syncConfig() {
   mkdirSync(resolve(backend, 'supabase'), { recursive: true });
   cpSync(resolve(root, 'supabase'), resolve(backend, 'supabase'), {
@@ -80,17 +128,11 @@ async function environment() {
   if (!existsSync(secretFile))
     writeFileSync(secretFile, randomBytes(32).toString('hex'), { mode: 0o600 });
   const password = readFileSync(secretFile, 'utf8');
-  const client = new pg.Client({ connectionString: dbUrl.href });
-  await client.connect();
-  try {
-    // Password is locally generated hexadecimal, never user-controlled or printed.
-    if (!/^[a-f0-9]{64}$/.test(password)) throw new Error('Invalid local role secret.');
-    await client.query(`ALTER ROLE app_api PASSWORD '${password}'`);
-  } finally {
-    await client.end();
-  }
   dbUrl.username = 'app_api';
   dbUrl.password = password;
+  const rateSecretFile = resolve(directory, 'rate-limit-key');
+  if (!existsSync(rateSecretFile))
+    writeFileSync(rateSecretFile, randomBytes(32).toString('hex'), { mode: 0o600 });
   const entries = {
     APP_ENV: 'local',
     APP_ORIGIN: `http://localhost:${runtime.port}`,
@@ -101,14 +143,50 @@ async function environment() {
     LOCAL_ADMIN_DATABASE_URL: state.DB_URL,
     LOCAL_SUPABASE_SECRET_KEY: state.SECRET_KEY || state.SERVICE_ROLE_KEY,
     LOCAL_MAIL_URL: `http://127.0.0.1:${runtime.mailPort}`,
+    RATE_LIMIT_SECRET: readFileSync(rateSecretFile, 'utf8'),
   };
   if (Object.values(entries).some((entry) => !entry))
     throw new Error('CLI status omitted a required local connection field.');
+  const envFile = resolve(root, '.env.local');
+  const ownershipFile = resolve(directory, 'env-generated.json');
+  const existing = existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8')) : {};
+  const owned = existsSync(ownershipFile) ? JSON.parse(readFileSync(ownershipFile, 'utf8')) : {};
+  const digest = (entry) => createHash('sha256').update(entry).digest('hex');
+  for (const [key, entry] of Object.entries(entries)) {
+    if (
+      existing[key] !== undefined &&
+      existing[key] !== entry &&
+      owned[key] !== digest(existing[key])
+    )
+      throw new Error(
+        `Refusing to overwrite manually configured ${key}. Reconcile your local configuration first.`,
+      );
+  }
+  const client = new pg.Client({ connectionString: state.DB_URL });
+  await client.connect();
+  try {
+    const version = await client.query('show server_version_num');
+    if (Math.floor(Number(version.rows[0].server_version_num) / 10000) !== 17)
+      throw new Error('Expected PostgreSQL major 17.');
+    // Validate environment ownership before changing the runtime role's password.
+    if (!/^[a-f0-9]{64}$/.test(password)) throw new Error('Invalid local role secret.');
+    await client.query(`ALTER ROLE app_api PASSWORD '${password}'`);
+  } finally {
+    await client.end();
+  }
   writeFileSync(
-    resolve(root, '.env.local'),
-    Object.entries(entries)
+    envFile,
+    Object.entries({ ...existing, ...entries })
       .map(([key, entry]) => `${key}=${JSON.stringify(entry)}`)
       .join('\n') + '\n',
+    { mode: 0o600 },
+  );
+  chmodSync(envFile, 0o600);
+  writeFileSync(
+    ownershipFile,
+    JSON.stringify(
+      Object.fromEntries(Object.entries(entries).map(([key, entry]) => [key, digest(entry)])),
+    ),
     { mode: 0o600 },
   );
   console.log('Local environment written to ignored .env.local. Secrets were not printed.');
@@ -155,10 +233,9 @@ switch (command) {
   case 'clock': {
     const at = value('--at', null);
     if (!at || !Number.isFinite(Date.parse(at))) throw new Error('Supply --at ISO_INSTANT.');
-    writeFileSync(
-      resolve(directory, 'demo-clock.json'),
-      JSON.stringify({ now: new Date(at).toISOString() }),
-    );
+    const temporaryClock = resolve(directory, 'demo-clock.next.json');
+    writeFileSync(temporaryClock, JSON.stringify({ now: new Date(at).toISOString() }));
+    renameSync(temporaryClock, resolve(directory, 'demo-clock.json'));
     console.log('Local demonstration clock updated. Authentication still uses real time.');
     break;
   }

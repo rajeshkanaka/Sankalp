@@ -201,7 +201,11 @@ export function PracticePanel({
           <p className={`${styles.small} ${styles.muted}`}>
             Private reflections and corrections are not available yet.
           </p>
-          <Link className={styles.button} href={`/today?journey=${session.journeyId}`}>
+          <Link
+            prefetch={false}
+            className={styles.button}
+            href={`/today?journey=${session.journeyId}`}
+          >
             Done
           </Link>
         </>

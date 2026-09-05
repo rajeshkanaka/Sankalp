@@ -23,7 +23,7 @@ The experience should feel calm, spiritually meaningful, personal, and easy to u
 
 ## Project status
 
-Application implementation has not started. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
+Implementation follows the approved repository plan. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
 
 ## Documents
 

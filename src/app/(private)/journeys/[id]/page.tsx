@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPageUser } from '@/server/auth/server';
-import { getJourneyView } from '@/server/journeys/service';
+import { getPageJourneyView as getJourneyView } from '@/server/journeys/pages';
 import { PageHeader, ProgressRing } from '@/components/presentation';
 import { Icon } from '@/components/icons';
 import { SessionTimeline } from '@/features/journeys/session-timeline';
@@ -15,7 +15,7 @@ export default async function JourneyPage({ params }: { params: Promise<{ id: st
   const { journey, metrics, sessions, now } = view;
   return (
     <>
-      <Link href="/journeys" className={styles.back}>
+      <Link prefetch={false} href="/journeys" className={styles.back}>
         <Icon name="back" />
         All journeys
       </Link>
@@ -36,7 +36,11 @@ export default async function JourneyPage({ params }: { params: Promise<{ id: st
           <p className={`${styles.muted} ${styles.small}`}>
             Sessions are shown on the date practice begins.
           </p>
-          <Link className={`${styles.button} ${styles.secondary}`} href={`/today?journey=${id}`}>
+          <Link
+            prefetch={false}
+            className={`${styles.button} ${styles.secondary}`}
+            href={`/today?journey=${id}`}
+          >
             Open Today
           </Link>
         </section>

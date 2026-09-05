@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AppError } from './errors';
 import { getOrigin } from './config';
 import { getApiUser, privateHeaders } from './auth/server';
+import { consumeLimit } from './rate-limit';
 
 export function assertSameOrigin(request: Request) {
   if (request.headers.get('origin') !== getOrigin())
@@ -20,7 +21,7 @@ export async function readJson<T>(request: Request, schema: z.ZodType<T>): Promi
     const { value, done } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > 32768) {
+    if (size > 131072) {
       await reader.cancel();
       throw new AppError(413, 'BODY_TOO_LARGE', 'Please shorten your input.');
     }
@@ -61,7 +62,15 @@ export async function handleApi(operation: () => Promise<unknown>) {
             ...(error.current ? { current: error.current } : {}),
           },
         },
-        { status: error.status, headers: privateHeaders },
+        {
+          status: error.status,
+          headers: {
+            ...privateHeaders,
+            ...(error.status === 429
+              ? { 'Retry-After': String(Math.max(1, Math.min(3600, error.retryAfter ?? 60))) }
+              : {}),
+          },
+        },
       );
     console.error(JSON.stringify({ event: 'request_failed', correlationId }));
     return NextResponse.json(
@@ -84,6 +93,7 @@ export async function authenticated<T>(
   return handleApi(async () => {
     assertSameOrigin(request);
     const user = await getApiUser();
+    await consumeLimit('write-minute', user.id);
     return operation(user.id, await readJson(request, schema));
   });
 }

@@ -60,7 +60,7 @@ export function TodayView({
         title="A moment for your practice"
         description="Return with attention. Let each day have its own place."
         action={
-          <Link className={`${styles.button} ${styles.secondary}`} href="/setup">
+          <Link prefetch={false} className={`${styles.button} ${styles.secondary}`} href="/setup">
             New journey
           </Link>
         }
@@ -115,7 +115,7 @@ export function TodayView({
             </>
           )}
           <div className={styles.actions}>
-            <Link className={styles.button} href={currentHref}>
+            <Link prefetch={false} className={styles.button} href={currentHref}>
               {status === 'complete'
                 ? 'View recorded practice'
                 : status === 'partial'
@@ -152,7 +152,7 @@ export function TodayView({
               </strong>
             </p>
             <p className={styles.muted}>{metrics.upcoming} upcoming</p>
-            <Link className={styles.textButton} href={`/journeys/${journey.id}`}>
+            <Link prefetch={false} className={styles.textButton} href={`/journeys/${journey.id}`}>
               View journey
             </Link>
           </div>
@@ -165,7 +165,7 @@ export function TodayView({
         <h2 className={styles.sectionTitle}>Along your journey</h2>
         <SessionTimeline sessions={sessions.slice(0, 7)} now={now} />
         {sessions.length > 7 && (
-          <Link className={styles.textButton} href={`/journeys/${journey.id}`}>
+          <Link prefetch={false} className={styles.textButton} href={`/journeys/${journey.id}`}>
             View all {metrics.total} sessions
           </Link>
         )}

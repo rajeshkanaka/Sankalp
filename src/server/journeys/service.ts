@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
+import { z } from 'zod';
 import type {
   JourneyDraft,
   JourneyRecord,
@@ -84,9 +85,27 @@ export async function listJourneyViews(userId: string): Promise<JourneyView[]> {
   });
 }
 export async function getJourneyView(userId: string, id: string): Promise<JourneyView> {
+  if (!z.uuid().safeParse(id).success) throw notFound();
   return withUser(userId, (client) => readJourneyView(client, id, getRuntimeInfo().now));
 }
-export async function createJourney(userId: string, input: JourneyDraft) {
+function checkedPreview(draft: JourneyDraft, now: string) {
+  try {
+    return previewSchedule(draft.schedule, now);
+  } catch (error) {
+    if (error instanceof RangeError)
+      throw new AppError(
+        422,
+        'INVALID_SCHEDULE',
+        'Choose a feasible schedule with at least one future session. Check the date, weekdays, timezone and completion window.',
+      );
+    throw error;
+  }
+}
+export async function createJourney(
+  userId: string,
+  input: JourneyDraft,
+  operationId: string = randomUUID(),
+) {
   const draft = journeyDraftSchema.parse(input);
   if (draft.reminders.enabled)
     throw new AppError(
@@ -95,26 +114,26 @@ export async function createJourney(userId: string, input: JourneyDraft) {
       'Reminder delivery is not available in this milestone.',
     );
   const { now } = getRuntimeInfo();
-  const preview = previewSchedule(draft.schedule, now);
-  if (!preview.total)
-    throw new AppError(422, 'EMPTY_SCHEDULE', 'Choose a schedule with at least one practice.');
-  return withUser(userId, async (client) => {
-    await client.query('select pg_advisory_xact_lock(hashtextextended($1, 1))', [userId]);
-    const count = await client.query(
-      "select count(*)::int as total from app.journey where state <> 'archived'",
-    );
-    if (count.rows[0].total >= 20)
-      throw new AppError(
-        422,
-        'JOURNEY_LIMIT',
-        'Archive a journey before adding another. Up to 20 active or draft journeys are supported.',
+  return withUser(userId, (client) =>
+    idempotent(client, userId, operationId, 'create-journey', draft, async () => {
+      const preview = checkedPreview(draft, now);
+      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 1))', [userId]);
+      const count = await client.query(
+        "select count(*)::int as total from app.journey where state <> 'archived'",
       );
-    const result = await client.query<JourneyRow>(
-      'insert into app.journey(id,owner_id,title,intention,draft,created_at) values($1,$2,$3,$4,$5,$6) returning *',
-      [randomUUID(), userId, draft.title, draft.intention, JSON.stringify(draft), now],
-    );
-    return { journey: toJourney(result.rows[0]), preview, fingerprint: fingerprint(draft) };
-  });
+      if (count.rows[0].total >= 20)
+        throw new AppError(
+          422,
+          'JOURNEY_LIMIT',
+          'Archive a journey before adding another. Up to 20 active or draft journeys are supported.',
+        );
+      const result = await client.query<JourneyRow>(
+        'insert into app.journey(id,owner_id,title,intention,draft,created_at) values($1,$2,$3,$4,$5,$6) returning *',
+        [randomUUID(), userId, draft.title, draft.intention, JSON.stringify(draft), now],
+      );
+      return { journey: toJourney(result.rows[0]), preview, fingerprint: fingerprint(draft) };
+    }),
+  );
 }
 export async function activateJourney(
   userId: string,
@@ -136,7 +155,7 @@ export async function activateJourney(
       const draft = journeyDraftSchema.parse(row.draft);
       if (fingerprint(draft) !== input.payload.fingerprint)
         throw new AppError(409, 'PREVIEW_CHANGED', 'Please review the updated schedule preview.');
-      const schedule = previewSchedule(draft.schedule, now);
+      const schedule = checkedPreview(draft, now);
       if (!schedule.total)
         throw new AppError(422, 'EMPTY_SCHEDULE', 'Choose a schedule with at least one practice.');
       const versionId = randomUUID();

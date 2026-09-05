@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPageUser } from '@/server/auth/server';
-import { getJourneyView } from '@/server/journeys/service';
+import { getPageJourneyView as getJourneyView } from '@/server/journeys/pages';
 import { getRuntimeInfo } from '@/server/config';
 import { PageHeader, formatPracticeDate } from '@/components/presentation';
 import { Icon } from '@/components/icons';
@@ -24,7 +24,7 @@ export default async function SessionPage({
   const runtime = getRuntimeInfo();
   return (
     <div className={styles.practicePage}>
-      <Link href={`/journeys/${id}`} className={styles.back}>
+      <Link prefetch={false} href={`/journeys/${id}`} className={styles.back}>
         <Icon name="back" />
         Your journey
       </Link>

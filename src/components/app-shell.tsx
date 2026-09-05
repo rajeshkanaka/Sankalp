@@ -16,6 +16,7 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
       aria-label={mobile ? 'Mobile navigation' : 'Main navigation'}
     >
       <Link
+        prefetch={false}
         className={styles.navLink}
         href="/today"
         aria-current={path === '/today' ? 'page' : undefined}
@@ -24,6 +25,7 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
         Today
       </Link>
       <Link
+        prefetch={false}
         className={styles.navLink}
         href="/journeys"
         aria-current={path.startsWith('/journeys') || path === '/setup' ? 'page' : undefined}
@@ -68,7 +70,7 @@ export function AppShell({
     }
   }
   const brand = (
-    <Link className={styles.brand} href="/today">
+    <Link prefetch={false} className={styles.brand} href="/today">
       <Icon name="light" width="31" height="31" />
       Sankalpa
     </Link>
