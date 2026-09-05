@@ -85,7 +85,8 @@ test('@smoke @M1 custom journey persists completion through real email sign-in',
     page.getByRole('img', { name: '1 of 21 sessions completed, 5% complete', exact: true }),
   ).toBeVisible();
   phase = 'today';
-  await page.goto('/today');
+  // Other engine scenarios may have newer journeys under a later synthetic clock.
+  await page.goto(`/today?journey=${view.journey.id}`);
   await expect(
     page.getByRole('img', { name: '1 of 21 sessions completed, 5% complete', exact: true }).first(),
   ).toBeVisible();
