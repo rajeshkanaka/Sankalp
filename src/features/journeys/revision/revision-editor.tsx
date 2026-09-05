@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { requestJson } from '@/components/api';
+import { RequestError, requestJson } from '@/components/api';
 import { RequestErrorMessage } from '@/components/request-error';
 import type {
   JourneyView,
@@ -83,6 +83,8 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
   const [error, setError] = useState<Error | null>(null);
   const [preview, setPreview] = useState<ScheduleRevisionPreview | null>(null);
   const [saved, setSaved] = useState(false);
+  const [refreshingFromRevision, setRefreshingFromRevision] = useState<number | null>(null);
+  const [latestRevisionLoaded, setLatestRevisionLoaded] = useState(false);
   const nextKey = useRef(values.practices.length + 1);
   const previewHeading = useRef<HTMLHeadingElement>(null);
   const applyOperationId = useRef<string | null>(null);
@@ -95,6 +97,28 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
     if (preview) previewHeading.current?.focus();
   }, [preview]);
 
+  useEffect(() => {
+    if (refreshingFromRevision !== null && view.journey.revision !== refreshingFromRevision) {
+      setRefreshingFromRevision(null);
+      setLatestRevisionLoaded(true);
+    }
+  }, [refreshingFromRevision, view.journey.revision]);
+
+  function recoverFromStalePreview(cause: unknown) {
+    if (
+      !(cause instanceof RequestError) ||
+      (cause.code !== 'PREVIEW_CHANGED' && cause.code !== 'REVISION_CONFLICT')
+    )
+      return;
+    setPreview(null);
+    applyOperationId.current = null;
+    if (cause.code === 'REVISION_CONFLICT') {
+      setRefreshingFromRevision(view.journey.revision);
+      setLatestRevisionLoaded(false);
+      router.refresh();
+    }
+  }
+
   async function requestPreview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!values.daily && values.weekdays.length === 0) {
@@ -104,6 +128,7 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
     setWeekdaysError(false);
     setPending(true);
     setSaved(false);
+    setLatestRevisionLoaded(false);
     setError(null);
     const signature = candidateSignature(values);
     if (!previewAttempt.current || previewAttempt.current.signature !== signature) {
@@ -122,6 +147,7 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
       applyOperationId.current = crypto.randomUUID();
       setPreview(result);
     } catch (cause) {
+      recoverFromStalePreview(cause);
       setError(
         cause instanceof Error
           ? cause
@@ -152,10 +178,12 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
       );
       setPreview(null);
       setSaved(true);
+      setLatestRevisionLoaded(false);
       applyOperationId.current = null;
       previewAttempt.current = null;
       router.refresh();
     } catch (cause) {
+      recoverFromStalePreview(cause);
       setError(
         cause instanceof Error
           ? cause
@@ -228,7 +256,11 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
   }
 
   return (
-    <form className={shared.panel} onSubmit={requestPreview}>
+    <form
+      className={shared.panel}
+      onSubmit={requestPreview}
+      aria-busy={pending || refreshingFromRevision !== null}
+    >
       <h2>Change future sessions</h2>
       <p className={shared.muted}>
         Opened sessions and sessions before the effective practice date keep their original time,
@@ -262,8 +294,41 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
       </div>
       {saved && <p className={shared.success}>Future schedule updated.</p>}
       <RequestErrorMessage error={error} />
-      <button className={shared.button} type="submit" disabled={pending}>
-        {pending ? 'Preparing changes…' : 'Preview future changes'}
+      {error instanceof RequestError && error.code === 'PREVIEW_CHANGED' && (
+        <p className={shared.quietNote}>
+          Your future schedule entries are still here. Preview them again to review the updated
+          schedule before applying it.
+        </p>
+      )}
+      {refreshingFromRevision !== null && (
+        <div aria-live="polite">
+          <p className={shared.quietNote}>
+            Loading the latest journey. Your future schedule entries are still here.
+          </p>
+          <button
+            type="button"
+            className={`${shared.button} ${shared.secondary}`}
+            onClick={() => router.refresh()}
+          >
+            Retry loading latest journey
+          </button>
+        </div>
+      )}
+      {latestRevisionLoaded && (
+        <p className={shared.quietNote} aria-live="polite">
+          Latest journey loaded. Review your preserved entries, then preview them again.
+        </p>
+      )}
+      <button
+        className={shared.button}
+        type="submit"
+        disabled={pending || refreshingFromRevision !== null}
+      >
+        {refreshingFromRevision !== null
+          ? 'Loading latest journey…'
+          : pending
+            ? 'Preparing changes…'
+            : 'Preview future changes'}
       </button>
     </form>
   );
