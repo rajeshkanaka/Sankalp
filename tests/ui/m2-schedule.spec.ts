@@ -13,7 +13,12 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
   page,
 }, info) => {
   const consoleErrors: string[] = [];
-  page.on('pageerror', (error) => consoleErrors.push(`${error.name}: ${error.message}`));
+  let phase = 'login';
+  page.on('pageerror', (error) =>
+    consoleErrors.push(
+      `${phase}: ${error.name}: ${error.message.replace(/https?:\/\/[^\s]+/g, '<url>')}`,
+    ),
+  );
   setUiClock(M2_NOW);
 
   try {
@@ -21,6 +26,7 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
       page,
       info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
     );
+    phase = 'custom setup';
     await page.goto('/setup');
 
     await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue('');
@@ -42,6 +48,7 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await expect(page.getByText(/no reminder will be sent/i)).toBeVisible();
     await page.getByRole('button', { name: 'Edit details', exact: true }).click();
 
+    phase = 'template preview';
     await page.getByRole('button', { name: 'Use 21-night example', exact: true }).click();
     await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue(
       '21-night Sankalpa',
@@ -55,16 +62,19 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
 
     await expect(page.getByRole('heading', { name: 'Review your journey' })).toBeFocused();
     await expect(page.getByText(/21 sessions from 21 scheduled sessions/)).toBeVisible();
-    await expect(page.getByText(/6 September 2026/, { exact: false }).first()).toBeVisible();
-    await expect(page.getByText(/26 September 2026/, { exact: false }).first()).toBeVisible();
-    await expect(page.getByText('5 Sep 2026', { exact: true })).toBeVisible();
-    await expect(page.getByText('25 Sep 2026', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('September 6, 2026 at 12:00 AM', { exact: true }).first(),
+    ).toBeVisible();
+    await expect(page.getByText('September 26, 2026 at 12:00 AM', { exact: true })).toBeVisible();
+    await expect(page.getByText('Sep 5, 2026', { exact: true })).toBeVisible();
+    await expect(page.getByText('Sep 25, 2026', { exact: true })).toBeVisible();
     await expect(page.getByText(/previous calendar night/i)).toBeVisible();
     await expect(page.getByText(/no reminder will be sent/i)).toBeVisible();
     await expect(
       page.getByLabel('First practice reminder suggestions').getByRole('listitem'),
     ).toHaveCount(4);
 
+    phase = 'weekday preview';
     await page.getByRole('button', { name: 'Edit details', exact: true }).click();
     await page.getByLabel('Journey title', { exact: true }).fill('Monday Thursday meditation');
     await page.getByLabel('Practice 1', { exact: true }).fill('Meditation');
@@ -88,7 +98,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
       await page.getByLabel(day, { exact: true }).uncheck();
     }
     await page.getByRole('button', { name: 'Preview journey', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('Choose at least one practice day');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Choose at least one practice day' }),
+    ).toContainText('Your other entries are still here');
     await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue(
       'Monday Thursday meditation',
     );
@@ -102,11 +114,12 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
       page.getByText(/12 sessions from 12 scheduled sessions; Monday, Thursday/),
     ).toBeVisible();
     await expect(page.getByText('Meditation · 20 minutes', { exact: true })).toBeVisible();
-    await expect(page.getByText(/15 October 2026/, { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('October 15, 2026 at 6:30 PM', { exact: true })).toBeVisible();
     const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
     await page.screenshot({ path: resolve(evidence, 'weekday-preview.png'), fullPage: true });
 
+    phase = 'calendar-span preview';
     await page.getByRole('button', { name: 'Edit details', exact: true }).click();
     await page.getByLabel('Duration counts', { exact: true }).selectOption('calendar_days');
     await page.getByLabel('Number of calendar days', { exact: true }).fill('30');
@@ -116,8 +129,10 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await page.getByLabel('Tuesday', { exact: true }).check();
     await page.getByRole('button', { name: 'Preview journey', exact: true }).click();
     await expect(page.getByText(/4 sessions from 30 calendar days; Tuesday/)).toBeVisible();
-    await expect(page.getByText(/29 September 2026/, { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('September 29, 2026 at 6:30 PM', { exact: true })).toBeVisible();
+    await expect(page.getByText('Sep 29, 2026', { exact: true })).toBeVisible();
 
+    phase = 'numeric practice';
     await page.getByRole('button', { name: 'Edit details', exact: true }).click();
     await page.getByLabel('Journey title', { exact: true }).fill('Open numeric meditation');
     await page.getByLabel('Practice 1', { exact: true }).fill(LONG_PRACTICE);
@@ -151,7 +166,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
       });
     });
     await checkbox.check();
-    await expect(page.getByRole('alert')).toContainText('Temporary checkbox failure');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Temporary checkbox failure' }),
+    ).toContainText('The choice is still here');
     await expect(checkbox).toBeChecked();
     await expect(numeric).toBeDisabled();
     await expect(page.getByRole('status')).toContainText(
@@ -180,7 +197,9 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await page
       .getByRole('button', { name: `Save value for ${LONG_PRACTICE}`, exact: true })
       .click();
-    await expect(page.getByRole('alert')).toContainText('Temporary test failure');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Temporary test failure' }),
+    ).toContainText('Your entry is still here');
     await expect(numeric).toHaveValue('5');
     await page.unroute('**/api/sessions/*/practices');
     await page.getByRole('button', { name: 'Try saving again', exact: true }).click();
@@ -198,6 +217,7 @@ test('@M2 @M2-schedule personalized schedules preview accurately and numeric tar
     await expect(
       page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
     ).toBeVisible();
+    await page.screenshot({ path: resolve(evidence, 'numeric-complete.png'), fullPage: true });
 
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.setViewportSize({ width: 320, height: 800 });
