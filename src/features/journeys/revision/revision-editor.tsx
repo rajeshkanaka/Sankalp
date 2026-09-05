@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { requestJson } from '@/components/api';
@@ -84,11 +84,16 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
   const [preview, setPreview] = useState<ScheduleRevisionPreview | null>(null);
   const [saved, setSaved] = useState(false);
   const nextKey = useRef(values.practices.length + 1);
+  const previewHeading = useRef<HTMLHeadingElement>(null);
   const applyOperationId = useRef<string | null>(null);
   const previewAttempt = useRef<{
     signature: string;
     candidate: ScheduleRevisionCandidate;
   } | null>(null);
+
+  useEffect(() => {
+    if (preview) previewHeading.current?.focus();
+  }, [preview]);
 
   async function requestPreview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -164,7 +169,9 @@ export function RevisionEditor({ view }: { view: JourneyView }) {
   if (preview) {
     return (
       <section className={shared.panel} aria-busy={pending}>
-        <h2 tabIndex={-1}>Review future changes</h2>
+        <h2 ref={previewHeading} tabIndex={-1}>
+          Review future changes
+        </h2>
         <p>
           {preview.retained.length} existing session{preview.retained.length === 1 ? '' : 's'} will
           stay unchanged. {preview.supersededSessionIds.length} unopened session

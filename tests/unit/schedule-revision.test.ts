@@ -143,4 +143,23 @@ describe('generateScheduleRevision', () => {
       ),
     ).toThrow(/already opened/i);
   });
+
+  it('rejects a calendar revision that would leave no active sessions', () => {
+    expect(() =>
+      generateScheduleRevision(
+        '2026-09-07',
+        candidate({
+          effectivePracticeDate: '2026-09-07',
+          schedule: {
+            ...candidate().schedule,
+            durationMode: 'calendar_days',
+            durationValue: 1,
+            weekdays: [2],
+          },
+        }),
+        [],
+        NOW,
+      ),
+    ).toThrow(/no occurrences/i);
+  });
 });

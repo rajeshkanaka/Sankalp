@@ -6,13 +6,14 @@ import { createClient, type User } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { JourneyDraft, ScheduleRevisionCandidate } from '../../src/domain/contracts';
-import { getPool } from '../../src/server/db/client';
+import { getPool, withUser } from '../../src/server/db/client';
 import { activateJourney, createJourney, getJourneyView } from '../../src/server/journeys/service';
 import { updateJourneyMetadata } from '../../src/server/journeys/metadata';
 import {
   applyScheduleRevision,
   previewScheduleRevision,
 } from '../../src/server/journeys/revisions';
+import { confirmSession } from '../../src/server/sessions/service';
 import {
   buildSyntheticMarker,
   isExpectedSyntheticUser,
@@ -285,6 +286,51 @@ describe('future schedule revisions', () => {
       activeScheduleVersionId: before.journey.activeScheduleVersionId,
     });
     expect(after.sessions).toEqual(before.sessions);
+  });
+
+  it('serializes completion at the opening boundary and preserves the completed session', async () => {
+    setClock(BEFORE_SECOND_OPEN);
+    const original = await activate();
+    const second = original.sessions.find(({ practiceDate }) => practiceDate === '2026-09-06')!;
+    await withUser(userId, (client) =>
+      client.query(
+        'update app.session_practice set numeric_value=108 where session_id=$1 and practice_id=$2',
+        [second.id, FIRST_PRACTICE_ID],
+      ),
+    );
+    const revision = candidate();
+    const proposed = await preview(original.journey.id, revision);
+
+    setClock(AT_SECOND_OPEN);
+    const [completion, application] = await Promise.allSettled([
+      confirmSession(userId, second.id, {
+        operationId: randomUUID(),
+        baseRevision: second.revision,
+        payload: { performedAt: second.opensAt },
+      }),
+      applyScheduleRevision(userId, original.journey.id, {
+        mode: 'apply',
+        operationId: randomUUID(),
+        baseRevision: original.journey.revision,
+        payload: { candidate: revision, fingerprint: proposed.fingerprint },
+      }),
+    ]);
+
+    expect(completion.status).toBe('fulfilled');
+    expect(application).toMatchObject({
+      status: 'rejected',
+      reason: { code: 'PREVIEW_CHANGED', status: 409 },
+    });
+    const after = await getJourneyView(userId, original.journey.id);
+    expect(after.journey.activeScheduleVersionId).toBe(original.journey.activeScheduleVersionId);
+    expect(after.sessions.find(({ id }) => id === second.id)).toMatchObject({
+      id: second.id,
+      ordinal: second.ordinal,
+      scheduleVersionId: second.scheduleVersionId,
+      confirmed: true,
+      supersededAt: null,
+      practices: [expect.objectContaining({ id: FIRST_PRACTICE_ID, value: 108 })],
+    });
   });
 
   it('rejects duration reductions that would remove retained occurrence or calendar history', async () => {

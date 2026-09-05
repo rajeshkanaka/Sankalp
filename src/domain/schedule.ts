@@ -243,6 +243,9 @@ export function generateScheduleRevision(
   let nextOrdinal =
     retained.reduce((maximum, occurrence) => Math.max(maximum, occurrence.ordinal), 0) + 1;
   const proposed = selectedDates.map((date) => createOccurrence(schedule, date, nextOrdinal++));
+  if (retained.length === 0 && proposed.length === 0) {
+    throw new RangeError('The revised schedule contains no occurrences');
+  }
   const current = Temporal.Instant.from(now);
   if (proposed.some(({ opensAt }) => Temporal.Instant.compare(opensAt, current) <= 0)) {
     throw new RangeError('A proposed practice window has already opened');
