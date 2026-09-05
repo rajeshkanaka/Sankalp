@@ -28,6 +28,10 @@ function signature(payload: ReflectionPayload): string {
   return JSON.stringify(payload);
 }
 
+function matchesReflection(payload: ReflectionPayload, reflection: ReflectionRecord): boolean {
+  return signature(payload) === signature({ text: reflection.text, moods: reflection.moods });
+}
+
 function hasInvalidPlainText(value: string): boolean {
   if (value.includes('\0')) return true;
   for (let index = 0; index < value.length; index += 1) {
@@ -122,6 +126,7 @@ export function ReflectionEditor({
   const [savedSignature, setSavedSignature] = useState(() => signature(initialPayload));
   const [pending, setPending] = useState(false);
   const [autosaveBlocked, setAutosaveBlocked] = useState(false);
+  const [retryRequired, setRetryRequired] = useState(false);
   const [state, setState] = useState(initialReflection ? 'Saved.' : 'No reflection saved yet.');
   const [error, setError] = useState<Error | null>(null);
   const [conflict, setConflict] = useState<ConflictVersions | null>(null);
@@ -177,15 +182,34 @@ export function ReflectionEditor({
         setSavedSignature(currentAttempt.signature);
         setState('Saved.');
         setAutosaveBlocked(false);
+        setRetryRequired(false);
         setConflict(null);
         attempt.current = null;
       } catch (cause) {
-        if (cause instanceof RequestError && cause.code === 'REVISION_CONFLICT') {
+        if (
+          cause instanceof RequestError &&
+          (cause.code === 'REVISION_CONFLICT' || cause.code === 'NO_CHANGE')
+        ) {
           const server = reflectionFromConflict(cause.current, session.id);
-          if (server !== undefined) {
+          if (server && matchesReflection(currentAttempt.mutation.payload, server)) {
+            revisionRef.current = server.revision;
+            setRevision(server.revision);
+            setText(server.text);
+            setMoods([...server.moods]);
+            setSavedSignature(signature({ text: server.text, moods: server.moods }));
+            setState('Saved.');
+            setAutosaveBlocked(false);
+            setRetryRequired(false);
+            setConflict(null);
+            setError(null);
+            attempt.current = null;
+            return;
+          }
+          if (cause.code === 'REVISION_CONFLICT' && server !== undefined) {
             setConflict({ local: currentAttempt.mutation.payload, server });
             setState('Choose which version to keep.');
             setAutosaveBlocked(true);
+            setRetryRequired(false);
             attempt.current = null;
             return;
           }
@@ -197,6 +221,13 @@ export function ReflectionEditor({
         );
         setState('Not saved.');
         setAutosaveBlocked(true);
+        const uncertain =
+          cause instanceof RequestError &&
+          (cause.code === 'NETWORK_ERROR' ||
+            cause.code === 'RESPONSE_ERROR' ||
+            (typeof cause.status === 'number' && cause.status >= 500));
+        setRetryRequired(uncertain);
+        if (!uncertain) attempt.current = null;
       } finally {
         pendingRef.current = false;
         setPending(false);
@@ -211,6 +242,7 @@ export function ReflectionEditor({
       validationMessage ||
       pending ||
       autosaveBlocked ||
+      retryRequired ||
       conflict ||
       unavailable
     )
@@ -224,6 +256,7 @@ export function ReflectionEditor({
     currentSignature,
     pending,
     persist,
+    retryRequired,
     savedSignature,
     unavailable,
     validationMessage,
@@ -247,6 +280,7 @@ export function ReflectionEditor({
     setMoodInput('');
     setError(null);
     setAutosaveBlocked(false);
+    setRetryRequired(false);
   }
 
   function useSavedVersion() {
@@ -263,6 +297,7 @@ export function ReflectionEditor({
     setConflict(null);
     setError(null);
     setAutosaveBlocked(false);
+    setRetryRequired(false);
     setState(conflict.server ? 'Loaded the saved version.' : 'Loaded the empty saved version.');
   }
 
@@ -277,6 +312,7 @@ export function ReflectionEditor({
     setConflict(null);
     setError(null);
     setAutosaveBlocked(false);
+    setRetryRequired(false);
     attempt.current = null;
     void persist({ payload: local, baseRevision });
   }
@@ -311,7 +347,7 @@ export function ReflectionEditor({
           id={`reflection-${session.id}`}
           className={styles.editor}
           value={text}
-          disabled={pending || Boolean(conflict)}
+          disabled={pending || Boolean(conflict) || retryRequired}
           aria-describedby={`reflection-count-${session.id}`}
           onChange={(event) => {
             setText(event.target.value);
@@ -330,7 +366,7 @@ export function ReflectionEditor({
           <input
             id={`mood-${session.id}`}
             value={moodInput}
-            disabled={pending || Boolean(conflict) || moods.length >= 5}
+            disabled={pending || Boolean(conflict) || retryRequired || moods.length >= 5}
             onChange={(event) => setMoodInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
@@ -342,7 +378,7 @@ export function ReflectionEditor({
           <button
             type="button"
             className={`${shared.button} ${shared.secondary}`}
-            disabled={pending || Boolean(conflict) || moods.length >= 5}
+            disabled={pending || Boolean(conflict) || retryRequired || moods.length >= 5}
             onClick={addMood}
           >
             Add mood
@@ -356,7 +392,7 @@ export function ReflectionEditor({
                 <button
                   type="button"
                   aria-label={`Remove mood ${mood}`}
-                  disabled={pending || Boolean(conflict)}
+                  disabled={pending || Boolean(conflict) || retryRequired}
                   onClick={() => {
                     setMoods((current) => current.filter((item) => item !== mood));
                     setError(null);
@@ -410,6 +446,7 @@ export function ReflectionEditor({
           disabled={
             pending ||
             Boolean(conflict) ||
+            retryRequired ||
             Boolean(validationMessage) ||
             currentSignature === savedSignature
           }
@@ -417,7 +454,7 @@ export function ReflectionEditor({
         >
           {pending ? 'Saving…' : 'Save reflection'}
         </button>
-        {error && attempt.current && !conflict && (
+        {error && retryRequired && attempt.current && !conflict && (
           <button
             type="button"
             className={`${shared.button} ${shared.secondary}`}

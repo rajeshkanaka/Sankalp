@@ -72,7 +72,7 @@ async function createJourney(request: APIRequestContext): Promise<JourneyView> {
 }
 
 async function expectSaved(scope: Page | Locator) {
-  await expect(scope.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+  await expect(scope.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
 }
 
 async function reflectionPage(context: BrowserContext, path: string) {
@@ -97,9 +97,36 @@ test('@M3 @M3-journal private Unicode reflections autosave, search and resolve c
 
   const editor = page.getByRole('region', { name: 'Private reflection' });
   const note = editor.getByLabel('Your reflection', { exact: true });
+  let committedBody: unknown;
+  let committedStatus = 0;
+  await page.route(
+    `**/api/sessions/${session.id}/reflection`,
+    async (route) => {
+      committedBody = route.request().postDataJSON();
+      const upstream = await route.fetch();
+      committedStatus = upstream.status();
+      await route.abort('connectionfailed');
+    },
+    { times: 1 },
+  );
   await note.fill(NOTE);
   await editor.getByLabel('Mood tag (optional)', { exact: true }).fill('शांत');
   await editor.getByRole('button', { name: 'Add mood', exact: true }).click();
+  await editor.getByRole('button', { name: 'Save reflection', exact: true }).click();
+  await expect(editor.getByRole('alert').filter({ hasText: 'Could not connect' })).toBeVisible();
+  expect(committedStatus).toBe(200);
+  await expect(note).toBeDisabled();
+  await expect(editor.getByRole('button', { name: 'Save reflection', exact: true })).toBeDisabled();
+  const retriedResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/api/sessions/${session.id}/reflection`) &&
+      response.request().method() === 'PUT',
+  );
+  await editor.getByRole('button', { name: 'Try saving again', exact: true }).click();
+  const retried = await retriedResponse;
+  expect(retried.ok()).toBe(true);
+  expect(retried.request().postDataJSON()).toEqual(committedBody);
+  expect(await retried.json()).toMatchObject({ sessionId: session.id, revision: 1 });
   await expectSaved(editor);
   await expect(note).toHaveValue(NOTE);
   await page.reload();
@@ -119,7 +146,9 @@ test('@M3 @M3-journal private Unicode reflections autosave, search and resolve c
 
   await page.getByLabel('What did you notice?', { exact: true }).check();
   await page.getByRole('button', { name: 'Save prompt choices', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Prompt choices saved.' })).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^Prompt choices saved\.$/ }),
+  ).toBeVisible();
   await page.goto(sessionPath);
   await expect(page.getByText('What did you notice?', { exact: true })).toBeVisible();
 
@@ -159,6 +188,10 @@ test('@M3 @M3-journal private Unicode reflections autosave, search and resolve c
       losingEditor.getByRole('region', { name: 'Your unsaved reflection' }),
     ).toContainText(losingText);
     await expect(losingEditor.getByRole('region', { name: 'Saved reflection' })).toBeVisible();
+    const winningEditor = winningPage.getByRole('region', { name: 'Private reflection' });
+    await winningEditor.getByLabel('Your reflection', { exact: true }).fill(losingText);
+    await winningEditor.getByRole('button', { name: 'Save reflection', exact: true }).click();
+    await expectSaved(winningEditor);
     await losingEditor.getByRole('button', { name: 'Keep my version', exact: true }).click();
     await expectSaved(losingEditor);
     await winningPage.reload();

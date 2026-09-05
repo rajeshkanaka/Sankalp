@@ -244,7 +244,11 @@ describe('private reflections', () => {
     expect(['First device', 'Second device']).toContain(current?.text);
     await expect(
       save(maya, sessionId, { text: current!.text, moods: current!.moods }, current!.revision),
-    ).rejects.toMatchObject({ status: 409, code: 'NO_CHANGE' });
+    ).rejects.toMatchObject({
+      status: 409,
+      code: 'NO_CHANGE',
+      current: { sessionId, revision: current!.revision, text: current!.text },
+    });
   });
 
   it('allows archived opened sessions while rejecting unopened, superseded and foreign sessions', async () => {

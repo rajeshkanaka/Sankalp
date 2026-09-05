@@ -165,7 +165,7 @@ export async function saveReflection(
         current.moods.length === payload.moods.length &&
         current.moods.every((mood, index) => mood === payload.moods[index])
       )
-        throw new AppError(409, 'NO_CHANGE', 'This reflection already has those details.');
+        throw new AppError(409, 'NO_CHANGE', 'This reflection already has those details.', current);
 
       const revision = (current?.revision ?? 0) + 1;
       if (current) {
