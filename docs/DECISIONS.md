@@ -91,6 +91,12 @@ Production privacy text must disclose actual policies, local storage limits, rep
 
 The user requested these documents and a local planning commit on 2026-09-05. No implementation, spending, staging, real messages or production deployment is authorized in this session. Record actual plan approval with date and scope in PROJECT_PROGRESS and a dated SESSION_LOG entry. Then these selected decisions become the baseline. For a later change, append a decision with problem, exact change, impact/migration/tests and the user's approval reference; preserve superseded decisions. Routine substeps do not need repeated approval within already-authorized scope.
 
+## D10 — Approved continuous implementation (2026-09-06)
+
+User approved the entire plan and instructed the coordinator to commit, push, orchestrate agents and continue until the app is complete. This authorizes implementation, dependency setup, focused commits/pushes and progression across milestones without repeated visual-review pauses. Retain all technical acceptance, security, real-device and evidence gates; do not record waived visual pauses as reviews that happened. The coordinator may assign bounded substeps within a task to isolated workers while retaining single-task accountability.
+
+Deployment work is authorized in principle as part of the approved plan; actual budget cap, accounts, domain/sender, device availability and recipient consent still require concrete inputs. A concise question for those details was presented while local implementation proceeds. Do not spend without an established cap or fabricate credentials/device results. No unrelated destructive operation or shared-history rewrite is authorized. Subsequent architecture/stack changes retain the existing approval rule; compatibility corrections must be evidence-backed and recorded.
+
 ## Verification sources
 
 Accessed during **2026-09-05–06 (Asia/Kolkata)**; version support/package metadata was rechecked on 2026-09-06 for the final compatibility corrections. Sources support the decisions above; provider behavior must be reconfirmed at the relevant implementation/release gate. Links to future repository paths are not evidence that those files exist.

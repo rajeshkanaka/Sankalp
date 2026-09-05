@@ -4,11 +4,11 @@
 
 ## 1. Register and assignment rules
 
-Owners below are responsible role slots, **not already-running agents**. Before IN_PROGRESS the coordinator replaces the slot with a named owner and records branch, worktree, base SHA and resource slot in its task report; only one active owner per task. `C` = coordinator, `W-<area>` = assigned worker or coordinator in sequential mode. Coordinator is accountable for all integration/migration/config work. No implementation task may start before plan approval or outside the approved milestone.
+Owners below are responsible role slots, **not already-running agents**. Before IN_PROGRESS the coordinator replaces the slot with a named owner and records branch, worktree, base SHA and resource slot in its task report; only one active owner per task. `C` = coordinator, `W-<area>` = assigned worker or coordinator in sequential mode. Coordinator is accountable for all integration/migration/config work. Plan approval is recorded in D10. Milestone review dependencies below are waived as pauses by that decision; their technical gates remain prerequisites.
 
 | ID | Milestone | Concrete outcome | Depends on | Responsible owner | Status | Evidence/report |
 |---|---|---|---|---|---|---|
-| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval | C | TODO | `docs/handoffs/SK-001.md`; M1 evidence |
+| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-001.md`; M1 evidence |
 | SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | W-foundation | TODO | `docs/handoffs/SK-002.md`; M1 evidence |
 | SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review | W-schedule | TODO | `docs/handoffs/SK-003.md`; M2 evidence |
 | SK-004 | M2 | Future revisions preserve original history | SK-003 | W-revisions | TODO | `docs/handoffs/SK-004.md`; M2 evidence |
@@ -34,11 +34,11 @@ Genuine external blockers (dependency waiting alone does not require BLOCKED):
 
 | Blocker | Affected work | Required resolution |
 |---|---|---|
-| B01 | SK-016 | User authorization for staging provisioning/spending, actual itemized quote and budget cap; cloud accounts/credentials supplied through secure provider configuration. |
+| B01 | SK-016 | Deployment authorization is recorded in D10; still require actual itemized quote and budget cap; cloud accounts/credentials supplied through secure provider configuration. |
 | B02 | SK-016 | Owned sending domain/DNS, verified Resend SMTP and explicit test-mail recipients; no real mail authorization assumed. |
 | B03 | SK-016 | Verified provider retention/deletion/backup terms compatible with D08 and a disclosed actual policy; regional capacity and selected compute quote. |
 | B04 | SK-017 | Access to a supported real iPhone Home Screen install and Android install, plus explicit consent to send test pushes to those devices. Browser emulation cannot resolve this. |
-| B05 | SK-019 | Separate production deployment approval, approved revision/domain/budget and production credentials after M6 review. |
+| B05 | SK-019 | Deployment authorization is recorded in D10; still require verified release revision/domain/budget, production credentials and M6 technical gates. |
 
 ## 2. Execution and checkpoint sequence
 

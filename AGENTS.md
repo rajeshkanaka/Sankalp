@@ -11,7 +11,7 @@ The repository is the durable context for Codex, Claude Code, and other coding a
 - [APP_SPECIFICATION](docs/APP_SPECIFICATION.md): product behavior and A01–A27 acceptance requirements.
 - [SESSION_LOG](docs/SESSION_LOG.md): dated session evidence and handoffs. Task reports live at `docs/handoffs/<task-id>.md` once implementation starts.
 
-Current user instructions take precedence. Preserve approved behavior when code disagrees with it. Do not silently redesign the stack or reduce launch scope. Stack changes require user approval recorded in DECISIONS. Until PROJECT_PROGRESS records plan approval, do planning work only. Each milestone requires its own visual-review pause before starting the next milestone; approval to implement is not approval to provision, send real messages, push, or deploy.
+Current user instructions take precedence. Preserve approved behavior when code disagrees with it. Do not silently redesign the stack or reduce launch scope. Stack changes require user approval recorded in DECISIONS. Until PROJECT_PROGRESS records plan approval, do planning work only. The user approved the full plan on 2026-09-06 and explicitly requested continuous implementation through completion, commits and pushes. Milestone review pauses are waived by D10; continue after technical gates pass, retaining demo evidence. Deployment remains bounded by supplied accounts, budget/domain details and real-device access; never invent those prerequisites.
 
 ## Engineering rules
 
@@ -45,7 +45,7 @@ Command definitions and availability are centralized in PROJECT_PLAN §5. Requir
 
 DONE means acceptance passed, required tests actually ran successfully, changes were reviewed and integrated, regression evidence is retained, and the coordinator recorded the result. A blocked/unavailable test stays NOT RUN and prevents DONE for the affected task. Keep technical task completion separate from the user's milestone review in PROJECT_PROGRESS.
 
-For every milestone, launch the actual integrated app, exercise the specified workflow with functional assertions, and capture real screenshots. Label simulated transport and unavailable features visibly. Present startup commands, reachable entry point, actual test outcomes and evidence; then pause for visual review. Screenshots and user review do not replace tests. Never call a sandbox-only address accessible to the user.
+For every milestone, launch the actual integrated app, exercise the specified workflow with functional assertions, and capture real screenshots. Label simulated transport and unavailable features visibly. Present startup commands, reachable entry point, actual test outcomes and evidence; then continue under D10 after technical gates pass, retaining evidence for the user. Screenshots and user review do not replace tests. Never call a sandbox-only address accessible to the user.
 
 ## Before stopping or after interruption
 
