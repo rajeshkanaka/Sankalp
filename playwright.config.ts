@@ -7,6 +7,8 @@ const origin = `http://localhost:${runtime.testPort}`;
 process.env.UI_ORIGIN = origin;
 process.env.UI_RUN_ID ||= new Date().toISOString().replace(/[:.]/g, '-');
 mkdirSync('.local', { recursive: true });
+const firefoxAppData = resolve('.local/playwright-firefox-app-data');
+mkdirSync(firefoxAppData, { recursive: true, mode: 0o700 });
 writeFileSync('.local/ui-clock.json', JSON.stringify({ now: '2026-09-05T00:45:00.000Z' }));
 
 export default defineConfig({
@@ -30,7 +32,10 @@ export default defineConfig({
     {
       name: 'firefox',
       testIgnore: '**/http-boundaries.spec.ts',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        launchOptions: { env: { ...process.env, MOZ_APP_DATA: firefoxAppData } },
+      },
     },
   ],
   webServer: {

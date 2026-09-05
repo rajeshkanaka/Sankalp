@@ -2,8 +2,25 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { privateHeaders } from './server/auth/server';
 import { randomBytes } from 'node:crypto';
+import { getOrigin } from './server/config';
 
 export async function proxy(request: NextRequest) {
+  if (
+    ['local', 'ci'].includes(process.env.APP_ENV ?? '') &&
+    ['GET', 'HEAD'].includes(request.method)
+  ) {
+    const canonical = new URL(getOrigin());
+    if (
+      ['localhost', '127.0.0.1'].includes(request.nextUrl.hostname) &&
+      ['localhost', '127.0.0.1'].includes(canonical.hostname) &&
+      request.nextUrl.port === canonical.port &&
+      request.nextUrl.origin !== canonical.origin
+    )
+      return NextResponse.redirect(
+        new URL(request.nextUrl.pathname + request.nextUrl.search, canonical),
+        308,
+      );
+  }
   const nonce = randomBytes(24).toString('base64');
   const development = process.env.NODE_ENV === 'development';
   const policy = [

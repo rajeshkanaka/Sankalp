@@ -154,6 +154,14 @@ test.describe('@M1 @SK-002 real HTTP boundaries', () => {
     'HTTP boundaries are browser-neutral.',
   );
 
+  test('redirects the loopback alias to the configured local origin', async ({ request }) => {
+    const alias = new URL('/welcome', appOrigin());
+    alias.hostname = '127.0.0.1';
+    const response = await request.get(alias.href, { maxRedirects: 0 });
+    expect(response.status()).toBe(308);
+    expect(response.headers().location).toBe(`${appOrigin()}/welcome`);
+  });
+
   for (const [label, origin] of [
     ['missing', undefined],
     ['wrong', 'https://attacker.example.test'],

@@ -10,7 +10,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 |---|---|---|---|---|---|---|
 | SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-001.md`; M1 evidence |
 | SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-002.md`; M1 evidence |
-| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review | W-schedule | TODO | `docs/handoffs/SK-003.md`; M2 evidence |
+| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root/m1_domain | IN_PROGRESS | `docs/handoffs/SK-003.md`; M2 evidence |
 | SK-004 | M2 | Future revisions preserve original history | SK-003 | W-revisions | TODO | `docs/handoffs/SK-004.md`; M2 evidence |
 | SK-005 | M2 | Consistent dashboard/calendar/list | SK-003 | W-progress | TODO | `docs/handoffs/SK-005.md`; M2 evidence |
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | W-practice | TODO | `docs/handoffs/SK-006.md`; M3 evidence |

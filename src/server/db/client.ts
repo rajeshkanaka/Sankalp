@@ -8,7 +8,7 @@ export function getPool() {
   if (!globalDb.sankalpaPool) {
     globalDb.sankalpaPool = new pg.Pool({
       connectionString: requiredEnv('DATABASE_URL'),
-      max: 8,
+      max: 5,
       connectionTimeoutMillis: 5000,
       idleTimeoutMillis: 30000,
       statement_timeout: 10000,

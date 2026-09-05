@@ -119,6 +119,67 @@ function cli(parts, capture = false) {
 function status() {
   return JSON.parse(cli(['status', '--output', 'json'], true));
 }
+const networkName = `${runtime.projectId}-loopback`;
+function docker(parts) {
+  return execFileSync('docker', parts, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+}
+function ensureLoopbackNetwork() {
+  const existing = docker([
+    'network',
+    'ls',
+    '--filter',
+    `name=^${networkName}$`,
+    '--format',
+    '{{.Name}}',
+  ]).trim();
+  if (!existing)
+    docker([
+      'network',
+      'create',
+      '--driver',
+      'bridge',
+      '--label',
+      `app.sankalpa.runtime-root=${root}`,
+      '--opt',
+      'com.docker.network.bridge.host_binding_ipv4=127.0.0.1',
+      networkName,
+    ]);
+  const [network] = JSON.parse(docker(['network', 'inspect', networkName]));
+  if (
+    network.Driver !== 'bridge' ||
+    network.Labels?.['app.sankalpa.runtime-root'] !== root ||
+    network.Options?.['com.docker.network.bridge.host_binding_ipv4'] !== '127.0.0.1'
+  )
+    throw new Error('Local network ownership or loopback binding does not match this worktree.');
+}
+function assertLoopbackBindings() {
+  const ids = docker([
+    'ps',
+    '-q',
+    '--filter',
+    `label=com.supabase.cli.project=${runtime.projectId}`,
+  ])
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!ids.length) throw new Error('No running containers found for the allocated local stack.');
+  const containers = JSON.parse(docker(['inspect', ...ids]));
+  const ports = new Set();
+  for (const container of containers) {
+    if (!container.NetworkSettings.Networks[networkName])
+      throw new Error(
+        'Local stack uses an older network. Run db:stop then db:start to preserve data and rebind it.',
+      );
+    for (const bindings of Object.values(container.NetworkSettings.Ports ?? {}))
+      for (const binding of bindings ?? []) {
+        if (binding.HostIp !== '127.0.0.1')
+          throw new Error('Local stack exposes a non-loopback port. Stop it before continuing.');
+        ports.add(Number(binding.HostPort));
+      }
+  }
+  if (![runtime.dbPort, runtime.apiPort, runtime.mailPort].every((port) => ports.has(port)))
+    throw new Error('Local stack omitted an expected loopback port.');
+}
 async function environment() {
   const state = status();
   const dbUrl = new URL(state.DB_URL);
@@ -199,7 +260,9 @@ switch (command) {
     );
     break;
   case 'start':
-    cli(['start']);
+    ensureLoopbackNetwork();
+    cli(['start', '--network-id', networkName]);
+    assertLoopbackBindings();
     await environment();
     console.log('Local Supabase stack started. Use npm run db:status for safe connection details.');
     break;
@@ -211,6 +274,7 @@ switch (command) {
     await environment();
     break;
   case 'status': {
+    assertLoopbackBindings();
     const state = status();
     console.log(
       JSON.stringify(

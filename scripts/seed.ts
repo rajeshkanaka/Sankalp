@@ -247,7 +247,8 @@ async function main(): Promise<void> {
     const localDirectory = resolve(runtime.root, '.local');
     const identityDirectory = resolve(localDirectory, 'fixtures');
     mkdirSync(identityDirectory, { recursive: true, mode: 0o700 });
-    writeJsonAtomically(resolve(localDirectory, 'demo-clock.json'), { now: M1_DEMO_NOW });
+    if (options.namespace === 'demo')
+      writeJsonAtomically(resolve(localDirectory, 'demo-clock.json'), { now: M1_DEMO_NOW });
     writeJsonAtomically(resolve(identityDirectory, fixtureIdentityFileName(options.namespace)), {
       profile: options.profile,
       namespace: options.namespace,
