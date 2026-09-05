@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type User } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { JourneyDraft } from '../../src/domain/contracts';
@@ -9,9 +9,16 @@ import { getPool, withUser } from '../../src/server/db/client';
 import { AppError } from '../../src/server/errors';
 import { activateJourney, createJourney, getJourneyView } from '../../src/server/journeys/service';
 import { confirmSession, savePractices } from '../../src/server/sessions/service';
+import {
+  buildSyntheticMarker,
+  isExpectedSyntheticUser,
+  loadGuardedIntegrationRuntime,
+  SYNTHETIC_MARKER_KEY,
+  type SyntheticMarker,
+} from './local-test-runtime';
 
-const ROOT_ENV = '/Users/rajesh/sankalpa/.env.local';
 const TEST_EMAIL = 'integration-maya-activation@example.test';
+const TEST_MARKER = buildSyntheticMarker('activation', 'maya');
 const CLOCK_PATH = resolve(process.cwd(), '.local/integration-activation-clock.json');
 const NOW = '2026-09-05T06:15:00+05:30';
 const PERFORMED_AT = '2026-09-05T06:10:00+05:30';
@@ -19,21 +26,13 @@ const FIRST_PRACTICE_ID = 'a1000000-0000-4000-8000-000000000001';
 const SECOND_PRACTICE_ID = 'a1000000-0000-4000-8000-000000000002';
 
 let userId = '';
+const ownedUserIds = new Set<string>();
 
 function loadIntegrationEnvironment() {
-  if (!process.env.DATABASE_URL && existsSync(ROOT_ENV)) process.loadEnvFile(ROOT_ENV);
-  for (const name of [
-    'DATABASE_URL',
-    'SUPABASE_URL',
-    'LOCAL_SUPABASE_SECRET_KEY',
-    'LOCAL_ADMIN_DATABASE_URL',
-  ]) {
-    if (!process.env[name]) throw new Error(`Integration environment is missing ${name}`);
-  }
+  loadGuardedIntegrationRuntime();
   mkdirSync(resolve(process.cwd(), '.local'), { recursive: true, mode: 0o700 });
   writeFileSync(CLOCK_PATH, JSON.stringify({ now: NOW }), { mode: 0o600 });
   process.env.DEMO_CLOCK_FILE = CLOCK_PATH;
-  process.env.APP_ENV = 'local';
 }
 
 function authAdmin() {
@@ -42,25 +41,47 @@ function authAdmin() {
   });
 }
 
-async function deleteSyntheticUsersByEmail(email: string) {
+async function listAllUsers(): Promise<User[]> {
   const admin = authAdmin();
-  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1_000 });
-  if (error) throw error;
-  for (const user of data.users) {
-    if (user.email === email) {
-      const deleted = await admin.auth.admin.deleteUser(user.id);
-      if (deleted.error) throw deleted.error;
-    }
+  const users: User[] = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1_000 });
+    if (error) throw error;
+    users.push(...data.users);
+    if (data.users.length < 1_000) return users;
   }
+  throw new Error('Local Supabase contains too many auth users for guarded test lookup.');
 }
 
-async function createSyntheticUser(email: string): Promise<string> {
-  await deleteSyntheticUsersByEmail(email);
+async function deleteOwnedSyntheticUser(id: string, email: string, marker: SyntheticMarker) {
+  if (!ownedUserIds.has(id)) throw new Error('Refusing to delete an unowned synthetic user ID.');
+  const admin = authAdmin();
+  const current = await admin.auth.admin.getUserById(id);
+  if (current.error) throw current.error;
+  if (!isExpectedSyntheticUser(current.data.user, email, marker))
+    throw new Error('Refusing to delete a user without the exact synthetic marker.');
+  const deleted = await admin.auth.admin.deleteUser(id);
+  if (deleted.error) throw deleted.error;
+  ownedUserIds.delete(id);
+}
+
+async function createSyntheticUser(email: string, marker: SyntheticMarker): Promise<string> {
+  const existing = (await listAllUsers()).find((user) => user.email === email);
+  if (existing) {
+    if (!isExpectedSyntheticUser(existing, email, marker))
+      throw new Error('Reserved integration email belongs to an unmarked or different account.');
+    ownedUserIds.add(existing.id);
+    await deleteOwnedSyntheticUser(existing.id, email, marker);
+  }
   const { data, error } = await authAdmin().auth.admin.createUser({
     email,
     email_confirm: true,
+    app_metadata: { [SYNTHETIC_MARKER_KEY]: marker },
   });
   if (error) throw error;
+  if (!isExpectedSyntheticUser(data.user, email, marker))
+    throw new Error('Supabase returned a user without the exact synthetic marker.');
+  ownedUserIds.add(data.user.id);
   return data.user.id;
 }
 
@@ -115,14 +136,12 @@ async function createActivatedJourney(title: string) {
 
 beforeAll(async () => {
   loadIntegrationEnvironment();
-  userId = await createSyntheticUser(TEST_EMAIL);
+  userId = await createSyntheticUser(TEST_EMAIL, TEST_MARKER);
 });
 
 afterAll(async () => {
-  if (userId) {
-    const deleted = await authAdmin().auth.admin.deleteUser(userId);
-    if (deleted.error) throw deleted.error;
-  }
+  if (userId && ownedUserIds.has(userId))
+    await deleteOwnedSyntheticUser(userId, TEST_EMAIL, TEST_MARKER);
   await closeApplicationPool();
   rmSync(CLOCK_PATH, { force: true });
   delete process.env.DEMO_CLOCK_FILE;

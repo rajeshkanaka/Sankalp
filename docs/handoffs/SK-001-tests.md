@@ -45,3 +45,17 @@ The integration script reports that this worktree has no `.env.local`; the tests
 ## Integration next step
 
 Cherry-pick the test and handoff commits, then rerun the focused integration command from the integrated root. Coordinator review, migration integration and retained regression evidence determine SK-001 status; this worker makes no DONE claim.
+
+## Post-integration destructive-test hardening
+
+Coordinator review identified that the original tests could load a hard-coded root environment, assigned `APP_ENV=local` themselves, and treated an email match as sufficient cleanup authority. The follow-up patch now:
+
+- loads only the current working directory's `.env.local` when no application database environment has been loaded;
+- reuses the coordinator-owned local runtime allocation guard and additionally requires `DATABASE_URL` to use the allocated loopback database port, the `app_api` role and the `postgres` database;
+- requires `APP_ENV=local|ci`, the current worktree root, canonical allocated ports/project ID, guarded local admin/API URLs and a local secret before writing a clock or calling Supabase;
+- assigns each synthetic account an exact `sankalpa_fixture` app-metadata marker and refuses unmarked or differently marked email collisions;
+- tracks confirmed owned IDs, re-fetches and revalidates marker plus email before cleanup, and applies the same checks before the narrow SQL fallback.
+
+Post-hardening static verification passed: format, lint and typecheck exit 0; the unchanged unit suite passes 3 files and 47 tests. Typecheck used a temporary symlink to the coordinator's already-integrated `tests/fixtures` because this worker branch predates that owned fixture commit; the symlink was removed and is not committed. A temporary, uncommitted guard test passed 8 cases covering production mode, foreign worktree roots, hosted APIs, wrong database ports/roles/names, invalid runtime allocation and exact-marker mismatch behavior.
+
+The 13 live integration assertions are **NOT RUN after this hardening patch in the worker worktree**. The guarded command failed before service access with `Missing or invalid .local/runtime.json` and skipped all 13 tests, as required because slot 0 belongs to `/Users/rajesh/sankalpa`. The coordinator must rerun them from the integrated root, whose runtime and environment own slot 0.
