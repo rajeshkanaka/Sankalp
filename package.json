@@ -1,0 +1,63 @@
+{
+  "name": "sankalpa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "24.20.0",
+    "npm": "11.19.0"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/run-next.mjs dev",
+    "build": "next build",
+    "start": "node --env-file-if-exists=.env.local scripts/run-next.mjs start",
+    "format:check": "prettier --check src tests scripts *.json *.mjs",
+    "format": "prettier --write src tests scripts *.json *.mjs",
+    "lint": "eslint src tests scripts --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --project integration",
+    "test:ui": "node --env-file-if-exists=.env.local node_modules/@playwright/test/cli.js test",
+    "test:smoke": "npm run test:ui -- --project chromium --grep @smoke",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test:unit && npm run test:integration && npm run build && npm run test:smoke",
+    "workspace:prepare": "node scripts/local.mjs prepare",
+    "db:start": "node scripts/local.mjs start",
+    "db:migrate": "node scripts/local.mjs migrate",
+    "db:status": "node scripts/local.mjs status",
+    "db:stop": "node scripts/local.mjs stop",
+    "env:local": "node scripts/local.mjs env",
+    "demo:seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
+    "dev:demo": "node scripts/local.mjs demo",
+    "demo:clock": "node scripts/local.mjs clock"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "@supabase/ssr": "0.12.6",
+    "@supabase/supabase-js": "2.115.0",
+    "next": "16.3.4",
+    "pg": "8.23.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.3.4",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.3",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "eslint": "10.10.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "prettier": "3.9.6",
+    "supabase": "2.116.0",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
+  }
+}
