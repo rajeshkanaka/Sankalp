@@ -11,6 +11,7 @@ export function ScheduleEditor({
   setZoneConfirmed,
   weekdaysError,
   disabled,
+  startDateLabel = 'Start date',
 }: {
   values: SetupValues;
   setValues: Dispatch<SetStateAction<SetupValues>>;
@@ -18,6 +19,7 @@ export function ScheduleEditor({
   setZoneConfirmed: Dispatch<SetStateAction<boolean>>;
   weekdaysError: boolean;
   disabled: boolean;
+  startDateLabel?: 'Start date' | 'Change from practice date';
 }) {
   function update(changes: Partial<SetupValues>) {
     setValues((current) => ({ ...current, ...changes }));
@@ -36,7 +38,7 @@ export function ScheduleEditor({
       <legend>A place in your day</legend>
       <div className={shared.fieldGrid}>
         <div className={shared.field}>
-          <label htmlFor="start-date">Start date</label>
+          <label htmlFor="start-date">{startDateLabel}</label>
           <input
             id="start-date"
             type="date"
