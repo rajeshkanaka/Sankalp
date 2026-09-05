@@ -1,18 +1,14 @@
 import { Temporal } from '@js-temporal/polyfill';
 
 import type { JourneyMetrics, SessionRecord, SessionStatus } from './contracts';
-import { deriveStatus, targetsMet } from './status';
+import { deriveCompletionTiming, deriveStatus } from './status';
 
 function isClosed(session: SessionRecord, now: Temporal.Instant): boolean {
   return Temporal.Instant.compare(now, session.closesAt) >= 0;
 }
 
 function isOnScheduleComplete(session: SessionRecord): boolean {
-  if (!session.confirmed || !targetsMet(session) || session.performedAt === null) return false;
-  return (
-    Temporal.Instant.compare(session.performedAt, session.opensAt) >= 0 &&
-    Temporal.Instant.compare(session.performedAt, session.closesAt) < 0
-  );
+  return deriveCompletionTiming(session).practiceTiming === 'on_schedule';
 }
 
 export function computeMetrics(sessions: SessionRecord[], now: string): JourneyMetrics {
