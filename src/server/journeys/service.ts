@@ -102,55 +102,65 @@ function checkedPreview(draft: JourneyDraft, now: string) {
     throw error;
   }
 }
-export async function createJourney(
-  userId: string,
-  input: JourneyDraft,
-  operationId: string = randomUUID(),
-): Promise<JourneyDraftPreview> {
-  const draft = journeyDraftSchema.parse(input);
+
+function assertRemindersAvailable(draft: JourneyDraft) {
   if (draft.reminders.enabled)
     throw new AppError(
       422,
       'REMINDERS_UNAVAILABLE',
       'Reminder delivery is not available in this milestone.',
     );
+}
+
+async function buildDraftPreview(client: pg.PoolClient, draft: JourneyDraft, now: string) {
+  const preview = checkedPreview(draft, now);
+  const overlap = await client.query<{ overlaps: boolean }>(
+    `select exists (
+      select 1 from app.session s join app.journey j on j.id=s.journey_id
+      join jsonb_to_recordset($1::jsonb) as proposed(opens_at timestamptz, closes_at timestamptz)
+        on s.opens_at < proposed.closes_at and s.closes_at > proposed.opens_at
+      where s.superseded_at is null and j.state='active'
+    ) as overlaps`,
+    [
+      JSON.stringify(
+        preview.occurrences.map((occurrence) => ({
+          opens_at: occurrence.opensAt,
+          closes_at: occurrence.closesAt,
+        })),
+      ),
+    ],
+  );
+  if (overlap.rows[0].overlaps)
+    preview.warnings.push(
+      'Some practice windows overlap another active journey of yours. You can keep both schedules or adjust the time.',
+    );
+  const reminderTimes = preview.occurrences.flatMap((occurrence) =>
+    draft.reminders.offsets.map((offsetMinutes) => {
+      const scheduledFor = new Date(
+        Date.parse(occurrence.opensAt) + offsetMinutes * 60_000,
+      ).toISOString();
+      return {
+        practiceDate: occurrence.practiceDate,
+        offsetMinutes,
+        scheduledFor,
+        isPast: Date.parse(scheduledFor) <= Date.parse(now),
+      };
+    }),
+  );
+  return { preview, reminderTimes };
+}
+
+export async function createJourney(
+  userId: string,
+  input: JourneyDraft,
+  operationId: string = randomUUID(),
+): Promise<JourneyDraftPreview> {
+  const draft = journeyDraftSchema.parse(input);
+  assertRemindersAvailable(draft);
   const { now } = getRuntimeInfo();
   return withUser(userId, (client) =>
     idempotent(client, userId, operationId, 'create-journey', draft, async () => {
-      const preview = checkedPreview(draft, now);
-      const overlap = await client.query<{ overlaps: boolean }>(
-        `select exists (
-          select 1 from app.session s join app.journey j on j.id=s.journey_id
-          join jsonb_to_recordset($1::jsonb) as proposed(opens_at timestamptz, closes_at timestamptz)
-            on s.opens_at < proposed.closes_at and s.closes_at > proposed.opens_at
-          where s.superseded_at is null and j.state='active'
-        ) as overlaps`,
-        [
-          JSON.stringify(
-            preview.occurrences.map((occurrence) => ({
-              opens_at: occurrence.opensAt,
-              closes_at: occurrence.closesAt,
-            })),
-          ),
-        ],
-      );
-      if (overlap.rows[0].overlaps)
-        preview.warnings.push(
-          'Some practice windows overlap another active journey of yours. You can keep both schedules or adjust the time.',
-        );
-      const reminderTimes = preview.occurrences.flatMap((occurrence) =>
-        draft.reminders.offsets.map((offsetMinutes) => {
-          const scheduledFor = new Date(
-            Date.parse(occurrence.opensAt) + offsetMinutes * 60_000,
-          ).toISOString();
-          return {
-            practiceDate: occurrence.practiceDate,
-            offsetMinutes,
-            scheduledFor,
-            isPast: Date.parse(scheduledFor) <= Date.parse(now),
-          };
-        }),
-      );
+      const { preview, reminderTimes } = await buildDraftPreview(client, draft, now);
       await client.query('select pg_advisory_xact_lock(hashtextextended($1, 1))', [userId]);
       const count = await client.query(
         "select count(*)::int as total from app.journey where state <> 'archived'",
@@ -174,6 +184,55 @@ export async function createJourney(
     }),
   );
 }
+
+export async function updateJourneyDraft(
+  userId: string,
+  id: string,
+  input: MutationEnvelope<JourneyDraft>,
+): Promise<JourneyDraftPreview> {
+  if (!z.uuid().safeParse(id).success) throw notFound();
+  const draft = journeyDraftSchema.parse(input.payload);
+  assertRemindersAvailable(draft);
+  const request = { ...input, payload: draft };
+  const { now } = getRuntimeInfo();
+  return withUser(userId, (client) =>
+    idempotent(
+      client,
+      userId,
+      input.operationId,
+      `update-journey-draft:${id}`,
+      request,
+      async () => {
+        const current = await client.query<JourneyRow>(
+          'select * from app.journey where id=$1 for update',
+          [id],
+        );
+        const row = current.rows[0];
+        if (!row) throw notFound();
+        if (row.state !== 'draft')
+          throw new AppError(409, 'DRAFT_UNAVAILABLE', 'This journey draft is no longer editable.');
+        assertRevision(row.revision, input.baseRevision, toJourney(row));
+        const { preview, reminderTimes } = await buildDraftPreview(client, draft, now);
+        const updated = await client.query<JourneyRow>(
+          `update app.journey
+         set title=$2,intention=$3,draft=$4,revision=revision+1
+         where id=$1 and state='draft'
+         returning *`,
+          [id, draft.title, draft.intention, JSON.stringify(draft)],
+        );
+        if (!updated.rows[0])
+          throw new AppError(409, 'DRAFT_UNAVAILABLE', 'This journey draft is no longer editable.');
+        return {
+          journey: toJourney(updated.rows[0]),
+          preview,
+          fingerprint: fingerprint(draft),
+          reminderTimes,
+        };
+      },
+    ),
+  );
+}
+
 export async function activateJourney(
   userId: string,
   id: string,
