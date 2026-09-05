@@ -2,6 +2,8 @@
 
 Version 1.1 · 5 September 2026 · Status: ready for implementation planning
 
+Product requirements remain authoritative here. The executable architecture/milestones are now in [PROJECT_PLAN](PROJECT_PLAN.md), with explicit product clarifications and the selected stack in [DECISIONS](DECISIONS.md). Those clarifications are submitted for approval; [PROJECT_PROGRESS](PROJECT_PROGRESS.md) records actual approval, and [TASKS](TASKS.md) alone records task status.
+
 ## 1. Purpose and product promise
 
 Sankalpa is a private online companion for a spiritual commitment: decide what to practice, arrive at the intended time, record completion, see the journey unfold, and preserve daily reflections.
@@ -316,9 +318,9 @@ Use warm, factual language: “No completion recorded for this night” and “Y
 
 ## 8. Technical architecture
 
-### Proposed implementation
+### Implementation authority
 
-Mobile-first TypeScript web app using React/Next.js, a standards-based PWA manifest and service worker, managed authentication, PostgreSQL, and a separately runnable reminder worker. Supabase is a candidate for managed authentication/database; select hosting after confirming worker/scheduler support, backup policy, regional availability, and cost. These are architecture proposals, not installed or version-verified dependencies.
+The single selected implementation stack, versions, hosting and rationale are recorded in [DECISIONS](DECISIONS.md), with source verification dates and unresolved runtime/deployment gates. [PROJECT_PLAN §2](PROJECT_PLAN.md#2-architecture-and-module-contracts) owns module/API/database integration boundaries. This specification's data model and behavioral contracts below remain the product basis; technologies are not installed merely because the plan selects them.
 
 Use one codebase and shared domain functions for schedule generation, progress calculations, and validation. Keep reminder dispatch outside request-bound page execution. A database job table is enough for launch; a separate queue service is unnecessary until measured scale justifies it.
 
@@ -328,7 +330,7 @@ Scheduled worker → due reminder jobs → Web Push service → device service w
 
 PDF renderer → authorized snapshot of journey/reflections → private download.
 
-Prefer browser-local PDF generation if the selected library handles required scripts, layout, and accessibility. Otherwise use a restricted authenticated server renderer with ephemeral storage; record the choice before building the export milestone. The user-facing requirement is a downloadable PDF, not merely an instruction to print a page.
+The selected PDF approach is recorded in DECISIONS D06. The user-facing requirement remains a downloadable PDF with the privacy, Unicode and layout requirements in §4.7, not merely an instruction to print a page.
 
 ### Data model
 
@@ -432,7 +434,7 @@ Required verification: unit tests for schedule/status/metrics; database/API test
 
 This document authorizes no paid service, deployment, message sending, or real reminder setup. It specifies the requested app. Implementation can start with a local development environment and simulated notification transport; label simulations clearly.
 
-Before production, settle: hosting and database provider/budget, supported browser/device matrix, verified software versions, email sign-in transport, PDF rendering choice, audio/font rights, and the actual retention/backups policy. These choices do not block creating the specification. All practice names and schedules are user specific, editable during setup and versioned for future changes.
+The implementation plan now selects hosting/database, software versions, email transport, PDF rendering and the browser-testing path in DECISIONS. Actual costs/authorization, runtime compatibility, real-device evidence, shipped asset rights and provider retention/backups remain explicit task/release gates in TASKS. All practice names and schedules remain user specific, editable during setup and versioned for future changes.
 
 ## 12. Official reference material
 

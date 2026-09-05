@@ -23,12 +23,15 @@ The experience should feel calm, spiritually meaningful, personal, and easy to u
 
 ## Project status
 
-Specification complete; application implementation has not started. No dependencies, accounts, notification services, or deployment have been configured.
+Application implementation has not started. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
 
 ## Documents
 
-- [Full application specification](docs/APP_SPECIFICATION.md): product requirements, screen behavior, spiritual visual design, midnight scheduling, reminders, data model, architecture, privacy, and acceptance criteria.
-- [Implementation plan](docs/IMPLEMENTATION_PLAN.md): ordered build milestones and release checks.
+- [Shared agent instructions](AGENTS.md) and [Claude adapter](CLAUDE.md): start/resume, checkpoints, ownership and verification rules.
+- [Application specification](docs/APP_SPECIFICATION.md): product behavior and A01–A27 acceptance requirements.
+- [Complete implementation plan](docs/PROJECT_PLAN.md): one stack/architecture, runnable milestones, setup, demos, tests and deployment approach.
+- [Task register](docs/TASKS.md): accountable execution, dependencies, ownership, acceptance and evidence.
+- [Current handoff](docs/PROJECT_PROGRESS.md), [decisions and verified sources](docs/DECISIONS.md), [session log](docs/SESSION_LOG.md): durable project context and approvals.
 
 ## Personalized journeys
 
@@ -40,4 +43,4 @@ Each user chooses their own practices or stotras, targets, duration, weekdays, t
 
 ## Implementation direction
 
-Mobile-first installable web application with authenticated private storage and a server-side reminder scheduler. The specification proposes technologies without installing or pinning them. Verify current supported versions and hosting capabilities before implementation.
+Mobile-first installable web application with authenticated private storage and a server-side reminder worker. The selected stack, exact version baseline, rationale and official verification sources are in [DECISIONS](docs/DECISIONS.md). Commands in the implementation plan are explicitly marked planned until their owning task creates and verifies them.
