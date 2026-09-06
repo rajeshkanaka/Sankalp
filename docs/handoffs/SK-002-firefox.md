@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-firefox.md](../archive/handoffs/SK-002-firefox.md). <a id="sk-002-firefox-launch-diagnosis"></a><a id="result"></a><a id="local-evidence"></a><a id="safe-invocation-pattern"></a><a id="authoritative-references"></a>

@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-007-boundaries.md](../archive/handoffs/SK-007-boundaries.md). <a id="sk-007-shared-validation-and-database-boundaries"></a><a id="coverage"></a><a id="findings-sent-to-the-coordinator"></a><a id="actual-verification"></a>

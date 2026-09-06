@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-usability.md](../archive/handoffs/SK-002-usability.md). <a id="sk-002-usability-substep-handoff"></a><a id="changes-and-evidence"></a><a id="checks"></a><a id="integration-and-exact-next-step"></a>

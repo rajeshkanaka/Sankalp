@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-003-ui-verification.md](../archive/handoffs/SK-003-ui-verification.md). <a id="sk-003-m2-ui-verification-correction"></a><a id="observed-failure-and-correction"></a><a id="verification"></a><a id="integration-action"></a>

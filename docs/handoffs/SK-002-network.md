@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-network.md](../archive/handoffs/SK-002-network.md). <a id="sk-002-local-supabase-network-review"></a><a id="finding"></a><a id="pinned-cli-evidence"></a><a id="project-scoped-implementation-contract"></a><a id="required-verification-after-restart"></a><a id="authoritative-references"></a>

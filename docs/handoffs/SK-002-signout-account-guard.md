@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-signout-account-guard.md](../archive/handoffs/SK-002-signout-account-guard.md). <a id="sk-002-expected-account-sign-out-guard"></a><a id="contract-and-change"></a><a id="pinned-source-and-scope-rationale"></a><a id="verification"></a>

@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-003-tests.md](../archive/handoffs/SK-003-tests.md). <a id="sk-003-integration-test-handoff"></a><a id="changes"></a><a id="verification-and-limitations"></a><a id="exact-next-action"></a>

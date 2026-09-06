@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-001-fixtures.md](../archive/handoffs/SK-001-fixtures.md). <a id="sk-001-synthetic-fixture-handoff"></a><a id="delivered"></a><a id="tdd-and-verification-evidence"></a><a id="consumed-and-produced-interfaces"></a><a id="integration-next-step"></a>

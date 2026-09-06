@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-http.md](../archive/handoffs/SK-002-http.md). <a id="sk-002-http-boundary-test-handoff"></a><a id="delivered"></a><a id="full-suite-isolation-correction"></a><a id="verification-evidence"></a><a id="consumed-interfaces-and-integration"></a>

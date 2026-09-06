@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-003-drafts.md](../archive/handoffs/SK-003-drafts.md). <a id="sk-003-recoverable-setup-drafts"></a><a id="implemented"></a><a id="commits"></a><a id="verification"></a><a id="coordinator-integration"></a>

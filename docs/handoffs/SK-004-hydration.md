@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-004-hydration.md](../archive/handoffs/SK-004-hydration.md). <a id="sk-004-metadata-hydration-recovery"></a><a id="observed-failure"></a><a id="changes"></a><a id="integration-feedback-and-test-correction"></a><a id="verification-actually-performed"></a><a id="exact-next-action"></a>

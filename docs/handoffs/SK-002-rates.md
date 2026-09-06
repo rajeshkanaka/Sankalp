@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-rates.md](../archive/handoffs/SK-002-rates.md). <a id="sk-002-rate-limit-integration-test-handoff"></a><a id="delivered"></a><a id="verification"></a><a id="integration-next-step"></a>

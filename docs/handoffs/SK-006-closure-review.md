@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-006-closure-review.md](../archive/handoffs/SK-006-closure-review.md). <a id="sk-006-closure-history-review"></a><a id="finding-and-scoped-change"></a><a id="verification-and-handoff"></a><a id="coordinator-integrated-verification"></a>

@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-004-conflicts.md](../archive/handoffs/SK-004-conflicts.md). <a id="sk-004-stale-preview-conflict-recovery"></a><a id="implemented"></a><a id="verification"></a><a id="coordinator-integration"></a>

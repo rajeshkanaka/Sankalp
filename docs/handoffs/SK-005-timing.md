@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-005-timing.md](../archive/handoffs/SK-005-timing.md). <a id="sk-005-completion-timing-labels"></a><a id="implemented"></a><a id="commit"></a><a id="verification"></a>

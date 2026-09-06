@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-004-transactions.md](../archive/handoffs/SK-004-transactions.md). <a id="sk-004-transaction-verification-handoff"></a><a id="changes"></a><a id="verification-actually-performed"></a><a id="exact-next-action"></a>

@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-auth-recovery.md](../archive/handoffs/SK-002-auth-recovery.md). <a id="sk-002-auth-verification-failure-classification"></a><a id="finding-and-change"></a><a id="primary-source-verification"></a><a id="actual-verification-and-limitations"></a>

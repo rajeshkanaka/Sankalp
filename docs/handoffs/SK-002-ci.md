@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-ci.md](../archive/handoffs/SK-002-ci.md). <a id="sk-002-first-ci-run-triage"></a><a id="exact-result"></a><a id="diagnosis"></a><a id="minimal-fix"></a><a id="validation"></a>

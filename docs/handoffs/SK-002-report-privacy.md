@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-002-report-privacy.md](../archive/handoffs/SK-002-report-privacy.md). <a id="sk-002-playwright-report-privacy-hardening"></a><a id="worker-checkpoint"></a><a id="behavior-implemented"></a><a id="coordinator-integration-required"></a><a id="verification"></a>

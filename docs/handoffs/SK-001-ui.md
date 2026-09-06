@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-001-ui.md](../archive/handoffs/SK-001-ui.md). <a id="sk-001-ui-implementation-handoff"></a><a id="implemented-scope"></a><a id="design-decisions"></a><a id="interface-dependencies"></a><a id="verification-actually-performed"></a><a id="exact-next-actions"></a>

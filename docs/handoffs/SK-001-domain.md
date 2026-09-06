@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-001-domain.md](../archive/handoffs/SK-001-domain.md). <a id="sk-001-domain-handoff"></a><a id="delivered"></a><a id="tdd-evidence"></a><a id="verification"></a><a id="contract-notes-for-integration"></a><a id="integration-next-step"></a>

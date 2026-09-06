@@ -1,1 +1,0 @@
-Archived: [docs/archive/handoffs/SK-001-tests.md](../archive/handoffs/SK-001-tests.md). <a id="sk-001-integration-test-handoff"></a><a id="delivered"></a><a id="defect-found-and-resolved-during-integration"></a><a id="verification"></a><a id="integration-next-step"></a><a id="post-integration-destructive-test-hardening"></a>
