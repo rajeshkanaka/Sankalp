@@ -13,6 +13,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-003.md`; M2 evidence |
 | SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-004.md`; M2 evidence |
 | SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-005.md`; M2 evidence |
+| SK-005-P2 | M2 correction | Calendar filter form accepts its empty optional fields | Observed during SK-020; after urgent SK-008-P1 on resume | /root coordinator | TODO | `docs/handoffs/SK-020.md`; real Chromium reproduction |
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
 | SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-008.md`; M3 evidence |
@@ -28,6 +29,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-017 | M6 | Actual iPhone/Android push and audio evidence | SK-016; B04 | W-device-validation | BLOCKED | `docs/handoffs/SK-017.md`; M6 evidence |
 | SK-018 | M6 | Integrated release candidate passes all launch gates | SK-015, SK-016, SK-017 | C | TODO | `docs/handoffs/SK-018.md`; M6 evidence |
 | SK-019 | M7 | Approved production canary and live handoff | SK-018 + M6 review; B05 | C | BLOCKED | `docs/handoffs/SK-019.md`; M7 evidence |
+| SK-020 | Local presentation tooling | One-command database-backed demo and polished README | Accepted main23f15b2; user-requested follow-up during pause | /root coordinator | IN_REVIEW | `docs/handoffs/SK-020.md`; `docs/evidence/demo-launcher/` |
 
 Evidence paths in this register are **planned**. Per-task report is created on claim; run evidence uses `docs/evidence/M<n>/<run-id>/` as defined in PROJECT_PLAN §4. Completion status is only the register cell above; task detail does not duplicate it. Every task must satisfy AGENTS' DONE gate, including integration and actual successful checks, not just its worker-local criteria.
 
@@ -301,3 +303,16 @@ Task status remains in the register above. Coordinator owns shared files/integra
 - Reviewed domain, preference UI, preference DB tests and guarded transport are integrated substeps. BRANCHES preserves their historical source refs. They do not establish reminder delivery or milestone completion.
 
 Emergency pause2026-09-06: all agents stopped. First resume SK-008-P1. Its scope is service-worker navigation policy + actual offline Done/calendar navigation regression, preserving strict asset cache/auth query rejection. Evidence/test commands follow SK-008. M4 remains unfinished; no task promoted by checkpoint commits.
+
+
+## SK-020 — One-command local presentation
+
+User-requested bounded work during the emergency break; it does not resume P1/M4 or waive their gates. Coordinator owns `setup.sh`, `scripts/setup-demo.mjs`, `tests/unit/setup-demo.test.ts`, README/demo documentation, synthetic screenshots/evidence and shared tracking. Read-only independent review is delegated; no worker borrows a database.
+
+**Outcome and order:** (1) verify existing commands, fixture/UI behavior and branch state; (2) document the presenter workflow; (3) implement the guarded single-command launcher using existing tools; (4) test fresh setup, preservation, port/ownership guards, failures and shutdown; (5) exercise real local authentication/persistence and capture the actual interface; (6) publish through a normally reviewed PR, retain the emergency pause and P1-first next action.
+
+**Interfaces:** existing npm scripts and `.local/runtime.json`, guarded seed identity metadata/clock and generated `.env.local`; no application API/schema or stack changes. One-time Git/fnm/Docker prerequisites remain explicit. Existing data and ready M1/M2/M3 fixtures are preserved; only a newly allocated isolated backend or explicit `--reset-demo` allows seeding.
+
+**Exclusions:** no P1/reminder feature implementation, real external email/push, paid provisioning, deployment, database resets, unrelated process termination or main bypass. No implication that all launch scope is complete.
+
+**Acceptance and verification:** `./setup.sh --help` and Bash syntax check pass; focused launcher tests, formatting/lint/type/unit gates pass; actual fresh `./setup.sh --no-open` starts local PostgreSQL/auth, migrates, seeds and builds; Chromium proves real sign-in, completion/reload and journal search; second launch preserves the data; interruption stops owned children before releasing its lock. Evidence and commands live in SK-020 and the demo-launcher manifest. Main integration and required hosted checks remain part of DONE.

@@ -9,6 +9,7 @@ All paths below are absolute. Branches are preserved; no cleanup/history rewrite
 | Purpose | Branch / checkpoint | Worktree and responsibility |
 |---|---|---|
 | Accepted application/context | `main` /23f15b2, PR5 | Fetch origin/main first. PR5 exact-head CI34025184143 passed; normal merge verified. |
+| Presentation tooling / emergency checkpoint | `rajesh_kanaka/emergency-checkpoint`, base638be75 | `/Users/rajesh/sankalpa`; coordinator owns SK-020 README/setup tooling. Application features remain paused. See its handoff for the ignored isolated verification clone; this is the normal PR route for the saved emergency context and tooling. |
 | Offline PR5 integration | `rajesh_kanaka/offline-recovery` /526e947 (merged) | `/Users/rajesh/sankalpa`; coordinator, slot1.98UI passed on5c8962f; ce56222 full verify passed; accepted by PR5. Root retains runnable3001 demo; no feature writes here. |
 | M4 coordinator | `rajesh_kanaka/reminder-integration` /3be8815 | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot2. Own SQL/API/config/integration. Main23f15b2 merged;010 applied;011 draft under review. Own SQL/API/config/shared tracking; unfinished source preserved. |
 | Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated3aa243b/177ab8b; historical no runtime. |

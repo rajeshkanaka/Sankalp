@@ -1,0 +1,19 @@
+{
+  "result": "PASS",
+  "date": "2026-09-06",
+  "transport": "real local Supabase Auth and PostgreSQL; captured email",
+  "clock": "simulated M3",
+  "checks": [
+    "real email-link sign-in",
+    "morning practice confirmation",
+    "on schedule classification",
+    "Done navigation online",
+    "1/21 rounded 5 percent after reload",
+    "Unicode reflection persisted and found by journal search",
+    "journal query completed: matching and nonmatching results",
+    "night session remains partial with Kunjika checked and Bhairav Stotra unchecked",
+    "September morning calendar completion and session-list filter",
+    "after actual launcher restart, completion and reflection remained and calendar/history walkthrough passed"
+  ],
+  "screenshots": ["morning-completed.png", "journal-saved.png"]
+}
