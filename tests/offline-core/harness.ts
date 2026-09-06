@@ -2,6 +2,7 @@ import type { OfflineCore } from '../../src/offline/core';
 import { ACCOUNT, OTHER, snapshot } from './fixtures';
 import { check, rejects, copy, environment, enqueue, values } from './helpers';
 import { regressions } from './regressions';
+import { failures } from './failures';
 
 let held: {
   core: OfflineCore;
@@ -11,6 +12,7 @@ let held: {
 } | null = null;
 const harness = {
   ...regressions,
+  ...failures,
   async basic(name: string) {
     const env = environment(name);
     const core = env.create();

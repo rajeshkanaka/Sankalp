@@ -34,3 +34,25 @@ The first resumption baseline `npx tsc --noEmit --incremental false` failed with
 Actual checks after fixes: scoped Prettier, ESLint (zero warnings), full TypeScript no-emit, and six offline unit tests PASS. The isolated IndexedDB/Web Locks harness PASS in Chromium, WebKit and Firefox, including twelve named scenarios, actual document reload, two-page leadership and zero page errors. Transport remains explicitly synthetic; this is not app/auth/database/service-worker verification.
 
 Exact next substep: add transaction-abort/quota/denied-storage, 500-operation ceiling, malformed-response and additional resolution-boundary tests; run all scoped gates and the full isolated three-engine harness again. Application integration, production build and M3 app UI tests remain coordinator-owned and NOT RUN by this worker. This checkpoint does not mark SK-008 DONE.
+
+## Storage, capacity and transport verification completed
+
+2026-09-06, 12:04 Asia/Kolkata. Production correctness checkpoint: `4d8f68c`. The subsequent change adds tests and safe harness reporting only; no production core behavior changed after that checkpoint.
+
+The full isolated harness now executes seventeen named scenarios in each of Chromium153.0.8010.12, WebKit26.6 and Firefox155.0, including real document reload and two-page leadership. Every scenario passed, every browser reported zero page errors, and the command exited0. The full local unit suite passed118tests/10files; the six focused offline model tests also passed. Full TypeScript no-emit, scoped ESLint/Prettier and `git diff --check` passed.
+
+New observed assertions cover quota and denied storage; aborted draft/enqueue/acknowledgment/resolution/purge transactions with rollback; exact retry after an accepted server effect whose local acknowledgment aborted;500pending operations and replacement accounting across both streams; empty/mixed/reused-ID/out-of-order/stale-draft resolution rejection; preserving a later acknowledged session while replacing reflections first→latest; retained unqueued raw input; shared-device management-only generations; malformed successful HTTP responses;429retry timing;401pause/recovery; and comparison-read ACCOUNT_CHANGED quarantine. Synthetic failure injection modifies browser APIs only within the isolated harness and restores them in finally blocks.
+
+Reproduce from this worktree using Node24.20.0:
+
+- `fnm exec --using 24.20.0 npx prettier --check src/offline/core tests/unit/offline-model.test.ts tests/offline-core`
+- `fnm exec --using 24.20.0 npx eslint src/offline/core tests/unit/offline-model.test.ts tests/offline-core --max-warnings 0`
+- `fnm exec --using 24.20.0 npx tsc --noEmit --incremental false`
+- `fnm exec --using 24.20.0 npm run test:unit`
+- `fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`
+
+The last command writes the ignored local `artifacts/offline-core/summary.json`: source commit/dirty marker, dates, full/focused scope, explicit synthetic-transport label, browser versions, static scenario result counts and page-error counts only. No raw private requests, response bodies, auth material or error messages enter that summary. A partial run is INCOMPLETE, never PASS. The completed run records source4d8f68c with dirty=true because the added tests/reporter were not yet committed; its production source is the reviewed checkpoint. The coordinator can retain that allowlisted summary alongside integrated M3 evidence.
+
+All owned browser/server processes closed through finally. `.local/offline-core-browser/` and the private Firefox test directory remain ignored. No shared dependency/configuration, types, database migrations, root runtime, tracking file, remote branch or PR was changed in this verification slice.
+
+Next owner/action: coordinator integrates the core correctness and follow-up verification commits, then verifies actual app/auth/database/service-worker offline reload/replay/conflict/account flows and cumulative regressions. The isolated harness intentionally does not claim that application integration or SK-008 is complete.

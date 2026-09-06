@@ -5,13 +5,25 @@ import { randomUUID } from 'node:crypto';
 import { log } from 'node:console';
 import process from 'node:process';
 import { createServer } from 'node:http';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { chromium, firefox, webkit } from '@playwright/test';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const summary = {
+  sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+  sourceDirty:
+    execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim().length >
+    0,
+  startedAt: new Date().toISOString(),
+  scope: process.env.OFFLINE_SCENARIOS ? 'focused' : 'full',
+  integration: 'Synthetic transport; real browser IndexedDB, Web Locks and document reload.',
+  browsers: [],
+};
+let complete = false;
 const outDir = path.join(root, '.local/offline-core-browser');
 await build({
   configFile: false,
@@ -69,6 +81,11 @@ try {
         'orderedReplacement',
         'accountChanged',
         'switchDuringReplay',
+        'storageFailures',
+        'queueCeiling',
+        'resolutionBoundaries',
+        'transportFailures',
+        'comparisonAccountChange',
       ]) {
         results[scenario] = await page.evaluate(
           ({ scenario, db }) => window.offlineHarness[scenario](db),
@@ -94,12 +111,35 @@ try {
         1,
       );
       assert.deepEqual(errors, []);
-      log(JSON.stringify({ browser: name, status: 'PASS', results, pageErrors: errors.length }));
+      const result = {
+        browser: name,
+        version: browser.version(),
+        status: 'PASS',
+        results,
+        pageErrors: errors.length,
+      };
+      summary.browsers.push(result);
+      log(JSON.stringify(result));
       await context.close();
     } finally {
       await browser.close();
     }
   }
+  complete = true;
 } finally {
   await new Promise((resolve) => server.close(resolve));
+  const directory = path.join(root, 'artifacts/offline-core');
+  await mkdir(directory, { recursive: true });
+  await writeFile(
+    path.join(directory, 'summary.json'),
+    JSON.stringify(
+      {
+        ...summary,
+        finishedAt: new Date().toISOString(),
+        status: complete ? 'PASS' : 'INCOMPLETE',
+      },
+      null,
+      2,
+    ) + '\n',
+  );
 }
