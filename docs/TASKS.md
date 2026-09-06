@@ -1,6 +1,6 @@
 # Sankalpa authoritative task register
 
-**This is the only source of task status.** Allowed statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `DONE`. Every application task is initialized below; none is complete. Plan/milestone approvals and the compact checkpoint live in [PROJECT_PROGRESS](PROJECT_PROGRESS.md), not this status column. [PROJECT_PLAN](PROJECT_PLAN.md) supplies shared interfaces, command definitions, demo/evidence recipes and parallel rules; [DECISIONS](DECISIONS.md) supplies the fixed stack and boundaries.
+**This is the only source of task status.** Allowed statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `IN_REVIEW`, `DONE`. The register records integrated technical completion; milestone/user approvals remain separate. Plan/milestone approvals and the compact checkpoint live in [PROJECT_PROGRESS](PROJECT_PROGRESS.md), not this status column. [PROJECT_PLAN](PROJECT_PLAN.md) supplies shared interfaces, command definitions, demo/evidence recipes and parallel rules; [DECISIONS](DECISIONS.md) supplies the fixed stack and boundaries.
 
 ## 1. Register and assignment rules
 
@@ -8,14 +8,14 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 
 | ID | Milestone | Concrete outcome | Depends on | Responsible owner | Status | Evidence/report |
 |---|---|---|---|---|---|---|
-| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | IN_PROGRESS | `docs/handoffs/SK-001.md`; M1 evidence |
-| SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | W-foundation | TODO | `docs/handoffs/SK-002.md`; M1 evidence |
-| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review | W-schedule | TODO | `docs/handoffs/SK-003.md`; M2 evidence |
-| SK-004 | M2 | Future revisions preserve original history | SK-003 | W-revisions | TODO | `docs/handoffs/SK-004.md`; M2 evidence |
-| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003 | W-progress | TODO | `docs/handoffs/SK-005.md`; M2 evidence |
-| SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | W-practice | TODO | `docs/handoffs/SK-006.md`; M3 evidence |
-| SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | W-journal | TODO | `docs/handoffs/SK-007.md`; M3 evidence |
-| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | W-offline | TODO | `docs/handoffs/SK-008.md`; M3 evidence |
+| SK-001 | M1 | Real local sign-in, create, confirm and reload workflow | Plan approval (recorded D10) | /root coordinator | DONE | `docs/handoffs/SK-001.md`; M1 evidence |
+| SK-002 | M1 | Accessible, private and recoverable first workflow | SK-001 | /root coordinator | BLOCKED | `docs/handoffs/SK-002.md`; M1 evidence |
+| SK-003 | M2 | Complete personalized schedule/target setup | SK-002 + M1 review; isolated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-003.md`; M2 evidence |
+| SK-004 | M2 | Future revisions preserve original history | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-004.md`; M2 evidence |
+| SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-005.md`; M2 evidence |
+| SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
+| SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
+| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | C (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-008.md`; M3 evidence |
 | SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review | C | TODO | `docs/handoffs/SK-009.md`; M4 evidence |
 | SK-010 | M4 | PWA install, permission and device controls | SK-009 | W-device | TODO | `docs/handoffs/SK-010.md`; M4 evidence |
 | SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009 | W-reminders | TODO | `docs/handoffs/SK-011.md`; M4 evidence |
@@ -38,6 +38,7 @@ Genuine external blockers (dependency waiting alone does not require BLOCKED):
 | B02 | SK-016 | Owned sending domain/DNS, verified Resend SMTP and explicit test-mail recipients; no real mail authorization assumed. |
 | B03 | SK-016 | Verified provider retention/deletion/backup terms compatible with D08 and a disclosed actual policy; regional capacity and selected compute quote. |
 | B04 | SK-017 | Access to a supported real iPhone Home Screen install and Android install, plus explicit consent to send test pushes to those devices. Browser emulation cannot resolve this. |
+| B06 | SK-002 | VoiceOver announcements and authenticated manual checks remain unverified. Public native200% reflow/keyboard passed in SK-002-manual-retry; settings restored. Automated axe and browser checks do not close the remaining gate. |
 | B05 | SK-019 | Deployment authorization is recorded in D10; still require verified release revision/domain/budget, production credentials and M6 technical gates. |
 
 ## 2. Execution and checkpoint sequence
@@ -118,7 +119,7 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 
 ### SK-007 — Private reflections and journal
 
-**Outcome/owner/files:** W-journal owns `src/server/journal/`, `src/features/journal/`, journal/reflection tests; C supplies table/RLS/index/route integration. Consume session identity and MutationEnvelope; one Reflection per session with text, optional mood tags and revision. `GET /api/journal` filters by journey/date/mood/text with bounded cursor pagination.
+**Outcome/owner/files:** W-journal owns `src/server/journal/`, `src/features/journal/`, journal/reflection tests; C supplies table/RLS/index/route integration. Consume session identity and MutationEnvelope; one Reflection per session with text, optional mood tags and revision. `POST /api/journal/query` (D15) filters by journey/date/mood/text with bounded cursor pagination.
 
 **Scope/substeps:** test one-row ownership/Unicode/20,000-char boundary; implement debounced autosave plus explicit Save and visible saved/pending/error states; allow missed/partial-session notes; add recoverable two-device conflict view preserving both texts; implement journal search/list/detail and configurable optional reflection prompts. No rich text/HTML/AI interpretation/public search service.
 
@@ -127,6 +128,8 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 **Verification/evidence:** `npm run test:integration -- tests/integration/reflections.test.ts`; `npm run verify`; `npm run test:ui -- --grep @M3-journal`. Save synthetic Unicode fixtures, conflict output, `journal-saved.png`, `SK-007.md`; synchronize contract with SK-006 before offline work starts.
 
 ### SK-008 — Offline replay without silent data loss
+
+**Active ownership (2026-09-06 resume):** coordinator owns reconciliation, main PR integration, app/API hooks, shared configuration and service-worker build. Core/UI worker source remains preserved but unassigned until main consolidation; current branches/worktrees and exact recovery pointers are authoritative in [BRANCHES](BRANCHES.md). The assigned SK-006 closure fix is limited to its service, correction regressions and task-specific report. No historical agent name implies active ownership. D12 permits preparation while B06 remains; D17 freezes the interfaces. Subsequent claims must update this paragraph and BRANCHES before implementation begins.
 
 **Outcome/owner/files:** W-offline owns `src/offline/`, offline-specific feature controls and tests; C integrates app/session/signout hooks and script/SW build config. Consume SK-006/007 versioned mutations; provide enqueue/read/flush/resolve/clear-account interfaces and explicit pending state. Static service-worker shell source starts here; SK-010 adds push without changing private-data caching policy.
 

@@ -23,7 +23,9 @@ The experience should feel calm, spiritually meaningful, personal, and easy to u
 
 ## Project status
 
-Application implementation has not started. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
+Implementation follows the approved repository plan. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
+
+**Resume from `main`.** Its [progress](docs/PROJECT_PROGRESS.md), [session log](docs/SESSION_LOG.md) and [branch/worktree map](docs/BRANCHES.md) identify the accepted app and any unfinished worker branches. Historical worker copies of these documents are not the current project checkpoint.
 
 ## Documents
 

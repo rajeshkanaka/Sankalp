@@ -10,6 +10,7 @@ The repository is the durable context for Codex, Claude Code, and other coding a
 - [DECISIONS](docs/DECISIONS.md): selected stack, product clarifications, sources and approval/change history.
 - [APP_SPECIFICATION](docs/APP_SPECIFICATION.md): product behavior and A01–A27 acceptance requirements.
 - [SESSION_LOG](docs/SESSION_LOG.md): dated session evidence and handoffs. Task reports live at `docs/handoffs/<task-id>.md` once implementation starts.
+- [BRANCHES](docs/BRANCHES.md): current integration route, worker worktrees and preserved historical checkpoints. **Start from `origin/main`'s progress/log**, then follow its explicit active-branch handoff; a worker's older tracking files never override main.
 
 Current user instructions take precedence. Preserve approved behavior when code disagrees with it. Do not silently redesign the stack or reduce launch scope. Stack changes require user approval recorded in DECISIONS. Until PROJECT_PROGRESS records plan approval, do planning work only. The user approved the full plan on 2026-09-06 and explicitly requested continuous implementation through completion, commits and pushes. Milestone review pauses are waived by D10; continue after technical gates pass, retaining demo evidence. Deployment remains bounded by supplied accounts, budget/domain details and real-device access; never invent those prerequisites.
 
@@ -26,7 +27,7 @@ Current user instructions take precedence. Preserve approved behavior when code 
 
 ## Start/resume protocol
 
-1. Read this file, PROJECT_PROGRESS, relevant TASKS/PROJECT_PLAN sections, applicable DECISIONS and the latest SESSION_LOG/task handoff.
+1. Fetch `origin` and read this file, PROJECT_PROGRESS, BRANCHES, relevant TASKS/PROJECT_PLAN sections, applicable DECISIONS and the latest SESSION_LOG/task handoff from `origin/main`. If offline, use the last fetched main and record that limitation. Then read the assigned branch's task report and reconcile its newer work. Do not switch a dirty checkout or overwrite worker tracking files blindly.
 2. Confirm `pwd`, OS/tool versions, branch, `git worktree list`, `git status --short`, staged/unstaged diffs and recent commits. Compare actual worktree paths with ownership assignments.
 3. Reconcile the checkpoint with code and evidence. Do not assume the previous session ended cleanly or that its process still runs. Preserve all uncommitted work; investigate discrepancies before claiming completion.
 4. Run available baseline smoke checks from PROJECT_PLAN §5. Before application scripts exist, use the documented documentation-only baseline and record app checks as **NOT RUN**. After implementation exists, start its local services and run `npm run test:smoke` before extending it. Missing tools or failed required checks are blockers, not passes.
@@ -37,6 +38,7 @@ Current user instructions take precedence. Preserve approved behavior when code 
 - One coordinator assigns one owner per active task, records branch/worktree/resource slots in TASKS, and establishes shared contracts before parallel work. Follow PROJECT_PLAN §7; sequential execution uses the same tasks.
 - Checkpoint after a meaningful verified substep: update the task-specific report with changes, exact commands and actual results, evidence, failures, commit/base SHA, dirty files and the next substep. Workers do not change TASKS, PROJECT_PROGRESS, DECISIONS or SESSION_LOG.
 - After each task, coordinator reviews and integrates its owned changes, reruns relevant integration/regression checks, then updates TASKS and the compact progress/session records. A successful worker check alone cannot make a task DONE.
+- D18: use short feature branches from current main and reviewed PRs back to main. Commit/push/PR/merge are authorized by the user's resume request. Main owns the accepted code and coordinator records; worker branches retain unfinished source and task reports. Merge runnable, tested increments with explicit limitations; merge is not launch approval or a reason to mark blocked tasks DONE. Keep branch pointers and exact next action in the same PR as accepted changes.
 - Keep integrated code and tracking aligned in focused commits containing the task ID. If interrupted between integration and tracking, record the mismatch and reconcile on resume. Update architecture/decisions only when their content changes.
 
 ## Verification and definition of done
@@ -53,3 +55,13 @@ For every milestone, launch the actual integrated app, exercise the specified wo
 - Update task handoff, then have the coordinator update TASKS, PROJECT_PROGRESS and SESSION_LOG. Include restart/verification commands and any required seed profile. Stop owned processes if appropriate and record it; assume none survive.
 - Recover unexpected interruptions from Git, saved task reports and fresh smoke checks. Never discard uncommitted work or promote an unverified task to DONE.
 - Review the final diff for unrelated edits and sensitive data before committing. State what changed, checks actually run, limitations and pending approvals in the final handoff.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

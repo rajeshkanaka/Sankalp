@@ -1,0 +1,13 @@
+.editorFields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.changeList {
+  display: grid;
+  gap: 10px;
+  padding-left: 22px;
+  overflow-wrap: anywhere;
+}

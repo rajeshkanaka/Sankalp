@@ -21,3 +21,85 @@ Short factual handoffs only. Current checkpoint: [PROJECT_PROGRESS](PROJECT_PROG
 ## 2026-09-06 — Approval and implementation kickoff
 
 User approved the plan, authorized commits/pushes and requested continuous implementation with orchestration through completion. D10 records the override of visual-review pauses without waiving tests. Rechecked branch/worktree/Git baseline at `93384ed`; working tree was clean. Docker CLI 29.4.2 present but daemon stopped. Asked only for eventual hosting cap/domain/sender/device inputs; local development proceeds. SK-001 claimed by coordinator; exact next substep in PROJECT_PROGRESS. No application test result claimed at kickoff.
+
+## 2026-09-06 — SK-001 bootstrap checkpoint
+
+Approval commit 2c9b13c pushed to origin/main; implementation branch created. Node24.20.0/npm11.19.0 installed, exact manifest/lock installed with zero audit findings. Contracts checkpoint2ee1251; domain d76d257/dd75fa6 integrated (worker:47 unit tests, typecheck and scoped checks passed). UI worker remains isolated in SK-001-ui. Root auth, local wrappers and database services are in progress; full workflow is NOT RUN.
+
+Docker4.72 startup failed with Electron unexpected EOF from inherited large environment; clean-environment application launch recovered engine29.4.2 without data changes. [Official fix in Docker4.81](https://docs.docker.com/desktop/release-notes/#4810). Local Supabase started with Postgres17 image and Mailpit. Initial CLI start printed local service keys by default; wrapper now captures stdout, prints safe status only, and no keys were written to tracking/evidence. Do not copy raw CLI status or auth links into reports.
+
+Security review prompted immutable-table permissions, kind/owner FK strengthening and fail-closed runtime role checks. Managed postgres rejects ALTER ROLE NOSUPERUSER even for a restricted role; migration instead checks every dangerous attribute and refuses drift. Account disable will require the exclusive account advisory lock matching withUser shared lock. Resume at PROJECT_PROGRESS exact substep; no app task is DONE.
+
+## 2026-09-06 — SK-001 integrated browser checkpoint
+
+UI acf32ba, fixture helpers1d4fc5f and usabilityd0518a5 integrated. Guarded testsff81ab8/692a6a8 now run from the owning local runtime and reject hosted/admin-role drift. Migration003 fixes the real Auth deletion cascade failure. Integrated checks:47 domain tests,13 database tests,12 Chromium/WebKit browser tests passed (production build), including actual captured-mail auth,21 sessions, checkbox saves, deliberate confirmation,1/21=5%, Back/reload persistence, axe and320px reflow. Screenshots are in the current M1 run directories; final release evidence manifest is pending.
+
+Failed attempts retained as lessons: GoTrue PKCE token hashes include a pkce_ prefix; do not assume hexadecimal-only tokens before verifyOtp. Next route announcer also has role alert; scope form alerts to the sign-in landmark. WebKit reported cancelled private-prefetch fetches as access-control errors during reload. Disabling private Link prefetch resolved that while preserving completion router.refresh for Back-cache correctness; Back-before-reload now has a functional assertion. No CORS relaxation, error filter or CSP weakening was used.
+
+Nonce CSP now applies to dynamic pages; local wrappers protect manual env values, allocate repository-wide worktree slots and check PostgreSQL17. Exact tagged GitHub Actions revisions were verified from official release pages/remotes on2026-09-06 (checkout7.0.1,setup-node7.0.0,upload-artifact7.0.1). CI is configured but has not run remotely yet. Rate-limit and extra HTTP-boundary tests are still being integrated. No application task is marked DONE from this checkpoint alone.
+
+## 2026-09-06 — M1 HTTP and privacy checkpoint
+
+Integrated real rate-limit/draft retry coverage:23 PostgreSQL tests pass, alongside47 domain tests. Chromium/WebKit21 HTTP/UI tests pass. Fixed test harness malformed-body serialization and isolated Auth rate tests into a marked ui-http namespace; consuming a link alone does not clear provider resend cooldown. Firefox155 revision1543 downloaded but launch fails with “Could not find profile folder”; investigation active. Manual zoom/VoiceOver was initially blocked by active Chrome; user has now indicated idle and retry is underway. No missing check is counted as passed.
+
+Review found Next development request logging could include auth token query values; disabled framework request logging. Local environment ownership checks now precede runtime-role password mutation. npm ls, full and production-only audits pass with0 vulnerabilities. Final post-refinement build/UI verification and hosted CI remain pending. Root demo3000 is running, test3100 stops between suites.
+
+## 2026-09-06 — Local runtime isolation and first remote CI
+
+Pushed implementation/sankalpa at a87c90a. GitHub run33989840616 completed core verify successfully, then failed fullUI; triage pending. Locally all27 Chromium/WebKit/Firefox cases passed before the final alias/network refinements. Firefox155 r1543 needs a private MOZ_APP_DATA directory on this macOS27 host; default profile access is denied. No TCC/sandbox settings were weakened.
+
+Supabase's documented network default still exposed wildcard ports on Docker Desktop29.4.2. Stopped only the owned stack preserving its backup/volume, then used the pinned CLI's project-local Docker wrapper to pass explicit127.0.0.1 port mappings. Actual Docker inspection now shows only127.0.0.1 for54321/54322/54324. Binding assertion prevents continuing if this changes. Eleven focused wrapper tests pass. A new forward migration rejects SQL NULL numeric targets/values (CHECK otherwise accepts UNKNOWN). Latest integrated verify passes58 unit,23 DB integration, build and real-browser smoke; full post-refinement UI and new M2 tests remain pending.
+
+Manual test reached Chrome's actual200% zoom and keyboard focus, but screen images stayed stale and the Mac locked before VoiceOver announcements could be verified. User unlocked it; all changed settings restored (VoiceOveroff, Chrome100%/windowed/bookmarks, test incognito window closed). Manual visual reflow and VoiceOver remain NOT RUN, tracked by SK-002-manual. No claimed visual approval. SK-003 isolated UI and integration cases are in progress per D12.
+
+## 2026-09-06 — M1 gate and M2 contract checkpoint
+
+M1 full28 HTTP/UI checks passed across Chromium/WebKit/Firefox on7ba9c4e, with9 real synthetic screenshots retained in foundation-final. GitHub CI33990840939 also passed verify/fullUI/audits. SK-001 technical evidence is complete; SK-002 manual200% reflow/VoiceOver remains B06. User visual review was not invented. D12 permits cumulative work while that testing capability is unresolved.
+
+SK-003 personalized setup/numeric controls and review fixes integrated throughd7e1d6d. Full local verify passed58unit34DB/build/smoke before subsequent shared migrations. Initial all3 M2 UI cases stopped at an incorrect date-format assertion: actual app showed September6/26 correctly; worker fixed exact expectations, scoped alerts and redacted page errors. Rerun pending. The M2 demo is built using real creation/save/confirmation services and reproduces7/21,14upcoming,33%; no fake server completion.
+
+Fixture review identified stale readiness after failed reseed. Added restricted application-role connection preflight, incomplete marker before reset, ready marker only after successful population, and launch refusal for incomplete profiles. Focused recovery test passed, preserving previously seeded rows on bad application credentials; manual incomplete-marker launch refusal and restoration passed. Fixture/test clocks are separate; UI seeding does not reset the user's demo clock.
+
+Shared revision contracts/migration006 bfa8eb2 and progress contracts/preference migration007 21c378c are integrated. All34 DB cases passed after006; forged-owner test uses a noncolliding version so the intended FK check is still exercised. Typecheck passed after007. Separate SK004/SK005 workers now own their services/features/tests without shared configuration or runtime access. Full post-refinement verification running; see PROJECT_PROGRESS for exact sessions/next action.
+
+## 2026-09-06 — Personalized workflow verification and artifact privacy
+
+Verify2103 passed format/lint/types,58unit35DB, production build and smoke after migrations007 and the recovery test. FullUI83542 passed30/31, including all3 new personalized setup/numeric cases. Firefox's final M1 Today assertion selected another journey created under M2's later clock;201d8c8 selects the test's own journey explicitly. This preserves the original completion/Back/reload assertions. Cumulative rerun pending.
+
+Fresh manual retry284cd60 verified public welcome native200% reflow and keyboard invalid-email validation/focus. VoiceOver caption output remained unavailable; no announcement pass inferred. Chrome100%, incognito window, VoiceOveroff and settings restored. Browser chrome contained private bookmark/password-manager information, so no screenshots were retained.
+
+Privacy inspection decoded the local raw Playwright HTML report without printing content, then confirmed13 auth-query mentions in CI artifact9976615640. Raw step metadata retains local captured sign-in links even when tests pass. Removed the two affected verification-evidence artifacts (9976615640/9976333426) after private ignored copies were retained; GitHub now reports0 artifacts. These were ephemeral local CI credentials, with no hosted deployment. CI upload paths are being narrowed to a safe allowlisted summary and synthetic screenshots/manifests. Test helper navigation failures now omit secret URLs. Source-SHA CI results remain independently visible; do not claim the deleted raw artifact links still exist.
+
+## 2026-09-06 — Integrated M2 review and draft recovery
+
+Revision, metadata and canonical progress/calendar interfaces are integrated through055e259. Review found stale schedule previews retaining unusable operation IDs; recovery now preserves local edits, discards stale preview/operation state, reloads the authorized revision and requires a fresh explicit preview. Real Chromium opening-boundary and two-context conflict flow passed. Deterministic PostgreSQL tests prove both journey-lock winners, actual blocked competitors and rollback after supersede/first-replacement writes; all9 revision cases pass.
+
+Repeated setup previews previously created hidden drafts. The setup form now updates one saved draft with revision/idempotency protection; Journeys exposes Resume draft. Three DB cases include20 edits staying one row, exact retry, changed-body rejection, concurrency, owner isolation and activation of the latest draft. Streak preference now updates its controlled checkbox immediately and restores it after save failure. Two browser assertions were scoped away from Next's route announcer and aligned with actual Current practices text.
+
+Verification51408: format/lint/typecheck,80unit,56DB, production build and real Chromium smoke PASS. Full regression79171 is running under m2-final; no full-suite pass is inferred yet. Safe allowlist reporter excludes raw errors/steps/URLs/cookies/attachments; current CI upload paths include only that summary and synthetic screenshots/manifests. Raw reports are not generated by the new configuration. The previous two affected remote artifacts remain removed. M3 read-only preflight is recorded; source/migration assignment follows coordinator freeze. Manual B06 remains limited to unavailable announcements/authenticated checks, with all desktop settings restored.
+
+
+## 2026-09-06 — M3 history/journal integration and preserved local runtime
+
+Integrated SK-006 correction/undo/immutable closure history and SK-007 exact-text reflections, autosave/conflict recovery, private POST journal search and prompt preferences. Shared routes/pages and M3 service-built fixture are wired. Reflection validation preserves whitespace, rejects NUL/lone surrogates and counts Unicode code points; SQL mood-edge whitespace matches ECMAScript. Migration008 found unmarked legacy history, so slot0 and its private environment were preserved intact and stopped. Fresh slot1 applied001–008; see D16 and SK-006-runtime. No legacy rows were relabeled or erased. M3 seed and launch pass atlocalhost3001.
+
+Verify97932 passed formatting/lint/types,112unit83DB, production build and real Chromium smoke. All3 engines passed correction/journal functional, lost-response retry, conflict and axe workflows in75121. Full suite46/49 revealed duplicated checklist landmarks: sibling checklist/reflection components shared a React key. Unique keys fixed the actual refresh duplication; all3 focused personalized/numeric workflows pass after rebuild99289. An earlier selector also needed scoping to the practice landmark because journal adds its own status. Keep both the functional and accessibility assertions. Final complete regression is pending.
+
+SK-008 preparation installs only planned idb8.0.3 (audit0 vulnerabilities), freezes core interfaces and adds server-verified identity/canonical snapshot/expected-account guards. Isolated workers implement core/UI and HTTP tests; coordinator owns public-only service worker/build integration. New real HTTP tests reached successful retry but their raw JSON.stringify digest disagreed with PostgreSQL JSONB key ordering; canonical digest fix requested. No offline durability or task completion inferred from prepared source. B06 remains unverified, settings restored; external blockers remain unchanged and no paid provisioning occurred.
+
+
+## 2026-09-06 — User-requested break and durable resume checkpoint
+
+User requested pause, commit/push all current work, then manual morning resumption. Final integrated fullUI94699 passed50/50 in2.2minutes;115unit/format/lint/type PASS18833;83DB/build/smoke previously passed and finalrebuild passed. Root application checkpointd2b1d85 and final evidence/handoff are saved. Unfinished offline work is committed separately: core86769b5, UI3d54c3b, HTTP037ab05. Known WIP failures and exact nextsubstep are in SK-008-break and branch reports; nothing was promoted toDONE. App3001 and owned Supabase slot1 stopped, private volumes/env preserved. No overnight agent work or automation. Final remote CI is pending until freshly inspected.
+
+
+## 2026-09-06 — Resume reconciliation and main-first integration
+
+User resumed and requested tested work merged through PRs, authoritative coordinator context on main and an exact worktree map before continuing. Read the overnight checkpoint and audited25local branches/23worktrees: all tracked trees clean; only the documented core dependency symlink untracked. All old source is integrated except core86769b5/UI3d54c3b; journal's final handoff is byte-identical despite adjusted cherry-picks. Fresh remote refs matched all saved checkpoints. BRANCHES records the inventory; no historical worktree or legacy database was deleted.
+
+Hosted CI33995477654 on ef6e0a9 is now verified SUCCESS (verify, fullUI and audits). Restarted preserved slot1; fresh local npm verify PASS115unit/83DB/build/real smoke, raw safe-wrapper output in ignored artifacts/resume-verify.log. Review found a cross-tab closure-event omission in the client mutation response; narrowly assigned regression/fix before PR. Seven inactive unfinished offline source/test files are removed only from the consolidation branch and remain recoverable at ef6e0a9. The selected architecture and complete launch scope are unchanged. D18 establishes main-first context and regular reviewed integration; no implementation task was promoted merely because work resumed.
+
+
+## 2026-09-06 — PR3 integrated correction regression
+
+Opened draftPR3 from rajesh_kanaka/consolidate-main. Tests1b33394 reproduced the reviewed closure omission in both real database and Chromium UI: another tab creates the immutable marker, but an already-open page receives none after correction. Fixad78c5c returns the existing marker and preserves client ID deduplication. Fresh npm verify PASS112unit/84DB/build/smoke; full UI53/53PASS in2.3minutes acrossall3engines. Retained safe sourceSHA summary and synthetic screenshots in M1/M2/M3 main-consolidation; inspected Chromium closing history. Local logs remain ignored. Required PRCI pending before merge; no release claim. Core resume review records exact stale-comparison/account-change/replay-exclusion defects and required regression design before resuming WIP.

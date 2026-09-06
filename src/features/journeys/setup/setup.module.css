@@ -1,0 +1,152 @@
+.templateBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  margin-bottom: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.templateBar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.practiceCard {
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.practiceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.practiceHeader label {
+  font-weight: 600;
+}
+
+.practiceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(150px, 0.8fr);
+  gap: 16px;
+}
+
+.targetGrid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(130px, 0.8fr) minmax(110px, 0.6fr);
+}
+
+.choiceGroup {
+  display: grid;
+  gap: 12px;
+  margin: 8px 0 22px;
+}
+
+.choice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.choice input,
+.weekday input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--brass);
+  flex: 0 0 auto;
+}
+
+.choice span {
+  display: grid;
+  gap: 2px;
+}
+
+.choice small {
+  color: var(--muted);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(56px, 1fr));
+  gap: 8px;
+  margin: 8px 0 22px;
+}
+
+.weekday {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-height: 68px;
+  padding: 10px 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.weekday:has(input:checked),
+.choice:has(input:checked) {
+  border-color: var(--brass);
+  background: #342f2c;
+}
+
+.fieldError {
+  color: var(--error);
+  font-size: 14px;
+  margin: -12px 0 22px;
+}
+
+.practiceList {
+  display: grid;
+  gap: 4px;
+}
+
+.scheduleFacts {
+  margin: 0;
+}
+
+.warningList {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.reminderList {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.reminderList small {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .practiceGrid,
+  .targetGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .weekdays {
+    grid-template-columns: repeat(4, minmax(56px, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .weekdays {
+    grid-template-columns: repeat(3, minmax(56px, 1fr));
+  }
+}

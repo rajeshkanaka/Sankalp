@@ -1,0 +1,212 @@
+.statistics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 24px 0 16px;
+}
+.statistics div {
+  min-width: 0;
+}
+.statistics dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.statistics dd {
+  margin: 3px 0 0;
+  font-size: 24px;
+  font-family: var(--serif);
+}
+.endState {
+  color: var(--brass);
+  font-weight: 600;
+}
+.sessionLink {
+  gap: 16px;
+}
+.sessionLink > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.journeyName {
+  display: block;
+  margin-bottom: 4px;
+}
+.badges {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-start;
+}
+.timing {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 8px;
+}
+.otherJourneys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.otherJourneys li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.otherJourneys span {
+  color: var(--muted);
+}
+.calendarToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  margin: 24px 0;
+}
+.calendarToolbar a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.filters fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+}
+.viewChoices {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.viewChoices label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+}
+.viewChoices input {
+  accent-color: var(--brass);
+}
+.grid {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.grid caption {
+  text-align: left;
+  margin-bottom: 16px;
+  font-family: var(--serif);
+  font-size: 26px;
+}
+.grid th {
+  font-weight: 400;
+  color: var(--muted);
+  padding: 10px 2px;
+}
+.grid td {
+  vertical-align: top;
+  border: 1px solid var(--line);
+  padding: 8px;
+  height: 110px;
+  overflow-wrap: anywhere;
+}
+.grid td[data-outside='true'] {
+  background: var(--deep-night);
+  color: var(--muted);
+}
+.grid td[data-selected='true'] {
+  outline: 2px solid var(--brass);
+  outline-offset: -2px;
+}
+.dayLink {
+  display: inline-flex;
+  min-height: 32px;
+  min-width: 24px;
+  align-items: center;
+  justify-content: center;
+  color: var(--parchment);
+}
+.calendarEntry {
+  display: block;
+  padding: 8px 4px;
+  margin-top: 6px;
+  border-left: 2px solid var(--line);
+  font-size: 12px;
+  text-decoration: none;
+  min-height: 44px;
+}
+.calendarEntry span {
+  display: block;
+}
+.calendarEntry[data-status='complete'] {
+  border-color: var(--success);
+}
+.calendarEntry[data-status='partial'] {
+  border-color: var(--brass);
+}
+.calendarEntry[data-status='missed'] {
+  border-color: var(--error);
+}
+.calendarEntry[data-status='open'] {
+  border-color: var(--parchment);
+}
+.emptyDay {
+  color: var(--muted);
+  font-size: 12px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 20px 0;
+}
+.journeyTotals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 0;
+  list-style: none;
+}
+.journeyTotals li {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+  .grid td {
+    padding: 3px;
+  }
+  .calendarEntry {
+    padding: 6px 2px;
+    font-size: 11px;
+  }
+  .grid th {
+    font-size: 12px;
+  }
+}
+@media (max-width: 380px) {
+  .grid {
+    font-size: 12px;
+  }
+  .sessionLink {
+    flex-direction: column;
+  }
+  .badges {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
