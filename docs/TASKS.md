@@ -29,7 +29,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-017 | M6 | Actual iPhone/Android push and audio evidence | SK-016; B04 | W-device-validation | BLOCKED | `docs/handoffs/SK-017.md`; M6 evidence |
 | SK-018 | M6 | Integrated release candidate passes all launch gates | SK-015, SK-016, SK-017 | C | TODO | `docs/handoffs/SK-018.md`; M6 evidence |
 | SK-019 | M7 | Approved production canary and live handoff | SK-018 + M6 review; B05 | C | BLOCKED | `docs/handoffs/SK-019.md`; M7 evidence |
-| SK-020 | Local presentation tooling | One-command database-backed demo and polished README | Accepted main23f15b2; user-requested follow-up during pause | /root coordinator | DONE | `docs/handoffs/SK-020.md`; PR6/main `ff6a479`; `docs/evidence/demo-launcher/` |
+| SK-020 | Local presentation tooling | One-command database-backed demo and polished README | Accepted main `23f15b2`; user-requested follow-up during pause | /root coordinator | DONE | `docs/handoffs/SK-020.md`; PR6/main `ff6a479`; `docs/evidence/demo-launcher/` |
 
 Evidence paths in this register are **planned**. Per-task report is created on claim; run evidence uses `docs/evidence/M<n>/<run-id>/` as defined in PROJECT_PLAN §4. Completion status is only the register cell above; task detail does not duplicate it. Every task must satisfy AGENTS' DONE gate, including integration and actual successful checks, not just its worker-local criteria.
 
@@ -146,7 +146,7 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 
 ### SK-009 — Reminder preferences and durable job foundation
 
-**Paused integration checkpoint:** reviewed domain preparation has progressed to unfinished schema/API/UI integration on `4d9fd1d`, with011 applied and012 corrections next. Use [the emergency handoff](handoffs/SK-009-integration.md#emergency-pause--2026-09-06-1552-ist) and the paused scopes below. D12 does not waive SK-008/native technical gates; the register above remains authoritative.
+**Paused integration checkpoint:** reviewed domain preparation has progressed to unfinished schema/API/UI integration on `4d9fd1d`, with migration 011 applied and corrections in migration 012 next. Use [the emergency handoff](handoffs/SK-009-integration.md#emergency-pause--2026-09-06-1552-ist) and the paused scopes below. D12 does not waive SK-008/native technical gates; the register above remains authoritative.
 
 **Outcome/owner/files:** C owns `src/domain/reminders.ts`, `src/server/reminders/preferences.ts`, reminder setup UI, all new reminder/subscription/job migrations and extensions to SK-006’s basic event schema, worker-role grants/functions and shared contracts. Consume canonical session/revision/clock; produce versioned preferences, job identity, worker claim/revalidate/settle API and notification event/read schemas before parallel dispatch/UI work.
 
@@ -294,9 +294,9 @@ Additional launch coverage: email-link states/privacy/rate limits (001/002/014/0
 
 ## Paused feature ownership — 2026-09-06 emergency checkpoint
 
-Task status remains in the register above. No feature worker is running; these are preserved scope boundaries for explicit reassignment after the user resumes. Coordinator owns shared files/integration. M4 checkpoint4d9fd1d includes accepted PR5 main23f15b2 via3be8815; upstream B06 remains explicit. Current accepted main also contains PR6 presentation tooling, without accepting unfinished M4 code.
+Task status remains in the register above. No feature worker is running; these are preserved scope boundaries for explicit reassignment after the user resumes. Coordinator owns shared files/integration. M4 checkpoint `4d9fd1d` includes accepted PR5 main `23f15b2` via `3be8815`; upstream B06 remains explicit. Current accepted main also contains PR6 presentation tooling, without accepting unfinished M4 code.
 
-- SK-009 C: reminder-integration4d9fd1d, slot2, owns SQL/API/config/contracts.011 is applied; latest combined SQL run65 passed/9 failed. Preserve existing migrations and implement corrections as012 after reviewing the emergency handoff. Actual reminder UI/worker verification remains pending.
+- SK-009 C: reminder-integration `4d9fd1d`, slot 2, owns SQL/API/config/contracts. Migration 011 is applied; latest combined SQL run: 65 passed / 9 failed. Preserve existing migrations and implement corrections as migration 012 after reviewing the emergency handoff. Actual reminder UI/worker verification remains pending.
 - SK-009 schema tests: /root/branch_audit, reminder-schema-tests from177ab8b; only tests/integration/reminder-schema.test.ts and its handoff, no runtime or migration writes.
 - SK-009 UI tests: /root/merge_review, reminder-ui-tests from177ab8b; only tests/ui/m4-reminder-preferences.spec.ts and its handoff, actual API-driven fixtures, no mocked persistence/runtime borrowing.
 - SK-011 worker: /root/ci_triage, reminder-worker from32333fe; only src/worker/*.ts, tests/unit/worker*.test.ts and its handoff under SK-011-worker-contract. C supplies SQL/config/tsc/scripts and actual role/runtime tests.
