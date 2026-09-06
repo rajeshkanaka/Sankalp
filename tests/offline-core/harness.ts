@@ -1,138 +1,8 @@
-import { createOfflineCore, ReplayError } from '../../src/offline/core';
-import type {
-  AccountScope,
-  Intent,
-  OfflineCore,
-  QueueOperation,
-  ReplayReply,
-  ReplayTransport,
-} from '../../src/offline/core';
+import type { OfflineCore } from '../../src/offline/core';
 import { ACCOUNT, OTHER, snapshot } from './fixtures';
+import { check, rejects, copy, environment, enqueue, values } from './helpers';
+import { regressions } from './regressions';
 
-const check = (condition: unknown, message: string): void => {
-  if (!condition) throw new Error(message);
-};
-async function rejects(action: () => Promise<unknown>, code: string) {
-  try {
-    await action();
-  } catch (error) {
-    check((error as { code: string }).code === code, `Expected ${code}`);
-    return;
-  }
-  throw new Error(`Expected rejection ${code}`);
-}
-const copy = <T>(value: T): T => structuredClone(value);
-function environment(databaseName: string) {
-  let time = '2026-09-06T01:00:00.000Z';
-  let server = copy(snapshot.session);
-  let reflection = copy(snapshot.reflection);
-  let identity = ACCOUNT;
-  let loseReply = false;
-  let pause: (() => Promise<void>) | null = null;
-  const sent: QueueOperation[] = [];
-  const receipts = new Map<string, ReplayReply>();
-  const transport: ReplayTransport = {
-    async identity() {
-      return { accountId: identity, now: time };
-    },
-    async current() {
-      return {
-        code: 'REVIEW_REQUIRED',
-        currentSession: copy(server),
-        currentReflection: copy(reflection),
-        currentAvailable: true,
-      };
-    },
-    async send(_scope, op) {
-      sent.push(copy(op));
-      if (pause) await pause();
-      let reply = receipts.get(op.operationId);
-      if (!reply) {
-        check(!!op.request, 'Wire request must have committed before send');
-        const rev = op.stream === 'session' ? server.revision : (reflection?.revision ?? 0);
-        if (op.request!.baseRevision !== rev) throw new ReplayError(409, 'REVISION_CONFLICT');
-        if (op.intent.kind === 'reflection') {
-          reflection = {
-            ...copy(op.intent.payload),
-            sessionId: server.id,
-            journeyId: server.journeyId,
-            scheduleVersionId: server.scheduleVersionId,
-            revision: rev + 1,
-            createdAt: reflection?.createdAt ?? time,
-            updatedAt: time,
-          };
-          reply = { kind: 'reflection', sessionId: server.id, revision: rev + 1, updatedAt: time };
-        } else {
-          if (op.intent.kind === 'practices')
-            for (const item of server.practices) {
-              if (Object.hasOwn(op.intent.payload.values, item.id))
-                item.value = op.intent.payload.values[item.id];
-            }
-          if (op.intent.kind === 'completion') {
-            server.confirmed = true;
-            server.performedAt = op.intent.payload.performedAt;
-            server.recordedAt = time;
-          }
-          if (op.intent.kind === 'completion_undo') {
-            server.confirmed = false;
-            server.performedAt = null;
-            server.recordedAt = time;
-          }
-          server.revision += 1;
-          reply = { kind: 'session', session: copy(server) };
-        }
-        receipts.set(op.operationId, copy(reply));
-      }
-      if (loseReply) {
-        loseReply = false;
-        throw new ReplayError(0, 'NETWORK_UNCERTAIN');
-      }
-      return copy(reply);
-    },
-  };
-  const create = () => createOfflineCore({ databaseName, now: () => time, transport });
-  return {
-    create,
-    sent,
-    receipts,
-    transport,
-    advance: (days = 0) => {
-      time = new Date(Date.parse(time) + days * 86_400_000 + 301_000).toISOString();
-    },
-    lose: () => {
-      loseReply = true;
-    },
-    setServer: (value: typeof server) => {
-      server = copy(value);
-    },
-    setIdentity: (value: string) => {
-      identity = value;
-    },
-    setPause: (value: (() => Promise<void>) | null) => {
-      pause = value;
-    },
-  };
-}
-async function enqueue(core: OfflineCore, scope: AccountScope, intent: Intent) {
-  const view = (await core.read(scope, snapshot.session.id))!;
-  return core.enqueue(scope, {
-    operationId: crypto.randomUUID(),
-    sessionId: snapshot.session.id,
-    scheduleVersionId: snapshot.session.scheduleVersionId,
-    baseRevision:
-      intent.kind === 'reflection'
-        ? (view.snapshot.reflection?.revision ?? 0)
-        : view.snapshot.session.revision,
-    expectedLocalHead: view.heads[intent.kind === 'reflection' ? 'reflection' : 'session'],
-    intent,
-  });
-}
-const values = {
-  kind: 'practices',
-  payload: {
-    values: { [snapshot.session.practices[0].id]: true, [snapshot.session.practices[1].id]: 20 },
-  },
-} satisfies Intent;
 let held: {
   core: OfflineCore;
   release: () => void;
@@ -140,6 +10,7 @@ let held: {
   result: Promise<unknown>;
 } | null = null;
 const harness = {
+  ...regressions,
   async basic(name: string) {
     const env = environment(name);
     const core = env.create();
@@ -254,6 +125,7 @@ const harness = {
       () =>
         core.resolve(scope, conflict.operationId, {
           kind: 'use_server',
+          expectedComparisonId: conflict.conflict!.comparisonId,
           expectedOperationIds: [],
           expectedDraftRevision: view.draftRevision,
         }),
@@ -261,6 +133,7 @@ const harness = {
     );
     await core.resolve(scope, conflict.operationId, {
       kind: 'use_server',
+      expectedComparisonId: conflict.conflict!.comparisonId,
       expectedOperationIds: view.operations.map((row) => row.operationId),
       expectedDraftRevision: view.draftRevision,
     });
@@ -322,10 +195,10 @@ const harness = {
     view = (await core.read(scope, snapshot.session.id))!;
     await core.resolve(scope, view.operations[0].operationId, {
       kind: 'submit_reviewed',
+      expectedComparisonId: view.operations[0].conflict!.comparisonId,
       expectedOperationIds: view.operations.map((row) => row.operationId),
       expectedDraftRevision: view.draftRevision,
-      operationId: crypto.randomUUID(),
-      intent: values,
+      replacements: [{ operationId: crypto.randomUUID(), intent: values }],
       currentRevision: 1,
     });
     check((await core.flush(scope)).acknowledged === 1, 'Reviewed old intent resubmits explicitly');

@@ -1,4 +1,3 @@
-import { targetsMet } from '../../domain/status';
 import type { ReflectionRecord } from '../../domain/contracts';
 import {
   Storage,
@@ -13,10 +12,12 @@ import { createFetchTransport, ReplayError } from './transport';
 import {
   MAX_OPERATIONS,
   OfflineError,
+  applyIntent,
   dueForReview,
   instant,
   makeView,
   parseSession,
+  parseReflection,
   revision,
   retryAt,
   stableJson,
@@ -62,6 +63,7 @@ async function localView(
   );
 }
 const unknownConflict = (code: string): Conflict => ({
+  comparisonId: crypto.randomUUID(),
   code,
   currentSession: null,
   currentReflection: null,
@@ -129,18 +131,27 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
   }
   async function exclusive<T>(scope: AccountScope, action: () => Promise<T>): Promise<T> {
     if (!lockingAvailable()) return action(); // Purge is safe without replay support: generation invalidation still applies.
-    return navigator.locks.request(
+    const result = await navigator.locks.request(
       `sankalpa-sync:${scope.accountId}`,
       { ifAvailable: true },
       async (lock) => {
         if (!lock)
-          throw new OfflineError(
-            'SYNC_BUSY',
-            'A tab is syncing. Wait briefly before clearing local changes.',
-          );
-        return action();
+          return {
+            ok: false as const,
+            error: new OfflineError(
+              'SYNC_BUSY',
+              'A tab is syncing. Wait briefly before clearing local changes.',
+            ),
+          };
+        try {
+          return { ok: true as const, value: await action() };
+        } catch (error) {
+          return { ok: false as const, error };
+        }
       },
     );
+    if (!result.ok) throw result.error;
+    return result.value;
   }
   async function quarantine(scope: AccountScope): Promise<void> {
     await storage.run(scope, async (tx, meta) => {
@@ -161,9 +172,32 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
       await quarantine(scope);
       throw new OfflineError('ACCOUNT_CHANGED');
     }
-    const result = await transport.current(scope, operation, signal);
-    await storage.run(scope, async () => undefined);
-    return result;
+    try {
+      const result = await transport.current(scope, operation, signal);
+      await storage.run(scope, async () => undefined);
+      const currentSession =
+        result.currentSession === null ? null : parseSession(result.currentSession);
+      const currentReflection = parseReflection(result.currentReflection);
+      if (
+        typeof result.currentAvailable !== 'boolean' ||
+        (currentSession &&
+          (currentSession.id !== operation.sessionId ||
+            currentSession.scheduleVersionId !== operation.scheduleVersionId)) ||
+        (currentReflection &&
+          (!currentSession ||
+            currentReflection.sessionId !== currentSession.id ||
+            currentReflection.scheduleVersionId !== currentSession.scheduleVersionId ||
+            currentReflection.journeyId !== currentSession.journeyId))
+      )
+        throw new ReplayError(0, 'INVALID_RESPONSE');
+      return { ...result, currentSession, currentReflection, comparisonId: crypto.randomUUID() };
+    } catch (error) {
+      if (error instanceof ReplayError && error.code === 'ACCOUNT_CHANGED') {
+        await quarantine(scope);
+        throw new OfflineError('ACCOUNT_CHANGED');
+      }
+      throw error;
+    }
   }
   async function storeConflict(
     scope: AccountScope,
@@ -173,7 +207,11 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
   ) {
     await storage.run(scope, async (tx) => {
       const row = await tx.objectStore('operations').get(key(scope, operation.operationId));
-      if (!row || stableJson(row.request) !== stableJson(operation.request))
+      if (
+        !row ||
+        stableJson(row.request) !== stableJson(operation.request) ||
+        row.conflict?.comparisonId !== operation.conflict?.comparisonId
+      )
         throw new OfflineError('LOCAL_CONFLICT');
       row.state = review ? 'review_required' : 'conflict';
       row.conflict = conflict;
@@ -247,26 +285,39 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
     async bindAccount(accountId, bindOptions = {}) {
       uuid(accountId);
       initializeChannel();
-      const result = await storage.run(null, async (tx, meta) => {
+      const previous = await storage.run(null, async (tx, meta) => {
         const previous = meta.quarantinedAccountId ?? meta.activeAccountId;
         if (previous && previous !== accountId) {
-          const pending = await counts(tx, previous);
-          if ((pending.operations || pending.drafts) && !bindOptions.discardPrevious) {
-            meta.activeAccountId = null;
-            meta.quarantinedAccountId = previous;
-            meta.generation = crypto.randomUUID();
-            await tx.objectStore('meta').put(meta);
-            return null;
-          }
-          await purge(tx);
-        }
-        if (meta.activeAccountId !== accountId || meta.quarantinedAccountId)
+          // Hide the previous account before waiting for its potentially in-flight replay.
+          meta.activeAccountId = null;
+          meta.quarantinedAccountId = previous;
           meta.generation = crypto.randomUUID();
-        meta.activeAccountId = accountId;
-        meta.quarantinedAccountId = null;
-        await tx.objectStore('meta').put(meta);
-        return { accountId, generation: meta.generation };
+          await tx.objectStore('meta').put(meta);
+          return { accountId: previous, generation: meta.generation };
+        }
+        return null;
       });
+      if (previous) announce();
+      const bind = () =>
+        storage.run(null, async (tx, meta) => {
+          const current = meta.quarantinedAccountId ?? meta.activeAccountId;
+          if (previous) {
+            if (current !== previous.accountId || meta.generation !== previous.generation)
+              throw new OfflineError('ACCOUNT_CHANGED');
+            const pending = await counts(tx, previous.accountId);
+            if ((pending.operations || pending.drafts) && !bindOptions.discardPrevious) return null;
+            await purge(tx);
+          } else if (current && current !== accountId) {
+            throw new OfflineError('ACCOUNT_CHANGED');
+          }
+          if (meta.activeAccountId !== accountId || meta.quarantinedAccountId)
+            meta.generation = crypto.randomUUID();
+          meta.activeAccountId = accountId;
+          meta.quarantinedAccountId = null;
+          await tx.objectStore('meta').put(meta);
+          return { accountId, generation: meta.generation };
+        });
+      const result = previous ? await exclusive(previous, bind) : await bind();
       announce();
       if (!result)
         throw new OfflineError(
@@ -282,6 +333,10 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
         return {
           scope:
             meta.activeAccountId && !meta.quarantinedAccountId && !meta.sharedDevice
+              ? { accountId: meta.activeAccountId, generation: meta.generation }
+              : null,
+          managementScope:
+            meta.activeAccountId && !meta.quarantinedAccountId
               ? { accountId: meta.activeAccountId, generation: meta.generation }
               : null,
           quarantined: !!meta.quarantinedAccountId,
@@ -396,22 +451,7 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
             'REVIEW_REQUIRED',
             'Resolve the existing conflict before adding another change.',
           );
-        if (normalized.intent.kind === 'practices')
-          for (const [id, value] of Object.entries(normalized.intent.payload.values)) {
-            const practice = view.snapshot.session.practices.find((item) => item.id === id);
-            if (
-              !practice ||
-              (practice.kind === 'checkbox'
-                ? typeof value !== 'boolean'
-                : typeof value !== 'number')
-            )
-              throw new OfflineError('INVALID_PRACTICE');
-          }
-        if (normalized.intent.kind === 'completion' && !targetsMet(view.projectedSession))
-          throw new OfflineError(
-            'TARGETS_INCOMPLETE',
-            'Meet every practice target before confirming.',
-          );
+        applyIntent(view.projectedSession, normalized.intent);
         if (
           (await tx.objectStore('operations').index('account').count(scope.accountId)) >=
           MAX_OPERATIONS
@@ -538,9 +578,9 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
                 if (error instanceof OfflineError) throw error;
                 if (
                   error instanceof ReplayError &&
-                  (error.status === 401 || error.code === 'ACCOUNT_MISMATCH')
+                  (error.status === 401 || error.code === 'ACCOUNT_CHANGED')
                 ) {
-                  if (error.code === 'ACCOUNT_MISMATCH') {
+                  if (error.code === 'ACCOUNT_CHANGED') {
                     await quarantine(scope);
                     return {
                       acknowledged,
@@ -646,10 +686,19 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
     },
     async resolve(scope, operationId, choice) {
       uuid(operationId);
-      const reviewed = choice.kind === 'submit_reviewed' ? validateIntent(choice.intent) : null;
+      uuid(choice.expectedComparisonId);
+      revision(choice.expectedDraftRevision);
+      const reviewed =
+        choice.kind === 'submit_reviewed'
+          ? choice.replacements.map((item) => ({
+              operationId: uuid(item.operationId),
+              intent: validateIntent(item.intent),
+            }))
+          : [];
       if (choice.kind === 'submit_reviewed') {
-        uuid(choice.operationId);
         revision(choice.currentRevision);
+        if (!reviewed.length || reviewed.length > MAX_OPERATIONS)
+          throw new OfflineError('INVALID_REPLACEMENTS');
       }
       await exclusive(scope, () =>
         storage.run(scope, async (tx, meta) => {
@@ -663,57 +712,79 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
               'COMPARISON_REQUIRED',
               'Reconnect and refresh the server comparison before resolving.',
             );
-          const rows = (await sessionOperations(tx, scope.accountId, operation.sessionId)).filter(
-            (row) => row.stream === operation.stream,
+          const all = await sessionOperations(tx, scope.accountId);
+          const rows = all.filter(
+            (row) => row.sessionId === operation.sessionId && row.stream === operation.stream,
           );
           const draft = await tx.objectStore('drafts').get(key(scope, operation.sessionId));
           if (
+            operation.conflict.comparisonId !== choice.expectedComparisonId ||
             stableJson(rows.map((row) => row.operationId)) !==
               stableJson(choice.expectedOperationIds) ||
             (draft?.revision ?? 0) !== choice.expectedDraftRevision
           )
             throw new OfflineError(
               'LOCAL_CONFLICT',
-              'Local changes arrived after this comparison. Review them before resolving.',
+              'Local changes or a new comparison arrived. Review them before resolving.',
             );
           const saved = await tx.objectStore('sessions').get(key(scope, operation.sessionId));
           if (!saved) throw new OfflineError('SNAPSHOT_MISSING');
           const { currentSession, currentReflection } = operation.conflict;
+          if (
+            currentSession &&
+            (currentSession.id !== operation.sessionId ||
+              currentSession.scheduleVersionId !== operation.scheduleVersionId ||
+              currentSession.journeyId !== saved.snapshot.session.journeyId)
+          )
+            throw new OfflineError('IDENTITY_MISMATCH');
+          const currentRevision =
+            operation.stream === 'session'
+              ? (currentSession?.revision ?? 0)
+              : (currentReflection?.revision ?? 0);
+          const localRevision =
+            operation.stream === 'session'
+              ? saved.snapshot.session.revision
+              : (saved.snapshot.reflection?.revision ?? 0);
+          // An established deletion may be explicitly accepted; an older existing record may not.
+          if (currentSession && localRevision > currentRevision)
+            throw new OfflineError(
+              'LOCAL_CONFLICT',
+              'A newer confirmed version arrived. Refresh the comparison before resolving.',
+            );
+          if (choice.kind === 'submit_reviewed') {
+            if (!currentSession || currentSession.supersededAt)
+              throw new OfflineError('SESSION_REPLACED');
+            if (choice.currentRevision !== currentRevision)
+              throw new OfflineError('LOCAL_CONFLICT');
+            if (all.length - rows.length + reviewed.length > MAX_OPERATIONS)
+              throw new OfflineError('QUEUE_FULL');
+            const ids = new Set(all.map((row) => row.operationId));
+            let projected = currentSession;
+            for (const item of reviewed) {
+              if (ids.has(item.operationId)) throw new OfflineError('OPERATION_ID_REUSED');
+              ids.add(item.operationId);
+              if (streamFor(item.intent) !== operation.stream)
+                throw new OfflineError('INVALID_REPLACEMENTS');
+              projected = applyIntent(projected, item.intent);
+            }
+          }
           if (currentSession) {
-            if (
-              currentSession.id !== operation.sessionId ||
-              currentSession.scheduleVersionId !== operation.scheduleVersionId
-            )
-              throw new OfflineError('IDENTITY_MISMATCH');
-            saved.snapshot.session = currentSession;
-            saved.snapshot.reflection = currentReflection;
+            if (currentSession.revision >= saved.snapshot.session.revision)
+              saved.snapshot.session = currentSession;
+            if ((currentReflection?.revision ?? 0) >= (saved.snapshot.reflection?.revision ?? 0))
+              saved.snapshot.reflection = currentReflection;
             saved.snapshot.lastSyncedAt = now();
             await tx.objectStore('sessions').put(saved);
           }
-          if (choice.kind === 'submit_reviewed' && reviewed) {
-            if (
-              !currentSession ||
-              currentSession.supersededAt ||
-              streamFor(reviewed) !== operation.stream
-            )
-              throw new OfflineError('SESSION_REPLACED');
-            const currentRevision =
-              operation.stream === 'session'
-                ? currentSession.revision
-                : (currentReflection?.revision ?? 0);
-            if (
-              choice.currentRevision !== currentRevision ||
-              choice.operationId === operationId ||
-              (await tx.objectStore('operations').get(key(scope, choice.operationId)))
-            )
-              throw new OfflineError('LOCAL_CONFLICT');
+          let predecessorId: string | null = null;
+          for (const item of reviewed) {
             const input: EnqueueInput = {
-              operationId: choice.operationId,
+              operationId: item.operationId,
               sessionId: operation.sessionId,
               scheduleVersionId: operation.scheduleVersionId,
               baseRevision: currentRevision,
-              expectedLocalHead: null,
-              intent: reviewed,
+              expectedLocalHead: predecessorId,
+              intent: item.intent,
             };
             meta.sequence += 1;
             await tx.objectStore('operations').put({
@@ -723,7 +794,7 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
               sequence: meta.sequence,
               createdAt: now(),
               state: 'queued',
-              predecessorId: null,
+              predecessorId,
               request: null,
               attempts: 0,
               attemptedAt: null,
@@ -731,11 +802,13 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
               conflict: null,
               inputKey: stableJson(input),
             });
-            await tx.objectStore('meta').put(meta);
+            predecessorId = item.operationId;
           }
+          if (reviewed.length) await tx.objectStore('meta').put(meta);
           for (const row of rows)
             await tx.objectStore('operations').delete(key(scope, row.operationId));
-          if (draft) {
+          // Submission replaces only validated intents. Raw unfinished text is still unsent input.
+          if (draft && choice.kind === 'use_server') {
             if (draft.draft) {
               if (operation.stream === 'reflection') delete draft.draft.reflection;
               else delete draft.draft.numericValues;

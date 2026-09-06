@@ -20,3 +20,17 @@ Read D15 and root D16. Base reflection validation is older than coordinator's ve
 ## Verification checkpoint
 
 Types/API only at this checkpoint. Implementation, unit and real IndexedDB/browser checks: NOT RUN. No root database/environment/runtime was accessed. Next: implement storage, pure queue policy, fixed-route transport and replay, then run scoped static/unit checks and an isolated real-browser IndexedDB harness if available.
+
+## Main-first resumption: verified core correctness checkpoint
+
+2026-09-06. The coordinator consolidated PR #3 to main (`eac5cdc`), recorded assignments at `d7a1096`, and recovered this work into `rajesh_kanaka/offline-core` in the existing SK-008-core worktree. Historical branch `task/SK-008-core` remains preserved. Base `c4b0666` freezes ordered resolution replacements and comparison tokens; coordinator management-scope types were applied as `90997ec`. No root environment, database, runtime, main branch, PR, or remote push was touched by this worker.
+
+The first resumption baseline `npx tsc --noEmit --incremental false` failed with twelve expected old-implementation/new-contract diagnostics. Five real-browser regressions then failed on the unfixed implementation: accepting an older canonical comparison, losing an independently acknowledged reflection, accepting an unseen refreshed comparison, failing to quarantine the actual ACCOUNT_CHANGED response, and purging during in-flight replay. These failures are superseded by the verified fixes below.
+
+- Resolution checks the exact comparison token, ordered affected-stream IDs and raw-draft revision. A newer canonical revision in the reviewed stream requires fresh review. The other stream merges monotonically. Reviewed submissions validate and queue the entire ordered replacement sequence, preserve raw drafts and original performedAt values, enforce fresh IDs and the total queue limit, and advance successors only through actual predecessor acknowledgments.
+- Account-change responses immediately quarantine, including comparison reads. Account switching first hides the old namespace, then obtains the old account's replay lock before a destructive discard; contention preserves pending work and returns SYNC_BUSY. Shared-device managementScope reveals only the active generation; private scope remains null and private reads/writes remain disabled.
+- The standalone browser harness uses explicit Node imports/browser global declaration and its own Firefox MOZ_APP_DATA directory. An expected lock-contention callback rejection emitted a Firefox page error despite caller handling; returning a settled result from that callback and throwing outside the Web Lock boundary resolved the observed error. No page-error assertions were removed.
+
+Actual checks after fixes: scoped Prettier, ESLint (zero warnings), full TypeScript no-emit, and six offline unit tests PASS. The isolated IndexedDB/Web Locks harness PASS in Chromium, WebKit and Firefox, including twelve named scenarios, actual document reload, two-page leadership and zero page errors. Transport remains explicitly synthetic; this is not app/auth/database/service-worker verification.
+
+Exact next substep: add transaction-abort/quota/denied-storage, 500-operation ceiling, malformed-response and additional resolution-boundary tests; run all scoped gates and the full isolated three-engine harness again. Application integration, production build and M3 app UI tests remain coordinator-owned and NOT RUN by this worker. This checkpoint does not mark SK-008 DONE.

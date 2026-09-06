@@ -7,6 +7,7 @@ import {
   reflectionPreferencesSchema,
 } from '../../domain/validation';
 import type { ReflectionRecord, SessionRecord } from '../../domain/contracts';
+import { targetsMet } from '../../domain/status';
 import type { Intent, LocalView, QueueOperation, RawDraft, Snapshot, Stream } from './types';
 
 export const MAX_OPERATIONS = 500;
@@ -50,6 +51,30 @@ export function validateIntent(intent: Intent): Intent {
     default:
       throw new OfflineError('INVALID_INTENT', 'This action cannot be saved offline.');
   }
+}
+/** Validate every step against the state it will actually follow, including reviewed sequences. */
+export function applyIntent(session: SessionRecord, intent: Intent): SessionRecord {
+  const projected = structuredClone(session);
+  if (intent.kind === 'practices') {
+    for (const [id, value] of Object.entries(intent.payload.values)) {
+      const practice = projected.practices.find((item) => item.id === id);
+      if (
+        !practice ||
+        (practice.kind === 'checkbox' ? typeof value !== 'boolean' : typeof value !== 'number')
+      )
+        throw new OfflineError('INVALID_PRACTICE');
+      practice.value = value;
+    }
+  } else if (intent.kind === 'completion') {
+    if (!targetsMet(projected))
+      throw new OfflineError('TARGETS_INCOMPLETE', 'Meet every practice target before confirming.');
+    projected.confirmed = true;
+    projected.performedAt = intent.payload.performedAt;
+  } else if (intent.kind === 'completion_undo') {
+    projected.confirmed = false;
+    projected.performedAt = null;
+  }
+  return projected;
 }
 const sessionSchema = z.object({
   id: z.uuid(),

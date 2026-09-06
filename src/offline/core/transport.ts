@@ -101,7 +101,7 @@ export function createFetchTransport(): ReplayTransport {
         throw new ReplayError(0, 'INVALID_RESPONSE');
       }
     },
-    async current(scope, operation, signal): Promise<Conflict> {
+    async current(scope, operation, signal): Promise<Omit<Conflict, 'comparisonId'>> {
       const path = `/api/sessions/${uuid(operation.sessionId)}`;
       try {
         const result = z
