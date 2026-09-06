@@ -72,6 +72,16 @@ const unknownConflict = (code: string): Conflict => ({
 const lockingAvailable = (): boolean => typeof navigator !== 'undefined' && !!navigator.locks;
 const pausedStates = new Set(['conflict', 'review_required']);
 
+// Firefox can report rejected lock callbacks as uncaught even when the request is
+// awaited and handled. Settle inside the callback, then rethrow outside the lock.
+async function settleLock<T>(action: () => Promise<T>) {
+  try {
+    return { ok: true as const, value: await action() };
+  } catch (error) {
+    return { ok: false as const, error };
+  }
+}
+
 export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
   const now = options.now ?? (() => new Date().toISOString());
   const transport = options.transport ?? createFetchTransport();
@@ -143,11 +153,7 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
               'A tab is syncing. Wait briefly before clearing local changes.',
             ),
           };
-        try {
-          return { ok: true as const, value: await action() };
-        } catch (error) {
-          return { ok: false as const, error };
-        }
+        return settleLock(action);
       },
     );
     if (!result.ok) throw result.error;
@@ -501,156 +507,162 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
     async flush(scope, signal) {
       if (!lockingAvailable()) return countResult(scope, 'unsupported');
       try {
-        return await navigator.locks.request(
+        const outcome = await navigator.locks.request(
           `sankalpa-sync:${scope.accountId}`,
           { ifAvailable: true },
-          async (lock) => {
-            if (!lock) return countResult(scope, 'not_leader', 0, retryAt(now(), 1));
-            if (signal?.aborted) return countResult(scope, 'aborted');
-            const bounded = AbortSignal.any([
-              ...(signal ? [signal] : []),
-              AbortSignal.timeout(25_000),
-            ]);
-            await storage.run(scope, async () => undefined);
-            let identity;
-            try {
-              identity = await transport.identity(bounded);
-            } catch (error) {
-              return countResult(
-                scope,
-                error instanceof ReplayError && error.status === 401 ? 'auth' : 'offline',
-                0,
-                retryAt(now(), 1),
-              );
-            }
-            if (identity.accountId !== scope.accountId) {
-              await quarantine(scope);
-              return {
-                acknowledged: 0,
-                pending: 0,
-                blocked: 0,
-                reason: 'account_changed',
-                retryAt: null,
-              };
-            }
-            instant(identity.now);
-            let acknowledged = 0;
-            for (let turn = 0; turn < 50 && !bounded.aborted; turn += 1) {
-              const prepared = await storage.run(scope, async (tx) => {
-                const operations = await sessionOperations(tx, scope.accountId);
-                const first = new Map<string, OperationRow>();
-                for (const row of operations) {
-                  const streamKey = `${row.sessionId}:${row.stream}`;
-                  if (!first.has(streamKey)) first.set(streamKey, row);
-                }
-                for (const row of first.values()) {
-                  if (pausedStates.has(row.state)) continue;
-                  if (dueForReview(row, now())) {
-                    row.state = 'review_required';
-                    row.conflict = unknownConflict('OLDER_THAN_30_DAYS');
-                    await tx.objectStore('operations').put(row);
-                    continue;
-                  }
-                  if (row.retryAfter && row.retryAfter > now()) continue;
-                  if (row.predecessorId) throw new OfflineError('QUEUE_INVARIANT');
-                  row.request ??= {
-                    operationId: row.operationId,
-                    baseRevision: row.baseRevision,
-                    payload: structuredClone(row.intent.payload),
-                  };
-                  row.state = 'sending';
-                  row.attempts += 1;
-                  row.attemptedAt = now();
-                  await tx.objectStore('operations').put(row);
-                  return row;
-                }
-                return null;
-              });
-              if (!prepared) break;
-              announce(scope, prepared.sessionId);
-              // Transaction is committed before any request leaves the browser.
+          (lock) =>
+            settleLock(async (): Promise<FlushResult> => {
+              if (!lock) return countResult(scope, 'not_leader', 0, retryAt(now(), 1));
+              if (signal?.aborted) return countResult(scope, 'aborted');
+              const bounded = AbortSignal.any([
+                ...(signal ? [signal] : []),
+                AbortSignal.timeout(25_000),
+              ]);
               await storage.run(scope, async () => undefined);
+              let identity;
               try {
-                const reply = await transport.send(scope, publicOperation(prepared), bounded);
-                await acknowledge(scope, prepared, reply);
-                acknowledged += 1;
+                identity = await transport.identity(bounded);
               } catch (error) {
-                if (error instanceof OfflineError) throw error;
-                if (
-                  error instanceof ReplayError &&
-                  (error.status === 401 || error.code === 'ACCOUNT_CHANGED')
-                ) {
-                  if (error.code === 'ACCOUNT_CHANGED') {
-                    await quarantine(scope);
-                    return {
-                      acknowledged,
-                      pending: 0,
-                      blocked: 0,
-                      reason: 'account_changed',
-                      retryAt: null,
+                return countResult(
+                  scope,
+                  error instanceof ReplayError && error.status === 401 ? 'auth' : 'offline',
+                  0,
+                  retryAt(now(), 1),
+                );
+              }
+              if (identity.accountId !== scope.accountId) {
+                await quarantine(scope);
+                return {
+                  acknowledged: 0,
+                  pending: 0,
+                  blocked: 0,
+                  reason: 'account_changed',
+                  retryAt: null,
+                };
+              }
+              instant(identity.now);
+              let acknowledged = 0;
+              for (let turn = 0; turn < 50 && !bounded.aborted; turn += 1) {
+                const prepared = await storage.run(scope, async (tx) => {
+                  const operations = await sessionOperations(tx, scope.accountId);
+                  const first = new Map<string, OperationRow>();
+                  for (const row of operations) {
+                    const streamKey = `${row.sessionId}:${row.stream}`;
+                    if (!first.has(streamKey)) first.set(streamKey, row);
+                  }
+                  for (const row of first.values()) {
+                    if (pausedStates.has(row.state)) continue;
+                    if (dueForReview(row, now())) {
+                      row.state = 'review_required';
+                      row.conflict = unknownConflict('OLDER_THAN_30_DAYS');
+                      await tx.objectStore('operations').put(row);
+                      continue;
+                    }
+                    if (row.retryAfter && row.retryAfter > now()) continue;
+                    if (row.predecessorId) throw new OfflineError('QUEUE_INVARIANT');
+                    row.request ??= {
+                      operationId: row.operationId,
+                      baseRevision: row.baseRevision,
+                      payload: structuredClone(row.intent.payload),
                     };
-                  }
-                  return countResult(scope, 'auth', acknowledged);
-                }
-                if (
-                  error instanceof ReplayError &&
-                  error.status >= 400 &&
-                  error.status < 500 &&
-                  error.status !== 429 &&
-                  error.status !== 408
-                ) {
-                  let current = unknownConflict(error.code);
-                  try {
-                    current = { ...(await comparison(scope, prepared, bounded)), code: error.code };
-                  } catch (readError) {
-                    if (readError instanceof OfflineError) throw readError;
-                  }
-                  await storeConflict(scope, prepared, current);
-                } else {
-                  const next = retryAt(
-                    now(),
-                    prepared.attempts,
-                    error instanceof ReplayError ? error.retryAfterSeconds : 0,
-                  );
-                  await storage.run(scope, async (tx) => {
-                    const row = await tx
-                      .objectStore('operations')
-                      .get(key(scope, prepared.operationId));
-                    if (!row || stableJson(row.request) !== stableJson(prepared.request))
-                      throw new OfflineError('LOCAL_CONFLICT');
-                    row.state = 'queued';
-                    row.retryAfter = next;
+                    row.state = 'sending';
+                    row.attempts += 1;
+                    row.attemptedAt = now();
                     await tx.objectStore('operations').put(row);
-                  });
-                  announce(scope, prepared.sessionId);
+                    return row;
+                  }
+                  return null;
+                });
+                if (!prepared) break;
+                announce(scope, prepared.sessionId);
+                // Transaction is committed before any request leaves the browser.
+                await storage.run(scope, async () => undefined);
+                try {
+                  const reply = await transport.send(scope, publicOperation(prepared), bounded);
+                  await acknowledge(scope, prepared, reply);
+                  acknowledged += 1;
+                } catch (error) {
+                  if (error instanceof OfflineError) throw error;
+                  if (
+                    error instanceof ReplayError &&
+                    (error.status === 401 || error.code === 'ACCOUNT_CHANGED')
+                  ) {
+                    if (error.code === 'ACCOUNT_CHANGED') {
+                      await quarantine(scope);
+                      return {
+                        acknowledged,
+                        pending: 0,
+                        blocked: 0,
+                        reason: 'account_changed',
+                        retryAt: null,
+                      };
+                    }
+                    return countResult(scope, 'auth', acknowledged);
+                  }
+                  if (
+                    error instanceof ReplayError &&
+                    error.status >= 400 &&
+                    error.status < 500 &&
+                    error.status !== 429 &&
+                    error.status !== 408
+                  ) {
+                    let current = unknownConflict(error.code);
+                    try {
+                      current = {
+                        ...(await comparison(scope, prepared, bounded)),
+                        code: error.code,
+                      };
+                    } catch (readError) {
+                      if (readError instanceof OfflineError) throw readError;
+                    }
+                    await storeConflict(scope, prepared, current);
+                  } else {
+                    const next = retryAt(
+                      now(),
+                      prepared.attempts,
+                      error instanceof ReplayError ? error.retryAfterSeconds : 0,
+                    );
+                    await storage.run(scope, async (tx) => {
+                      const row = await tx
+                        .objectStore('operations')
+                        .get(key(scope, prepared.operationId));
+                      if (!row || stableJson(row.request) !== stableJson(prepared.request))
+                        throw new OfflineError('LOCAL_CONFLICT');
+                      row.state = 'queued';
+                      row.retryAfter = next;
+                      await tx.objectStore('operations').put(row);
+                    });
+                    announce(scope, prepared.sessionId);
+                  }
                 }
               }
-            }
-            const remaining = await storage.run(scope, (tx) =>
-              sessionOperations(tx, scope.accountId),
-            );
-            const pendingRetry =
-              remaining
-                .map((row) => row.retryAfter)
-                .filter((value): value is string => !!value)
-                .sort()[0] ?? null;
-            const blocked = remaining.filter((row) => pausedStates.has(row.state)).length;
-            announce(scope);
-            return {
-              acknowledged,
-              pending: remaining.length,
-              blocked,
-              reason: bounded.aborted
-                ? 'aborted'
-                : !remaining.length
-                  ? 'drained'
-                  : blocked
-                    ? 'conflict'
-                    : 'retry',
-              retryAt: remaining.length > blocked ? (pendingRetry ?? retryAt(now(), 1)) : null,
-            };
-          },
+              const remaining = await storage.run(scope, (tx) =>
+                sessionOperations(tx, scope.accountId),
+              );
+              const pendingRetry =
+                remaining
+                  .map((row) => row.retryAfter)
+                  .filter((value): value is string => !!value)
+                  .sort()[0] ?? null;
+              const blocked = remaining.filter((row) => pausedStates.has(row.state)).length;
+              announce(scope);
+              return {
+                acknowledged,
+                pending: remaining.length,
+                blocked,
+                reason: bounded.aborted
+                  ? 'aborted'
+                  : !remaining.length
+                    ? 'drained'
+                    : blocked
+                      ? 'conflict'
+                      : 'retry',
+                retryAt: remaining.length > blocked ? (pendingRetry ?? retryAt(now(), 1)) : null,
+              };
+            }),
         );
+        if (!outcome.ok) throw outcome.error;
+        return outcome.value;
       } catch (error) {
         if (error instanceof OfflineError && error.code === 'ACCOUNT_CHANGED')
           return {

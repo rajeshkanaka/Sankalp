@@ -82,6 +82,7 @@ try {
         'accountChanged',
         'switchDuringReplay',
         'storageFailures',
+        'flushStorageSetupFailure',
         'queueCeiling',
         'resolutionBoundaries',
         'transportFailures',

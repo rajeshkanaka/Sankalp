@@ -56,3 +56,22 @@ The last command writes the ignored local `artifacts/offline-core/summary.json`:
 All owned browser/server processes closed through finally. `.local/offline-core-browser/` and the private Firefox test directory remain ignored. No shared dependency/configuration, types, database migrations, root runtime, tracking file, remote branch or PR was changed in this verification slice.
 
 Next owner/action: coordinator integrates the core correctness and follow-up verification commits, then verifies actual app/auth/database/service-worker offline reload/replay/conflict/account flows and cumulative regressions. The isolated harness intentionally does not claim that application integration or SK-008 is complete.
+
+## Firefox flush failure regression
+
+2026-09-06, 12:36 Asia/Kolkata. Base `4621edd`; active branch remains `rajesh_kanaka/offline-core`. The UI worker found an uncaught Firefox error during a handled transient storage failure. The earlier settled Web Lock callback fix covered exclusive account/resolution changes; replay's `flush` still returned a rejecting callback directly.
+
+A new real-browser `flushStorageSetupFailure` scenario reproduced the failure before the fix: replacing `IDBDatabase.prototype.transaction` with a scoped synchronous `UnknownError` produced the expected `reason: storage` result, but Firefox emitted an uncaught page error and the harness failed its unchanged zero-page-error assertion. Chromium and WebKit passed that baseline. The injected browser method is always restored.
+
+`flush` now settles the lock callback into a success/error outcome, then throws the error outside the lock to its existing error handler. A shared small helper also preserves the previous exclusive-lock behavior. Existing storage/account-change result codes and unknown-error propagation remain unchanged; no failed persistence is reported as an acknowledgment. The new scenario verifies no request was sent, the queued operation survived, and replay succeeds after storage recovers.
+
+Actual verification after the fix:
+
+- `OFFLINE_SCENARIOS=flushStorageSetupFailure fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`: PASS in Chromium, WebKit and Firefox, including reload/multitab and zero page errors.
+- `fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`: all eighteen named scenarios PASS in each of Chromium 153.0.8010.12, WebKit 26.6 and Firefox 155.0; zero page errors; exit 0.
+- `fnm exec --using 24.20.0 npm run test:unit`: 118 tests / 10 files PASS.
+- Scoped ESLint, full TypeScript no-emit, scoped Prettier and `git diff --check`: PASS.
+
+The browser evidence still uses real IndexedDB/Web Locks with a synthetic replay transport; integrated app verification remains coordinator-owned. Safe results are in ignored `artifacts/offline-core/summary.json`, recording base `4621edd` with dirty=true while this regression/fix was under test. No assertions were removed, no errors suppressed at the page boundary, no root runtime accessed, and all owned processes closed. The separate actual network-cutoff fixture and browser-emulation diagnosis are documented in [SK-008-network-testing](SK-008-network-testing.md).
+
+Exact next action: coordinator/UI owner cherry-picks this focused core/regression/report commit, reruns the previously failing provider recovery scenario and the integrated M3 UI suite. This report does not mark the application task DONE.

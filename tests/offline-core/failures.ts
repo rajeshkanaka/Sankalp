@@ -48,6 +48,36 @@ async function abortWrite<T>(
 }
 
 export const failures = {
+  async flushStorageSetupFailure(name: string) {
+    const env = environment(name);
+    const core = env.create();
+    const scope = await core.bindAccount(ACCOUNT);
+    try {
+      await core.saveSnapshot(scope, snapshot);
+      await enqueue(core, scope, values);
+      const original = IDBDatabase.prototype.transaction;
+      IDBDatabase.prototype.transaction = function () {
+        throw new DOMException('Synthetic transient transaction failure', 'UnknownError');
+      };
+      try {
+        const result = await core.flush(scope);
+        check(result.reason === 'storage', 'Transient setup failure reports storage');
+        check(result.acknowledged === 0, 'Failed setup cannot claim acknowledgment');
+      } finally {
+        IDBDatabase.prototype.transaction = original;
+      }
+      check(env.sent.length === 0, 'No transport starts after failed transaction setup');
+      check(
+        (await core.read(scope, snapshot.session.id))!.operations.length === 1,
+        'Failed setup preserves queued operation',
+      );
+      check((await core.flush(scope)).acknowledged === 1, 'Recovered storage can replay');
+      // Browser runner also asserts zero uncaught page errors after this handled failure.
+      return { checks: 5 };
+    } finally {
+      core.close();
+    }
+  },
   async storageFailures(name: string) {
     const env = environment(name);
     let core = env.create();
