@@ -7,6 +7,7 @@ import type { MutationEnvelope, ReminderPreferences } from '@/domain/contracts';
 import type { ReminderPreferenceView } from '@/domain/reminder-contracts';
 import shared from '@/styles/sanctuary.module.css';
 import {
+  canSkipPreferenceSave,
   createReminderAttempt,
   fieldsFromPreferences,
   readPreferenceView,
@@ -21,6 +22,7 @@ interface Props {
   initial: ReminderPreferenceView;
   onSave(input: MutationEnvelope<ReminderPreferences>): Promise<ReminderPreferenceView>;
 }
+const unchangedMessage = 'These choices match the saved settings.';
 
 export function ReminderPreferencesForm(props: Props) {
   return <PreferencesEditor key={props.initial.journeyId} {...props} />;
@@ -33,7 +35,7 @@ function PreferencesEditor({ initial, onSave }: Props) {
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [pending, setPending] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(unchangedMessage);
   const [conflict, setConflict] = useState<ReminderPreferenceView | null>(null);
   const submitting = useRef(false);
   const alive = useRef(true);
@@ -46,6 +48,7 @@ function PreferencesEditor({ initial, onSave }: Props) {
   // Device registration can change without a preference revision. Refresh its visible state
   // independently of the raw form so registration never discards unfinished choices.
   const previewView = latest ?? (initial.revision === saved.revision ? initial : saved);
+  const unchanged = canSkipPreferenceSave(fields, saved.preferences, Boolean(attempt.current));
 
   useEffect(() => {
     alive.current = true;
@@ -62,7 +65,11 @@ function PreferencesEditor({ initial, onSave }: Props) {
     setFields(next);
     setIssues([]);
     setError(null);
-    setNotice('Unsaved choices. The preview still shows saved settings.');
+    setNotice(
+      canSkipPreferenceSave(next, saved.preferences, false)
+        ? unchangedMessage
+        : 'Unsaved choices. The preview still shows saved settings.',
+    );
     // Even editing away and back is a new intent; only an unchanged retry reuses an envelope.
     attempt.current = null;
   }
@@ -77,7 +84,9 @@ function PreferencesEditor({ initial, onSave }: Props) {
     setIssues([]);
     setNotice(
       keepEdits
-        ? 'Your choices are still here. Review them and save to replace the latest saved settings.'
+        ? canSkipPreferenceSave(fields, latest.preferences, false)
+          ? unchangedMessage
+          : 'Your choices are still here. Review them and save to replace the latest saved settings.'
         : 'Latest saved settings loaded. Your previous unsaved choices were discarded.',
     );
   }
@@ -85,6 +94,10 @@ function PreferencesEditor({ initial, onSave }: Props) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current || latest) return;
+    if (canSkipPreferenceSave(fields, saved.preferences, Boolean(attempt.current))) {
+      setNotice(unchangedMessage);
+      return;
+    }
     const validated = validateFields(fields);
     setError(null);
     setNotice('');
@@ -349,7 +362,11 @@ function PreferencesEditor({ initial, onSave }: Props) {
         <p role="status" aria-live="polite">
           {pending ? 'Saving reminder preferences…' : notice}
         </p>
-        <button type="submit" className={shared.button} disabled={pending || Boolean(latest)}>
+        <button
+          type="submit"
+          className={shared.button}
+          disabled={pending || Boolean(latest) || unchanged}
+        >
           {pending ? 'Saving…' : 'Save reminder preferences'}
         </button>
       </form>
