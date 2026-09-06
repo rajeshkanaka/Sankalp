@@ -27,6 +27,27 @@ IDBObjectStore.prototype.put = function (...args: Parameters<IDBObjectStore['put
 };
 let switchAccount: (accountId: string) => void = () => undefined;
 let signOutFails = false;
+let denyAfterPrivacyMutation = false;
+function OnlineInput() {
+  const { frozen, registerEditor } = useOfflineAccount();
+  const [value, setValue] = React.useState('');
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+  React.useEffect(
+    () =>
+      registerEditor({
+        settle: async () => undefined,
+        hasUnstoredInput: () => valueRef.current !== '',
+      }),
+    [registerEditor],
+  );
+  return (
+    <label>
+      Synthetic online input
+      <input value={value} disabled={frozen} onChange={(event) => setValue(event.target.value)} />
+    </label>
+  );
+}
 function Content() {
   const { status } = useOfflineAccount();
   return (
@@ -42,9 +63,13 @@ function Content() {
           }}
         />
       ) : (
-        <p>Online fallback remains available.</p>
+        <>
+          <p>Online fallback remains available.</p>
+          <OnlineInput />
+        </>
       )}
       <OfflineAccountControls
+        compact={new URLSearchParams(location.search).has('compact')}
         onSignOut={async () => {
           if (signOutFails) throw new Error('Synthetic sign-out failure; try again.');
           document.title = 'Synthetic signed out';
@@ -76,6 +101,14 @@ window.offlineUiHarness = {
   },
   denyReads(value: boolean) {
     denyReads = value;
+  },
+  denyAfterPrivacyMutation() {
+    denyAfterPrivacyMutation = true;
+  },
+  afterPrivacyMutation() {
+    if (!denyAfterPrivacyMutation) return;
+    denyAfterPrivacyMutation = false;
+    denyReads = true;
   },
   replaceDraftAfterEnqueue(draft: core.RawDraft) {
     nextDraft = draft;
@@ -115,6 +148,8 @@ declare global {
       other: string;
       denyDrafts(value: boolean): void;
       denyReads(value: boolean): void;
+      denyAfterPrivacyMutation(): void;
+      afterPrivacyMutation(): void;
       replaceDraftAfterEnqueue(draft: core.RawDraft): void;
       afterEnqueue(): Promise<void>;
       canonicalChanges(): number;

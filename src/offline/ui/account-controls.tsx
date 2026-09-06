@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { bindAccount, clearAccount, getDeviceState, setSharedDevice } from '../core';
 import shared from '@/styles/sanctuary.module.css';
@@ -9,7 +9,15 @@ import { useOfflineAccount } from './account-context';
 
 type Choice = 'sign_out' | 'shared_device' | null;
 
-export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise<void> }) {
+export function OfflineAccountControls({
+  onSignOut,
+  compact = false,
+}: {
+  onSignOut: () => Promise<void>;
+  compact?: boolean;
+}) {
+  const detailsId = useId();
+  const [expanded, setExpanded] = useState(false);
   const {
     accountId,
     scope,
@@ -164,95 +172,119 @@ export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise
     unfreeze();
   }
 
+  const detailsVisible = !compact || expanded || Boolean(choice);
   return (
-    <section className={`${shared.panel} ${styles.accountControls}`} aria-label="Device privacy">
-      <h2>Device privacy</h2>
-      {status === 'ready' && deviceState && (
-        <p className={shared.small}>
-          {deviceState.pendingOperations} pending change(s) and {deviceState.pendingDrafts} local
-          draft(s) on this device.
-        </p>
-      )}
-      {deviceState?.sharedDevice ? (
-        <>
-          <p>Private offline storage is disabled on this shared device.</p>
+    <section
+      className={compact ? styles.compactControls : `${shared.panel} ${styles.accountControls}`}
+      aria-label="Device privacy"
+    >
+      <div className={styles.accountToolbar}>
+        {compact && (
+          <button
+            type="button"
+            className={shared.textButton}
+            aria-expanded={detailsVisible}
+            aria-controls={detailsId}
+            onClick={() => setExpanded((value) => !value)}
+          >
+            Device privacy
+          </button>
+        )}
+        <button
+          type="button"
+          className={shared.textButton}
+          disabled={working}
+          onClick={() => void signOut()}
+        >
+          Sign out
+        </button>
+      </div>
+      <div
+        id={detailsId}
+        hidden={!detailsVisible}
+        className={compact ? styles.accountDetails : undefined}
+      >
+        <h2>Device privacy</h2>
+        {status === 'ready' && deviceState && (
+          <p className={shared.small}>
+            {deviceState.pendingOperations} pending change(s) and {deviceState.pendingDrafts} local
+            draft(s) on this device.
+          </p>
+        )}
+        {deviceState?.sharedDevice ? (
+          <>
+            <p>Private offline storage is disabled on this shared device.</p>
+            <button
+              type="button"
+              className={`${shared.button} ${shared.secondary}`}
+              disabled={working}
+              onClick={() => void enablePrivateStorage()}
+            >
+              Use private local storage on this device
+            </button>
+          </>
+        ) : (
           <button
             type="button"
             className={`${shared.button} ${shared.secondary}`}
-            disabled={working}
-            onClick={() => void enablePrivateStorage()}
+            disabled={working || status !== 'ready'}
+            onClick={() => void beginSharedDevice()}
           >
-            Use private local storage on this device
+            Mark this as a shared device
           </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          className={`${shared.button} ${shared.secondary}`}
-          disabled={working || status !== 'ready'}
-          onClick={() => void beginSharedDevice()}
-        >
-          Mark this as a shared device
-        </button>
-      )}
-      <button
-        type="button"
-        className={shared.textButton}
-        disabled={working}
-        onClick={() => void signOut()}
-      >
-        Sign out
-      </button>
-
-      {choice && (
-        <div className={styles.accountChoice} role="alert">
-          <h3>
-            {choice === 'sign_out' ? 'Local changes need attention' : 'Clear private storage?'}
-          </h3>
-          <p>
-            {deviceState?.pendingOperations ?? 0} pending change(s) and{' '}
-            {deviceState?.pendingDrafts ?? 0} draft(s) remain on this device. Input that could not
-            be stored also needs an explicit choice.
-          </p>
-          <div className={shared.actions}>
-            <button
-              type="button"
-              className={shared.button}
-              disabled={working}
-              onClick={() => void (choice === 'sign_out' ? syncThenSignOut() : syncThenShare())}
-            >
-              {choice === 'sign_out' ? 'Sync then sign out' : 'Sync then enable shared-device mode'}
-            </button>
-            <button
-              type="button"
-              className={`${shared.button} ${shared.secondary}`}
-              disabled={working}
-              onClick={cancel}
-            >
-              {choice === 'sign_out' ? 'Keep signed in' : 'Keep private local storage'}
-            </button>
-            <button
-              type="button"
-              className={`${shared.button} ${shared.secondary}`}
-              disabled={working}
-              onClick={() =>
-                void (choice === 'sign_out' ? discardThenSignOut() : discardThenShare())
-              }
-            >
-              {confirmDiscard
-                ? choice === 'sign_out'
-                  ? 'Confirm discard and sign out'
-                  : 'Confirm discard and enable shared-device mode'
-                : 'Discard local changes'}
-            </button>
-          </div>
-          {confirmDiscard && (
-            <p className={shared.quietNote}>
-              Discarding local data cannot undo a request that already reached the server.
+        )}
+        {choice && (
+          <div className={styles.accountChoice} role="alert">
+            <h3>
+              {choice === 'sign_out' ? 'Local changes need attention' : 'Clear private storage?'}
+            </h3>
+            <p>
+              {deviceState?.pendingOperations ?? 0} pending change(s) and{' '}
+              {deviceState?.pendingDrafts ?? 0} draft(s) remain on this device. Input that could not
+              be stored also needs an explicit choice.
             </p>
-          )}
-        </div>
-      )}
+            <div className={shared.actions}>
+              <button
+                type="button"
+                className={shared.button}
+                disabled={working}
+                onClick={() => void (choice === 'sign_out' ? syncThenSignOut() : syncThenShare())}
+              >
+                {choice === 'sign_out'
+                  ? 'Sync then sign out'
+                  : 'Sync then enable shared-device mode'}
+              </button>
+              <button
+                type="button"
+                className={`${shared.button} ${shared.secondary}`}
+                disabled={working}
+                onClick={cancel}
+              >
+                {choice === 'sign_out' ? 'Keep signed in' : 'Keep private local storage'}
+              </button>
+              <button
+                type="button"
+                className={`${shared.button} ${shared.secondary}`}
+                disabled={working}
+                onClick={() =>
+                  void (choice === 'sign_out' ? discardThenSignOut() : discardThenShare())
+                }
+              >
+                {confirmDiscard
+                  ? choice === 'sign_out'
+                    ? 'Confirm discard and sign out'
+                    : 'Confirm discard and enable shared-device mode'
+                  : 'Discard local changes'}
+              </button>
+            </div>
+            {confirmDiscard && (
+              <p className={shared.quietNote}>
+                Discarding local data cannot undo a request that already reached the server.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
       {message && (
         <p className={styles.accountMessage} role="status">
           {message}

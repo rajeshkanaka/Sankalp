@@ -16,7 +16,7 @@ import { setUiNetworkDisconnected } from './helpers/network';
 
 const NOW = '2026-09-05T00:45:00Z';
 const NOTE = '\n  Synthetic offline reflection. आज मन शांत है।\n';
-async function openPractice(page: Page, email: string) {
+async function openPractice(page: Page, email: string, includeNumeric = false) {
   setUiClock(NOW);
   await capturedSignIn(page, email);
   const draft: JourneyDraft = {
@@ -24,6 +24,17 @@ async function openPractice(page: Page, email: string) {
     intention: 'Synthetic browser recovery verification.',
     practices: [
       { id: randomUUID(), label: 'Quiet attention', order: 0, kind: 'checkbox', target: null },
+      ...(includeNumeric
+        ? [
+            {
+              id: randomUUID(),
+              label: 'Quiet minutes',
+              order: 1,
+              kind: 'minutes' as const,
+              target: 10,
+            },
+          ]
+        : []),
     ],
     schedule: {
       startDate: '2026-09-05',
@@ -227,6 +238,106 @@ test('@M3 @M3-offline switching real authenticated accounts hides the original p
   } finally {
     await other.close();
     await page.unroute('**/api/**');
+    setUiClock(NOW);
+  }
+});
+
+test('@M3 @M3-offline two device contexts review every queued change against real server values', async ({
+  browser,
+  page,
+}, info) => {
+  test.setTimeout(120000);
+  const { session, path } = await openPractice(
+    page,
+    info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
+    true,
+  );
+  const otherDevice = await browser.newContext({
+    baseURL: process.env.UI_ORIGIN,
+    storageState: await page.context().storageState(),
+  });
+  try {
+    const other = await otherDevice.newPage();
+    await other.goto(path);
+    await other.getByLabel('Quiet minutes', { exact: true }).fill('10');
+    await other.getByRole('button', { name: 'Save value for Quiet minutes', exact: true }).click();
+    await expect(
+      other
+        .getByRole('region', { name: 'Practice checklist', exact: true })
+        .locator('p[role=status]'),
+    ).toHaveText('Saved.');
+
+    // The original device still has revision0. Its independent IndexedDB has not read this update.
+    await setUiNetworkDisconnected(true);
+    if (info.project.name === 'chromium') await page.context().setOffline(true);
+    const numeric = page.getByLabel('Quiet minutes', { exact: true });
+    const save = page.getByRole('button', { name: 'Save value for Quiet minutes', exact: true });
+    await numeric.fill('10');
+    await save.click();
+    await expect(numeric).toBeEnabled();
+    await numeric.fill('30');
+    await save.click();
+    await expect(numeric).toBeEnabled();
+    await numeric.fill('later');
+    await expect(
+      page
+        .getByRole('region', { name: 'Practice checklist', exact: true })
+        .locator('p[role=status]'),
+    ).toHaveText('Draft saved on this device.');
+    const reflection = page.getByRole('region', { name: 'Private reflection', exact: true });
+    await reflection.getByLabel('Your reflection', { exact: true }).fill(NOTE);
+    await expect(reflection.getByRole('status')).toContainText('Saved on this device');
+
+    await page.context().setOffline(false);
+    await setUiNetworkDisconnected(false);
+    await page.reload();
+    await expect(
+      page.getByRole('heading', { name: 'This saved practice changed elsewhere', exact: true }),
+    ).toBeVisible({ timeout: 30000 });
+    const reviewedChanges = page.getByRole('list', { name: 'Changes in order', exact: true });
+    await expect(reviewedChanges.locator(':scope > li')).toHaveCount(2);
+    await expect(reviewedChanges.locator(':scope > li').nth(0)).toContainText('Quiet minutes: 10');
+    await expect(reviewedChanges.locator(':scope > li').nth(1)).toContainText('Quiet minutes: 30');
+    await expect(
+      page.getByRole('region', { name: 'Current saved version', exact: true }),
+    ).toContainText('Quiet minutes: 10');
+    await expect(
+      page.getByRole('region', { name: 'Your unsynced version', exact: true }),
+    ).toContainText('Quiet minutes: later');
+    const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
+    mkdirSync(evidence, { recursive: true });
+    await page.screenshot({
+      path: resolve(evidence, 'offline-two-device-conflict.png'),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Keep my reviewed version', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'This saved practice changed elsewhere', exact: true }),
+    ).toHaveCount(0);
+    await expect
+      .poll(async () => {
+        const response = await page.request.get(`/api/sessions/${session.id}`);
+        expect(response.ok()).toBe(true);
+        const value = ((await response.json()) as { session: SessionRecord }).session;
+        return {
+          revision: value.revision,
+          minutes: value.practices.find((item) => item.label === 'Quiet minutes')?.value,
+        };
+      })
+      .toEqual({ revision: 2, minutes: 30 });
+    await expect(numeric).toHaveValue('later');
+    await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
+    await page.reload();
+    await expect(numeric).toHaveValue('later');
+    await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
+    await page.screenshot({
+      path: resolve(evidence, 'offline-two-device-resolved.png'),
+      fullPage: true,
+    });
+  } finally {
+    await page.context().setOffline(false);
+    await setUiNetworkDisconnected(false);
+    await otherDevice.close();
     setUiClock(NOW);
   }
 });

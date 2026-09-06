@@ -1,15 +1,50 @@
-/* global window */
+/* global window, document */
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
-import { log } from 'node:console';
+import { log as consoleLog } from 'node:console';
+import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import { createServer } from 'node:http';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { build } from 'vite';
 import { chromium, webkit, firefox, expect } from '@playwright/test';
 const root = path.resolve(import.meta.dirname, '../..');
 const out = path.join(root, '.local/offline-ui-browser');
+const scenarioNames = [
+  'failed-draft-preservation',
+  'storage-read-withholding',
+  'canonical-change-notification',
+  'immediate-checkbox',
+  'shared-device-roundtrip',
+  'dirty-online-input-guards-private-mode',
+  'post-privacy-read-failure-recovery',
+  'invalid-numeric-reload',
+  'account-quarantine',
+  'concurrent-draft-cleanup-CAS',
+  'full-ordered-conflict-and-explicit-discard',
+  'compact-privacy-320px',
+  'unverified-storage-blocks-signout',
+];
+const summary = {
+  sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+  sourceDirty: Boolean(
+    execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim(),
+  ),
+  integration: 'SIMULATED_BACKEND_AND_PUBLIC_SHELL_READINESS',
+  browsers: [],
+};
+let activeResult;
+function log(serialized) {
+  const result = JSON.parse(serialized);
+  if (result.status === 'PASS' && activeResult) {
+    for (const name of result.scenarios ?? [result.scenario]) {
+      const scenario = activeResult.scenarios.find((item) => item.name === name);
+      if (scenario) scenario.status = 'PASS';
+    }
+  }
+  consoleLog(serialized);
+}
 await build({
   configFile: false,
   root,
@@ -149,10 +184,19 @@ try {
     const browser = await engine.launch(
       name === 'firefox' ? { env: { ...process.env, MOZ_APP_DATA: firefoxData } } : {},
     );
+    const result = {
+      browser: name,
+      version: browser.version(),
+      status: 'NOT_RUN',
+      pageErrors: null,
+      scenarios: scenarioNames.map((name) => ({ name, status: 'NOT_RUN' })),
+    };
+    summary.browsers.push(result);
+    activeResult = result;
+    const errors = [];
     try {
       const context = await browser.newContext();
       const page = await context.newPage();
-      const errors = [];
       page.on('pageerror', (error) => {
         errors.push(error.message);
         log(JSON.stringify({ browser: name, error: error.message, stack: error.stack }));
@@ -214,8 +258,27 @@ try {
       await page.getByRole('button', { name: 'Mark this as a shared device', exact: true }).click();
       await expect(page.getByText('Offline state: online_only', { exact: true })).toBeVisible();
       await page
+        .getByLabel('Synthetic online input', { exact: true })
+        .fill('Preserve this unsubmitted input');
+      await page
         .getByRole('button', { name: 'Use private local storage on this device', exact: true })
         .click();
+      await expect(
+        page.getByRole('status').filter({ hasText: 'Save or cancel your current input' }),
+      ).toBeVisible();
+      await expect(page.getByLabel('Synthetic online input', { exact: true })).toHaveValue(
+        'Preserve this unsubmitted input',
+      );
+      await page.getByLabel('Synthetic online input', { exact: true }).fill('');
+      await page.evaluate(() => window.offlineUiHarness.denyAfterPrivacyMutation());
+      await page
+        .getByRole('button', { name: 'Use private local storage on this device', exact: true })
+        .click();
+      await expect(
+        page.getByRole('heading', { name: 'Verify local storage to continue' }),
+      ).toBeVisible();
+      await page.evaluate(() => window.offlineUiHarness.denyReads(false));
+      await page.getByRole('button', { name: 'Retry verification', exact: true }).click();
       await expect(page.getByText('Offline state: ready', { exact: true })).toBeVisible();
       const numeric = page.getByLabel('Synthetic minutes', { exact: true });
       await numeric.fill('');
@@ -256,6 +319,8 @@ try {
             'canonical-change-notification',
             'immediate-checkbox',
             'shared-device-roundtrip',
+            'dirty-online-input-guards-private-mode',
+            'post-privacy-read-failure-recovery',
             'invalid-numeric-reload',
             'account-quarantine',
           ],
@@ -264,6 +329,7 @@ try {
       );
       const raceContext = await browser.newContext();
       const race = await raceContext.newPage();
+      race.on('pageerror', (error) => errors.push(error.message));
       await race.goto(url);
       await expect(race.getByLabel('Synthetic minutes', { exact: true })).toBeEnabled();
       await race.route('**/api/**', (route) => route.abort());
@@ -298,6 +364,7 @@ try {
       );
       const conflictContext = await browser.newContext();
       const conflict = await conflictContext.newPage();
+      conflict.on('pageerror', (error) => errors.push(error.message));
       await conflict.goto(url);
       await expect(conflict.getByLabel('Synthetic minutes', { exact: true })).toBeEnabled();
       await conflict.evaluate(async () => {
@@ -395,7 +462,46 @@ try {
           scenario: 'full-ordered-conflict-and-explicit-discard',
         }),
       );
+      const compactContext = await browser.newContext({ viewport: { width: 320, height: 800 } });
+      const compact = await compactContext.newPage();
+      compact.on('pageerror', (error) => errors.push(error.message));
+      await compact.goto(`${url}/?compact`);
+      await expect(compact.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+      await expect(
+        compact.getByRole('button', { name: 'Mark this as a shared device', exact: true }),
+      ).toBeHidden();
+      await compact.getByRole('button', { name: 'Device privacy', exact: true }).click();
+      await expect(
+        compact.getByRole('button', { name: 'Mark this as a shared device', exact: true }),
+      ).toBeVisible();
+      await compact.getByRole('button', { name: 'Device privacy', exact: true }).click();
+      await compact.route('**/api/**', (route) => route.abort());
+      await compact.getByRole('checkbox', { name: 'Synthetic checklist', exact: true }).check();
+      await expect(
+        compact.getByRole('checkbox', { name: 'Synthetic checklist', exact: true }),
+      ).toBeEnabled();
+      await compact.getByRole('button', { name: 'Sign out', exact: true }).click();
+      await expect(
+        compact.getByRole('heading', { name: 'Local changes need attention', exact: true }),
+      ).toBeVisible();
+      assert.equal(
+        await compact.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        true,
+      );
+      await compact.screenshot({
+        path: path.join(root, '.local/offline-ui-evidence', `${name}-compact-320.png`),
+        fullPage: true,
+      });
+      await compact.getByRole('button', { name: 'Keep signed in', exact: true }).click();
+      await expect(
+        compact.getByRole('heading', { name: 'Local changes need attention', exact: true }),
+      ).toBeHidden();
+      await expect(
+        compact.getByRole('checkbox', { name: 'Synthetic checklist', exact: true }),
+      ).toBeEnabled();
+      await compactContext.close();
       const denied = await context.newPage();
+      denied.on('pageerror', (error) => errors.push(error.message));
       await denied.goto(`${url}/?denyReads`);
       await expect(denied.getByText('Offline state: online_only', { exact: true })).toBeVisible();
       await denied.getByRole('button', { name: 'Sign out', exact: true }).click();
@@ -404,11 +510,31 @@ try {
       ).toBeVisible();
       await expect(denied).not.toHaveTitle('Synthetic signed out');
       await denied.close();
+      assert.deepEqual(errors, []);
+      log(
+        JSON.stringify({
+          browser: name,
+          status: 'PASS',
+          scenarios: ['compact-privacy-320px', 'unverified-storage-blocks-signout'],
+          pageErrors: errors.length,
+        }),
+      );
       await context.close();
+      result.status = 'PASS';
+      result.pageErrors = errors.length;
+    } catch (error) {
+      result.status = 'FAIL';
+      result.pageErrors = errors.length;
+      throw error;
     } finally {
       await browser.close();
     }
   }
 } finally {
+  await mkdir(path.join(root, 'artifacts/offline-ui'), { recursive: true });
+  await writeFile(
+    path.join(root, 'artifacts/offline-ui/summary.json'),
+    JSON.stringify(summary, null, 2) + '\n',
+  );
   await new Promise((resolve) => server.close(resolve));
 }
