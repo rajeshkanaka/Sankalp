@@ -4,7 +4,7 @@ Coordinator-owned map, reconciled 2026-09-06. **Begin every resume with `origin/
 
 ## Current integration route
 
-The first application PR uses `rajesh_kanaka/consolidate-main`, based on the verified `implementation/sankalpa` checkpoint `ef6e0a9`. It brings tested sign-in, personalized schedules, progress, correction history, journal and HTTP account guards to main. Seven inactive offline source/test files are intentionally excluded and remain recoverable at `ef6e0a9`. No unfinished core/UI work is included. D18 governs later PRs.
+The first application [PR3](https://github.com/rajeshkanaka/Sankalp/pull/3) uses `rajesh_kanaka/consolidate-main`, based on the verified `implementation/sankalpa` checkpoint `ef6e0a9`. It brings tested sign-in, personalized schedules, progress, correction history, journal and HTTP account guards to main. Seven inactive offline source/test files are intentionally excluded and remain recoverable at `ef6e0a9`. No unfinished core/UI work is included. D18 governs later PRs.
 
 After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from merged main at `/Users/rajesh/sankalpa` (slot 1) for integrated SK-008 work. This branch is planned until its actual creation is recorded below. Workers resume only after coordinator assignment; old agent names do not imply a live owner.
 
@@ -13,7 +13,7 @@ After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from 
 | Accepted source of context | `main` / inspect fetched HEAD | Start here; use `git show origin/main:docs/PROJECT_PROGRESS.md` without switching dirty worktrees. |
 | Consolidation PR | `rajesh_kanaka/consolidate-main` | Root `/Users/rajesh/sankalpa`; coordinator only. Review, verify, PR and merge before further feature integration. |
 | Preserved overnight checkpoint | `implementation/sankalpa` / `ef6e0a9` | Historical branch, no future integration here. Retains all prepared SW sources. |
-| Closure-history review fix | `rajesh_kanaka/closure-history-fix` / base `ef6e0a9` | `../sankalpa-worktrees/SK-006-closure-review`; `/root/merge_review` owns the narrow SK-006 service/regressions/report. No runtime. Integrate into consolidation after coordinator verification. |
+| Closure-history review fix | `rajesh_kanaka/closure-history-fix` / `71c8bd8` | `../sankalpa-worktrees/SK-006-closure-review`; `/root/merge_review` owns the narrow SK-006 service/regressions/report. No runtime. Integrated as ad78c5c after tests1b33394; coordinator full verification and53UI passed. Historical after PR3 merges. |
 | Offline core WIP | `task/SK-008-core` / `86769b5` | `../sankalpa-worktrees/SK-008-core`; preserved, no active implementation owner until reassigned. Repair stale conflict comparison and finish failure/limit tests. |
 | Offline UI WIP | `task/SK-008-ui` / `3d54c3b` | `../sankalpa-worktrees/SK-008-ui`; preserved, no active implementation owner until reassigned. Finish CSS, core integration and actual offline browser workflows. |
 

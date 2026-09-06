@@ -32,3 +32,8 @@ fnm exec --using 24.20.0 npm run test:ui -- --grep @M3-corrections
 ```
 
 Retain actual results and screenshots before declaring this regression resolved. Existing B06 and unfinished SK-008 gates remain independent.
+
+
+## Coordinator integrated verification
+
+Integrated tests as1b33394 and fix asad78c5c on PR3. Actual pre-fix database test failed with expected closure array versus empty; actual Chromium two-tab UI failed at missing closing marker. Post-fix npm verify PASS112unit/84DB/build/smoke; full UI53/53PASS acrossChromium/WebKit/Firefox, including all3 two-tab regressions and axe. Real screenshots and safe summary: ../evidence/M3/main-consolidation/. No native B06 or offline integration pass is implied.
