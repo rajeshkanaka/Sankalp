@@ -11,12 +11,14 @@ After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from 
 | Purpose | Branch / saved HEAD | Location and next action |
 |---|---|---|
 | Accepted source of context | `main` / inspect fetched HEAD | Start here; use `git show origin/main:docs/PROJECT_PROGRESS.md` without switching dirty worktrees. |
-| Active coordinator feature | `rajesh_kanaka/offline-recovery` / WIP contract `c4b0666` | Root `/Users/rajesh/sankalpa`, slot1; /root owns shared contract, app/API/build/SW and integrated regression. |
+| Active coordinator feature | `rajesh_kanaka/offline-recovery` / integrated WIP `9dfa844` | Root `/Users/rajesh/sankalpa`, slot1; /root owns shared contract, app/API/build/SW and integrated regression. |
+| Accepted checkpoint/hydration PR | `rajesh_kanaka/checkpoint-policy` / `1d15d81` | `../sankalpa-worktrees/project-checkpoint`; historical PR4 head, merged to main as `544f3ef` after CI34017887283 passed. |
+| Online checkpoint regressions | `rajesh_kanaka/online-checkpoints` / `77aa827` | `../sankalpa-worktrees/SK-006-closure-review`; /root/ci_triage owns only fallback lifecycle tests/report, integrated as3c81b5d for coordinator runtime validation. No database/runtime. Previous closure/hydration refs remain preserved. |
 | Accepted consolidation | `rajesh_kanaka/consolidate-main` / `30f80ca` | Historical PR3 head; merged eac5cdc. No future work here. |
 | Preserved overnight checkpoint | `implementation/sankalpa` / `ef6e0a9` | Historical branch, no future integration here. Retains all prepared SW sources. |
-| Closure-history review fix | `rajesh_kanaka/closure-history-fix` / `71c8bd8` | `../sankalpa-worktrees/SK-006-closure-review`; `/root/merge_review` owns the narrow SK-006 service/regressions/report. No runtime. Integrated as ad78c5c after tests1b33394; coordinator full verification and53UI passed. Historical after PR3 merges. |
-| Active offline core | `rajesh_kanaka/offline-core` / recovered WIP `c4b0666` | `../sankalpa-worktrees/SK-008-core`; /root/branch_audit owns core implementation/tests/handoff. No database; own random-loopback browser harness. Saved WIP source remains task/SK-008-core86769b5. |
-| Active offline UI | `rajesh_kanaka/offline-ui` / recovered WIP `148ca78` | `../sankalpa-worktrees/SK-008-ui`; /root/merge_review owns offline UI/CSS/UI regressions/handoff. No database/runtime. Saved WIP source remains task/SK-008-ui3d54c3b. |
+| Closure-history review fix | `rajesh_kanaka/closure-history-fix` / `71c8bd8` | Historical source ref; its old worktree directory now hosts online checkpoint regressions above. Integrated as ad78c5c after tests1b33394; coordinator full verification and53UI passed. Historical after PR3 merges. |
+| Active offline core | `rajesh_kanaka/offline-core` / verified core `eb7ab42` | `../sankalpa-worktrees/SK-008-core`; /root/branch_audit owns core implementation/tests/handoff. No database; own random-loopback browser harness. Saved WIP source remains task/SK-008-core86769b5. |
+| Active offline UI | `rajesh_kanaka/offline-ui` / UI recovery `7ed93f8` | `../sankalpa-worktrees/SK-008-ui`; /root/merge_review owns offline UI/CSS/UI regressions/handoff. No database/runtime. Saved WIP source remains task/SK-008-ui3d54c3b. |
 
 Original worker branches remain preserved without active worktrees; current workers reuse the existing directories on the new names above. New branches use `rajesh_kanaka/`. Keep the original WIP commits reachable. To resume on a fresh main-based worker, carry only its owned source/test/handoff commits; never overwrite coordinator tracking with an old branch's PROJECT_PROGRESS/TASKS/SESSION_LOG. Shared core contract changes must be reconciled by the coordinator first.
 
