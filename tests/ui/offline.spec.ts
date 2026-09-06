@@ -140,10 +140,6 @@ test('@M3 @M3-offline disconnected edits survive reload and sync once with real 
       page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
     ).toBeVisible({ timeout: 30000 });
     await expect(reflection.getByRole('status')).toHaveText('Saved.');
-    await page.goto(path);
-    await expect(
-      page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
-    ).toBeVisible();
     await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
     const savedSession = await page.request.get(`/api/sessions/${session.id}`);
     expect(savedSession.ok()).toBe(true);
@@ -157,6 +153,29 @@ test('@M3 @M3-offline disconnected edits survive reload and sync once with real 
       text: NOTE,
       revision: 1,
     });
+    await page.getByRole('link', { name: 'Your journey', exact: true }).click();
+    await expect(page).toHaveURL(`/journeys/${session.journeyId}`);
+    const progress = page.getByRole('region', { name: 'Journey progress', exact: true });
+    await expect(progress.getByText('1 of 2 sessions completed', { exact: true })).toBeVisible();
+    await expect(progress.getByText('1 upcoming', { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(progress.getByText('1 of 2 sessions completed', { exact: true })).toBeVisible();
+    await expect(progress.getByText('1 upcoming', { exact: true })).toBeVisible();
+    await page
+      .getByRole('list', { name: 'Chronological sessions', exact: true })
+      .locator(`a[href="${path}"]`)
+      .click();
+    await expect(page).toHaveURL(path);
+    await expect(
+      page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
+    ).toBeVisible();
+    await expect(
+      checklist.getByRole('checkbox', { name: 'Quiet attention', exact: true }),
+    ).toBeChecked();
+    await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
+    const history = page.getByRole('list', { name: 'Session history', exact: true });
+    await expect(history.getByText('Practice values saved.', { exact: true })).toHaveCount(1);
+    await expect(history.getByText('Completion confirmed.', { exact: true })).toHaveCount(1);
     await page.screenshot({ path: resolve(evidence, 'offline-replayed.png'), fullPage: true });
   } finally {
     await page.context().setOffline(false);
@@ -216,28 +235,43 @@ test('@M3 @M3-offline simulated quota failure preserves actual editor input thro
 test('@M3 @M3-offline switching real authenticated accounts hides the original pending reflection', async ({
   page,
 }, info) => {
-  await openPractice(
+  const { session } = await openPractice(
     page,
     info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
   );
-  await page.route('**/api/**', (route) => route.abort('connectionfailed'));
   const reflection = page.getByRole('region', { name: 'Private reflection', exact: true });
-  await reflection.getByLabel('Your reflection', { exact: true }).fill(NOTE);
-  await expect(reflection.getByRole('status')).toContainText('Saved on this device');
-  const other = await page.context().newPage();
+  let other: Page | undefined;
   try {
+    await setUiNetworkDisconnected(true);
+    await reflection.getByLabel('Your reflection', { exact: true }).fill(NOTE);
+    await expect(reflection.getByRole('status')).toContainText('Saved on this device');
+    // Freeze the original editor through its real account-action guard before reconnecting.
+    // No sign-out/discard is confirmed: the pending private note remains on this device.
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Local changes need attention', exact: true }),
+    ).toBeVisible();
+    await expect(reflection.getByLabel('Your reflection', { exact: true })).toBeDisabled();
+    await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
+    await setUiNetworkDisconnected(false);
+    const canonical = await page.request.get(`/api/sessions/${session.id}/reflection`);
+    expect(canonical.ok()).toBe(true);
+    expect(await canonical.json()).toBeNull();
+    other = await page.context().newPage();
     await capturedSignIn(
       other,
       info.project.name === 'chromium' ? 'ui-arun@example.test' : 'ui-maya@example.test',
     );
-    await expect(
-      other.getByRole('heading', { name: 'Local changes belong to another account', exact: true }),
-    ).toBeVisible();
-    await expect(other.getByText(NOTE, { exact: true })).toHaveCount(0);
-    await expect(page.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+    for (const tab of [page, other]) {
+      await expect(
+        tab.getByRole('heading', { name: 'Local changes belong to another account', exact: true }),
+      ).toBeVisible();
+      await expect(tab.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+      await expect(tab.locator('body')).not.toContainText(NOTE.trim());
+    }
   } finally {
-    await other.close();
-    await page.unroute('**/api/**');
+    await setUiNetworkDisconnected(false);
+    await other?.close();
     setUiClock(NOW);
   }
 });
