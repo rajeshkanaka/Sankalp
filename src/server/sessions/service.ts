@@ -83,7 +83,8 @@ async function finishMutation(
     throw new Error('Locked session revision did not advance exactly once.');
   const amendment = await createAmendment(client, userId, before, kind, nextRevision, now, detail);
   const session = await updatedSession(client, before.journeyId, before.id);
-  const historyEvents = closure?.created ? [closure.event] : [];
+  // An already-open page may not have seen a closure created by another reader.
+  const historyEvents = closure ? [closure.event] : [];
   if (Date.parse(now) >= Date.parse(before.closesAt)) {
     historyEvents.push(
       await createCorrectionEvent(client, userId, before, session, amendment, now),
