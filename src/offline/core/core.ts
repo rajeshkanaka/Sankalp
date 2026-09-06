@@ -421,8 +421,14 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
   const core: OfflineCore = {
     async bindAccount(accountId, bindOptions = {}) {
       uuid(accountId);
+      if (bindOptions.expectedGeneration !== undefined) uuid(bindOptions.expectedGeneration);
       initializeChannel();
       const previous = await storage.run(null, async (tx, meta) => {
+        if (
+          bindOptions.expectedGeneration !== undefined &&
+          meta.generation !== bindOptions.expectedGeneration
+        )
+          throw new OfflineError('ACCOUNT_CHANGED');
         const previous = meta.quarantinedAccountId ?? meta.activeAccountId;
         if (previous && previous !== accountId) {
           // Hide the previous account before waiting for its potentially in-flight replay.
@@ -444,7 +450,11 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
             const pending = await counts(tx, previous.accountId);
             if ((pending.operations || pending.drafts) && !bindOptions.discardPrevious) return null;
             await purge(tx);
-          } else if (current && current !== accountId) {
+          } else if (
+            (bindOptions.expectedGeneration !== undefined &&
+              meta.generation !== bindOptions.expectedGeneration) ||
+            (current && current !== accountId)
+          ) {
             throw new OfflineError('ACCOUNT_CHANGED');
           }
           if (meta.activeAccountId !== accountId || meta.quarantinedAccountId)
@@ -468,6 +478,7 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
       return storage.run(null, async (tx, meta) => {
         const pending = await counts(tx, meta.quarantinedAccountId ?? meta.activeAccountId);
         return {
+          bindingGeneration: meta.generation,
           scope:
             meta.activeAccountId && !meta.quarantinedAccountId && !meta.sharedDevice
               ? { accountId: meta.activeAccountId, generation: meta.generation }
