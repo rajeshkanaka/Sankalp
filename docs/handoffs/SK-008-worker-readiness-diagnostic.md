@@ -1,0 +1,15 @@
+# SK-008 public worker readiness diagnostic
+
+## 2026-09-06 checkpoint
+
+Owner `/root/merge_review`, branch `rajesh_kanaka/offline-ui`, isolated worktree `/Users/rajesh/sankalpa-worktrees/SK-008-ui`. Coordinator owns the application runtime and future diagnosis. Only `tests/ui/helpers/service-worker-diagnostics.ts`, `tests/ui/m2-schedule.spec.ts` and this report are changed.
+
+The earlier actual numeric workflow passed Chromium/WebKit but failed Firefox's unchanged PUBLIC_CACHE_READY predicate before disconnecting. The retained log is `artifacts/offline-numeric-migration-fixed.log` in the coordinator checkout; the detailed failure context was subsequently replaced by another Playwright run. Thus no claim is made about whether the failed instance lacked a controller, timed out waiting for a message, or received ready:false. The client-navigation workflow can retain an initial online-only provider, unlike tests that reopen the session in a fresh document; this is a diagnostic hypothesis, not an established root cause.
+
+The new helper observes real public worker registration/state transitions and only same-origin `/sw.js` or `/offline/*` response statuses/request failure names, beginning before sign-in. The register wrapper forwards the original receiver and arguments and preserves success/rejection; it never invokes registration itself. Events are capped at200. Only fixed categories, enumerated states/error names, numbers and booleans are retained. No raw URLs, query strings, auth events, content, payloads, cookies, account identities or exception messages enter the artifact.
+
+On readiness assertion failure, the helper writes `docs/evidence/M2/<UI_RUN_ID>/<engine>/service-worker-readiness.json`. It includes the local public manifest's asset count, controller/registration states, capped public-cache counts, unexpected-entry count and a bounded diagnostic message result. It does not register/reload/recover, intercept transport, change the original readiness predicate, add a retry, or increase its timeout. The original assertion error is rethrown. Diagnostic event listeners are detached at test cleanup. Production source is unchanged.
+
+Baseline integration: worker-only commit f4a712f carries the coordinator's current M2 test, including the required await of the session URL. **Do not cherry-pick f4a712f back into the coordinator**; it only establishes the already-integrated source as this branch's baseline. Integrate the following diagnostic-only commit instead.
+
+Verification: scoped Prettier/ESLint, full `npm run typecheck` and `git diff --check` PASS. Initial TypeScript rejected a required window binding cast; it was replaced with an optional test-only Window declaration and the check reran successfully. Actual browser execution and an emitted diagnostic JSON are NOT RUN/NOT CREATED by this worker. Coordinator next action: integrate, run the unchanged numeric workflow on the allocated actual app, and inspect the safe JSON if readiness fails. Diagnose from those observed states before changing application readiness or weakening tests.

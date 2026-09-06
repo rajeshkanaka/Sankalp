@@ -1,0 +1,134 @@
+# SK-008 offline UI break checkpoint
+
+Date: 2026-09-06 (Asia/Kolkata)
+
+Owner: `/root/bootstrap_audit`
+
+Worktree: `/Users/rajesh/sankalpa-worktrees/SK-008-ui`
+
+Branch: `task/SK-008-ui`
+
+Base: `3cff091`
+
+Status: **WIP checkpoint for the user-requested break. This is not a completed or verified implementation.**
+
+## Saved work
+
+The unintegrated UI slice currently defines these intended browser-neutral exports under `src/offline/ui/`:
+
+- `OfflineAccountBoundary({ accountId, children })` and `useOfflineAccount()` for verified UUID binding, generic account-change quarantine, private-state withholding and online-only fallback state.
+- `OfflineSession({ snapshot, now, demo, onCanonicalChange? })` for projected checklist values, raw numeric/reflection drafts, queued completion/correction/undo/reflection intents, foreground replay, pending/server-ack distinction and conflict choices.
+- `OfflineSavedPage()` for device-scoped saved-session links after `getDeviceState()` supplies a valid scope; it never selects an account from a URL.
+- `OfflineAccountControls({ onSignOut })` for pending counts, sync/cancel/confirmed-discard sign-out choices and shared-device controls.
+
+The approved clock contract is `Snapshot.clock: { serverNow, capturedAt, simulated }`. The UI freezes `serverNow` in demo mode and otherwise advances it by elapsed device time from `capturedAt`. Core worker checkpoint `86769b5` contains this required type and runtime validation.
+
+No Next imports, server imports, private response caches or authentication data were added to the offline UI. The source imports React, the external Temporal polyfill, pure domain status/contracts, shared CSS, and only the offline core entry point.
+
+## Incomplete work and known risks
+
+- `src/offline/ui/offline.module.css` has not been created. All current UI modules import it, so the slice cannot compile yet.
+- Core implementation commit `86769b5` is not present on this branch. This base contains only the earlier frozen type file and no `src/offline/core/index.ts`, so the UI imports cannot resolve here.
+- The core handoff marks conflict resolution incomplete: stale comparison/newer canonical regression and its fix remain before the UI conflict actions can be verified.
+- The current UI code has received formatting only. Its state transitions, effect dependencies, account invalidation, draft CAS sequencing, sign-out freeze, shared-device transitions and exact resolution operation-ID set need source review against the finished core implementation.
+- The `OfflineSession` adapter contract assumes the coordinator supplies a `Snapshot` whose clock exactly matches the verified `now` and `demo` props. Root integration must construct that snapshot once from the authorized server response and device capture time.
+- No offline UI test was written. `tests/ui/offline.spec.ts` remains outstanding.
+- Root-owned `ensurePublicShell(): Promise<boolean>`, service-worker shell/build, app hooks, API routes, provider mount, `SessionExperience` adapter and online fallback are not part of this branch.
+
+## Checks and processes
+
+- `/Users/rajesh/sankalpa/node_modules/.bin/prettier --write src/offline/ui` — PASS; seven current UI source files formatted.
+- `git diff --check` — PASS before the handoff was added; rerun after staging.
+- Format check, lint, typecheck, unit, integration, production build and Playwright — **NOT RUN** because the current branch intentionally lacks the core implementation/index and offline CSS at this break checkpoint.
+- No service, database, browser or test process was started from this worktree. Existing Next/Playwright/Firefox processes shown by `ps` use `/Users/rajesh/sankalpa` and belong to the coordinator; this worker did not stop them.
+
+## Exact next substep after resume
+
+1. Reconcile the completed/fixed core commit that supersedes `86769b5` into this branch without changing core-owned files.
+2. Read the final core resolution tests to freeze the exact `expectedOperationIds` set and shared-device scope transition.
+3. Add `offline.module.css`, run typecheck/lint, and fix the current WIP source from observed diagnostics.
+4. Review account invalidation and draft-write races, then add focused browser-neutral tests plus `tests/ui/offline.spec.ts` for network-off reload/reconnect, one server completion, conflict choices, account quarantine, storage failure and sign-out/shared-device recovery.
+5. Hand the verified UI commits to the coordinator for `SessionExperience`, public-shell and production-build integration. Root alone runs the real M3 database/browser gates and records evidence.
+
+## Resume checkpoint: coherent UI exports, 2026-09-06
+
+New owner `/root/merge_review`, branch `rajesh_kanaka/offline-ui`, same worktree, recovered base148ca78. Core correctness4d8f68c is incorporated as50c34fb, with managementScope types677397d incorporated as3997c50. No shared source was independently edited.
+
+The missing CSS is now present and uses the existing dark/brass tokens. Current UI adds account-ID keyed boundaries, cancellable identity reads, management-scope adoption for shared-device changes, and an editor checkpoint barrier before account actions. Failed local drafts remain in memory with explicit saved-versus-local comparison; queued conflict choices show the complete affected stream plus raw draft, carry the comparison token, and preserve all ordered replacement intents. Server practice summaries use server values. An absent server reflection is revision0; blocked queues are never labeled acknowledged. Sign-out errors unfreeze controls. Timing labels, custom moods/prompts, completion/undo and the Done link are retained.
+
+Coordinator integration exports:
+
+- `OfflineAccountBoundary({accountId,children,ensureOfflineReady?:()=>Promise<boolean>})`: omitted/false readiness selects `online_only`; pass the real public-shell readiness function. Account/generation invalidation hides children. Do not substitute mock readiness in the application.
+- `useOfflineAccount().status`: coordinator's SessionExperience selects the existing online controls for `online_only`; the ready branch mounts `OfflineSession({snapshot,now,demo,onCanonicalChange?})`.
+- `OfflineSavedPage({asStandalone?:boolean})`: defaulttrue supplies main for the public shell; passfalse inside the authenticated app's existing main.
+- `OfflineAccountControls({onSignOut})`: owns device/sync/discard choices before invoking the coordinator's actual sign-out operation.
+
+Actual local checks: scoped ESLint/Prettier and full `npm run typecheck` PASS after source changes. Initial lint found the misleading usePrivateStorage name and unused useMemo; both corrected. `next typegen` only generated ignored types; no app or database runtime was started. Functional browser checks, screenshots and actual application integration remain NOT RUN at this export checkpoint; the worker is preparing tests next. This checkpoint is not SK-008 completion.
+
+## Recovery and browser checkpoint, 2026-09-06
+
+Current owner remains `/root/merge_review`, branch `rajesh_kanaka/offline-ui`. Source after027c20b now provides immediate pending checkbox feedback without claiming persistence before IndexedDB success. Scope-bound invalidation cannot revoke an adopted shared-device generation. A temporary account-storage read failure withholds private UI, freezes actions and retains the mounted editor/input; Retry verification restores the same verified generation. A confirmed account change still removes the old private subtree. No coordinator status change is needed: ready stays ready during temporary withholding, and context.frozen is true.
+
+Draft cleanup now uses the revision captured before enqueue, and checkbox intents never rewrite the whole raw draft. Failed CAS requires review. Canonical-change notification tracks the last notified server revision independently of subscription/flush order, including use-server resolution. Raw invalid numeric text survives reload. Sign-out always requires verified local clearing, even when initial storage failed and no scope was available. Edited completion-time input participates in the account checkpoint guard. Deferred read errors remain recoverable UI errors.
+
+New browser-neutral harness: `tests/offline-ui/run-browser.mjs`, `harness.tsx`, `core-adapter.ts`. It runs the actual React UI, IndexedDB and Web Locks in isolated Chromium, WebKit and Firefox against an explicitly simulated backend/public-shell readiness callback. The harness-only adapter pauses after real enqueue to deliver a competing raw-draft update before UI cleanup; it is never imported into the application. Generated bundles and synthetic screenshots live under ignored `.local/offline-ui-browser` and `.local/offline-ui-evidence`. No application/DB runtime or root process was started by this worker.
+
+Actual verification at this checkpoint:
+
+- `fnm exec --using 24.20.0 npx eslint src/offline/ui tests/offline-ui tests/ui/offline.spec.ts` — PASS.
+- `fnm exec --using 24.20.0 npm run typecheck` — PASS after the network-helper import and complete harness sources were added.
+- `fnm exec --using 24.20.0 node tests/offline-ui/run-browser.mjs` — Chromium and WebKit PASS: failed-draft retention, storage-read withholding/recovery, exactly-once canonical notification, immediate checkbox, shared-device roundtrip, invalid numeric keyboard/reload, account quarantine, draft-cleanup CAS, complete ordered conflict replay and explicit discard. Firefox reaches the functional assertions but FAILS the no-pageerror gate during injected transaction-setup failure: core.flush's rejecting Web Locks callback reports an uncaught OfflineError. Core worker owns the fix; do not waive the assertion. Earlier harness plugin lacked enforce:pre and did not execute the intended race; that test setup was corrected before the reported passing CAS run.
+- Actual app `tests/ui/offline.spec.ts` — NOT RUN by worker. Three cases cover real auth/DB offline reload/reconnect, injected quota recovery and real account switch. Network fixture4621edd was coordinator-approved and incorporated asd26089e; all browsers use actual origin connection cutoff, Chromium additionally uses browser offline. Reconnection uses a user reload, not a synthetic online event. Parent must run these against its integrated production build and proxy.
+- Integration/unit/build/full regression/security review — NOT RUN by worker. Parent owns these gates and task status.
+
+Exact coordinator next action: cherry-pick this scoped UI checkpoint, integrate the pending core.flush outcome fix, rebuild, run `fnm exec --using 24.20.0 node tests/offline-ui/run-browser.mjs`, then the configured actual-app Playwright selection `tests/ui/m1.spec.ts tests/ui/offline.spec.ts tests/ui/offline-fallback.spec.ts` followed by required M1–M3 regressions. Test-run environment/seed/runtime commands remain in PROJECT_PLAN and the coordinator checkpoint. SK-008 remains unverified until those actual integrated gates pass. Worker next substep: compact opt-in header controls and any concrete integrated-test fixes.
+
+## Privacy controls and actual conflict test checkpoint, 2026-09-06
+
+Scoped recovery commits21834ea andef7f33a correct status semantics for accessibility, refuse private-mode enablement while registered online editors have unstored input, and retain a frozen/hidden subtree if verification fails after a successful privacy mutation. Core commits ef6e85f andeb7ab42 were incorporated as e8448df and4edc11f after coordinator approval; this resolves the Firefox handled Web Locks rejection. The first direct eb7ab42 cherry-pick lacked its preceding test fixtures and conflicted; it was aborted with all UI WIP preserved, then both commits applied cleanly in order.
+
+The UI now accepts `OfflineAccountControls({onSignOut, compact?:boolean})`, defaultfalse. Coordinator may passcompact in the top bar: Sign out stays visible, Device privacy expands options, and pending-input choices expand automatically. The narrow layout was exercised at320px and its actual synthetic screenshot reviewed; parent retains responsibility for the app-header screenshot.
+
+The expanded isolated harness verifies13 named scenarios per browser, including dirty online-editor protection and recovery after a post-toggle storage read failure. Actual Chromium/WebKit/Firefox runs PASS all13 with zero page errors after core fix integration. The reporter now emits `artifacts/offline-ui/summary.json` with only source SHA/dirty flag, actual engine versions, fixed scenario outcomes and page-error counts. Backend and public-shell readiness are explicitly labeled simulated. No raw error text, authentication URL or private content enters this summary. Synthetic screenshots and detailed local output remain ignored under `.local/offline-ui-evidence`.
+
+`tests/ui/offline.spec.ts` now adds a fourth, actual two-device-context conflict scenario. The second context saves10 minutes on the real server while the first retains revision0. The first queues10 then30 minutes during actual connection cutoff, adds raw invalid numeric text and a reflection, reconnects, verifies every compared change and current server value, captures a conflict screenshot, keeps the reviewed sequence and verifies30 minutes with raw draft/reflection preserved through reload. The first queued10 is already satisfied: this deliberately requires the core worker's pending NO_CHANGE handling fix and expects no fabricated revision for that satisfied head. The existing synthetic backend permits no-op writes; it does not establish this actual API edge case. This fourth actual-app case is NOT RUN by this worker, as are the other actual-app cases; coordinator must run them against its owned runtime after the core fix and retain both conflict/resolved screenshots. No task completion is claimed by these worker checkpoints.
+
+## Actual-browser test repair checkpoint, 2026-09-06
+
+Coordinator observed two test-boundary issues in the integrated run: WebKit's service worker bypassed the account-switch test's page-route API abort, allowing the note to reach the server; Firefox's redundant same-session goto could race an outstanding RSC refresh. These were not accepted as passes and no assertions were weakened.
+
+Owned `tests/ui/offline.spec.ts` now uses real connection cutoff for account switching, waits for the note to be pending, opens the actual Sign out choice to freeze the original editor without confirming sign-out/discard, and reconnects while the original editor remains frozen. It verifies the real canonical reflection is still null, signs the other account into a new tab, then requires both tabs to show quarantine with no reflection editor or note text. Cleanup restores the actual connection and closes the additional tab.
+
+The replay scenario retains exact canonical session revision2/confirmed and reflection revision1/exact text. It then clicks Your journey, verifies1of2 complete/1upcoming, reloads that journey, reopens the created session through its Chronological sessions link, and verifies the recorded checklist/note plus exactly one Practice values saved and Completion confirmed history entry. The redundant same-URL goto is removed. There are no sleeps, error filters, fabricated online events or substituted success states.
+
+Approved core12a4078 is incorporated asdfcbd44. Scoped test formatting, lint and full typecheck are the worker's checks; these revised actual application cases are NOT RUN by the worker because the coordinator owns the runtime. Exact next action: coordinator cherry-picks this tests/handoff commit, rebuilds if required by its integrated source, and runs the configured `tests/ui/offline.spec.ts` actual-browser selection in all three engines, retaining its real screenshots and test evidence. Existing source changes and tracking are untouched.
+
+## Fresh account binding and durable sign-out UI source checkpoint, 2026-09-06
+
+Coordinator reproduced stale-account disclosure in an actual Chromium test with delayed A hydration after real B login. The required boundary prop is now `verifyAccount:(accountId:string)=>Promise<boolean>`; the online wrapper must pass fresh authenticated verification and the public offline shell must pass its separately scoped cached verifier. Harness verification remains explicitly simulated.
+
+The provider captures bindingGeneration before verification and binds only through `verifyAndBindAccount` with expectedGeneration; failed/rejected identity verification fails closed. A failed initial storage read still requires fresh identity before online-only fallback and never performs a blind bind. After waiting for public-shell readiness it reads the device again before rendering. Scope subscriptions immediately reconcile missed invalidations. Pageshow/focus/visibility recheck identity even when online-only mode has no readable scope; private children remain mounted but hidden during the check and local-storage invalidations cannot reveal them while identity verification is pending. Types7c6ea14 and coree50a68e were coordinator-approved and incorporated as1304f94/d0c1225.
+
+Account controls now delegate sign-out lifecycle to the provider. Verified local clearing precedes the actual remote callback. After local purge, private children are removed and the retained callback drives Finishing sign out / Sign-out did not finish / Retry sign out independently of the unmounted controls. Retry verifies identity and never rebinds or restores private content. A pre-purge storage failure preserves the existing editor and remains recoverable through the account controls.
+
+Scoped lint/format and full typecheck PASS at this source checkpoint. New controlled verification/readiness races and failed-logout retry harness cases are being added next; these cases and the coordinator's actual browser regressions remain NOT RUN by this worker at this source checkpoint. Root owns its separate wrappers, helpers and actual application tests. No edits to tests/ui/offline.spec.ts in this assignment.
+
+## Account verification outcomes and offline recovery checkpoint, 2026-09-06
+
+The current verification contract supersedes the prior boolean callback: `verifyAccount(accountId, allowOffline?)` returns the shared `AccountVerification` union (`verified`, `unavailable`, `signed_out`, `different_account`) from `src/offline/core/types.ts`. Coordinator-authorized type commitbd59127 was applied only to that shared type file as335e442; root owns its verification helper and wrappers.
+
+Initial binding/discard/logout verification does not allow offline fallback. Ready focus/pageshow and Retry verification request the caller's verified-local fallback only when a bound scope and ready public shell already exist; the root helper remains responsible for allowing actual transport failure only with matching readable private scope. Ready `unavailable` keeps editor state mounted, hidden and frozen. Local storage broadcasts cannot reveal it until identity is verified again. `signed_out` or `different_account` invalidates the private view. After local purge, authoritative `signed_out` completes remote logout recovery without another POST; other unavailable/mismatched outcomes retain explicit failure/retry. Cancelled verification results and late bind failures cannot invalidate a newer provider epoch.
+
+New `tests/offline-ui/account-races.mjs` uses explicitly simulated identity/readiness/logout gates around real React and IndexedDB. It covers held verification after another account binds (including a stale verified response), changed/cleared scope during held readiness, storage failure with denied verification, identity checks in scope-less online mode, initial network denial, offline focus for an already verified local scope, only-in-memory input during unavailable verification, and failed logout retry with both authenticated and already-signed-out recovery. The harness's summary uses fixed scenario names and explicit outcomes; no private/error payload is added.
+
+Observed intermediate evidence: production22-scenario and development StrictMode22-scenario runs passed all three browsers with zero page errors before the final discriminated-outcome cases were added. The development mode also exercised cancellation during StrictMode effect replay; it is optional and uses the same isolated harness. Scoped lint/typecheck is rerun on the final source below, and final24-scenario verification follows. Actual private Next/provider regressions are owned and run by the coordinator; worker has not run the actual app or altered its runtime.
+
+Final observed worker check: `fnm exec --using 24.20.0 node tests/offline-ui/run-browser.mjs` PASS24/24 scenarios in each of Chromium, WebKit and Firefox, zero page errors. The safe summary is `artifacts/offline-ui/summary.json`; detailed synthetic output is `.local/offline-ui-evidence/latest-run.log`. Scoped Prettier/ESLint, full `npm run typecheck`, and `git diff --check` PASS. Exact next action: coordinator integrates this scoped source/test/handoff checkpoint after its shared verification type/helper changes and runs the actual private account boundary, lost-signout-response, offline and regression suites. Actual app checks remain NOT RUN by this worker.
+
+## Canonical save feedback after prop refresh, 2026-09-06
+
+Coordinator's actual Firefox unified correction regression reached numeric persistence, then failed because its status changed from pending to `Changes are saved individually.` instead of remaining `Saved.`. The cause is the new canonical acknowledgment triggering router.refresh: when the refreshed snapshot's prepare effect completed after flush, it reset the status to initial copy. No data-loss conclusion was inferred from the failed status assertion.
+
+A focused browser-neutral regression now delivers a new canonical snapshot prop after real browser-storage acknowledgment and waits for a changed prompt to prove the refreshed view was applied. It reproduced RED in Chromium before the fix (`.local/offline-ui-evidence/feedback-red.log`). Source `src/offline/ui/session.tsx` now derives settled feedback from the canonical session/reflection, with conflict, queued change and raw-draft precedence; pending or failed in-memory input keeps its own error/save state. The same rules apply after flush, so a surviving raw draft is never labeled server-saved. Existing actual corrections assertions were left unchanged.
+
+Final worker verification: `fnm exec --using 24.20.0 node tests/offline-ui/run-browser.mjs` PASS25/25 scenarios in Chromium153.0.8010.12, WebKit26.6 and Firefox155.0, zero page errors. Coverage includes successful acknowledgment after prop refresh, failed in-memory input, raw numeric draft, pending reflection and conflict state after refreshed props. Harness transport/public readiness/server-prop delivery are explicitly simulated; React, IndexedDB and Web Locks are real. Evidence: `artifacts/offline-ui/summary.json` and `.local/offline-ui-evidence/feedback-green.log`. Scoped Prettier/ESLint, full typecheck and diff check PASS. No root runtime was used. Next action: coordinator integrates this source/harness checkpoint, rebuilds the actual app with the separate sign-out guard, and reruns the unchanged journal/correction/other regression tests. Actual integrated rerun remains NOT RUN by this worker.

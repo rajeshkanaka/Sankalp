@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 
 import type { SessionRecord } from '@/domain/contracts';
 import { deriveCompletionTiming } from '@/domain/status';
+import { useOnlineEditorCheckpoint } from '../use-online-editor-checkpoint';
 import { formatInstant } from '@/components/presentation';
 import styles from '@/styles/sanctuary.module.css';
 
@@ -42,11 +43,16 @@ export function CompletionControls({
   const [localTime, setLocalTime] = useState(() =>
     localInputValue(session.performedAt ?? session.opensAt, session.timeZone),
   );
+  const { frozen, isFrozen } = useOnlineEditorCheckpoint(
+    editing &&
+      localTime !== localInputValue(session.performedAt ?? session.opensAt, session.timeZone),
+  );
   const [localError, setLocalError] = useState<string | null>(null);
   const timing = deriveCompletionTiming(session);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isFrozen()) return;
     try {
       const performedAt = instantFromLocalInput(localTime, session.timeZone);
       const instant = Date.parse(performedAt);
@@ -101,7 +107,7 @@ export function CompletionControls({
               step={60}
               required
               value={localTime}
-              disabled={pending}
+              disabled={pending || frozen}
               onChange={(event) => {
                 setLocalTime(event.target.value);
                 setLocalError(null);
@@ -119,7 +125,7 @@ export function CompletionControls({
             </p>
           )}
           <div className={styles.actions}>
-            <button type="submit" className={styles.button} disabled={pending}>
+            <button type="submit" className={styles.button} disabled={pending || frozen}>
               {pending
                 ? 'Saving completion…'
                 : session.confirmed
@@ -130,7 +136,7 @@ export function CompletionControls({
               <button
                 type="button"
                 className={`${styles.button} ${styles.secondary}`}
-                disabled={pending}
+                disabled={pending || frozen}
                 onClick={() => {
                   setEditing(false);
                   setLocalError(null);
@@ -148,7 +154,7 @@ export function CompletionControls({
           <button
             type="button"
             className={`${styles.button} ${styles.secondary}`}
-            disabled={pending}
+            disabled={pending || frozen}
             onClick={() => setEditing(true)}
           >
             Correct practice time
@@ -156,7 +162,7 @@ export function CompletionControls({
           <button
             type="button"
             className={`${styles.button} ${styles.secondary}`}
-            disabled={pending}
+            disabled={pending || frozen}
             onClick={() => setConfirmingRemoval(true)}
           >
             Remove completion
@@ -170,13 +176,18 @@ export function CompletionControls({
             Remove the completion record? Saved practice values and history will remain.
           </p>
           <div className={styles.actions}>
-            <button type="button" className={styles.button} disabled={pending} onClick={onRemove}>
+            <button
+              type="button"
+              className={styles.button}
+              disabled={pending || frozen}
+              onClick={onRemove}
+            >
               {pending ? 'Removing completion…' : 'Confirm remove completion'}
             </button>
             <button
               type="button"
               className={`${styles.button} ${styles.secondary}`}
-              disabled={pending}
+              disabled={pending || frozen}
               onClick={() => setConfirmingRemoval(false)}
             >
               Keep completion

@@ -1,0 +1,49 @@
+{
+  "sourceSha": "5c14a13cb48df45a987ba54311689dcf94a1154e",
+  "generatedAt": "2026-09-06T09:32:54.364Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4744,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5498,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5854,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

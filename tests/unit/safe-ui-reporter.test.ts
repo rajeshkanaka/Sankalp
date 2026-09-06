@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { FullConfig, FullResult, Suite } from '@playwright/test/reporter';
+import { describe, expect, it, vi } from 'vitest';
 
-import { resolveSourceSha, summarizeRun } from '../../scripts/safe-ui-reporter';
+import SafeUiReporter, { resolveSourceSha, summarizeRun } from '../../scripts/safe-ui-reporter';
 
 const SECRET = 'token_hash=super-secret-callback-value';
 
@@ -9,6 +13,29 @@ function project(name: string) {
 }
 
 describe('safe UI report summary', () => {
+  it('retains the run-start revision when Git context changes during a run', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'sankalpa-reporter-'));
+    const original = '0123456789abcdef0123456789abcdef01234567';
+    try {
+      vi.stubEnv('GITHUB_SHA', original);
+      const reporter = new SafeUiReporter();
+      reporter.onBegin(
+        { configFile: join(directory, 'playwright.config.ts') } as FullConfig,
+        { allTests: () => [] } as unknown as Suite,
+      );
+      vi.stubEnv('GITHUB_SHA', 'fedcba9876543210fedcba9876543210fedcba98');
+      reporter.onEnd({ status: 'passed' } as FullResult);
+      const summary = JSON.parse(
+        readFileSync(join(directory, 'artifacts/ui/summary.json'), 'utf8'),
+      );
+      expect(summary.sourceSha).toBe(original);
+      expect(summary.status).toBe('NOT_RUN');
+    } finally {
+      vi.unstubAllEnvs();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('preserves every retry attempt and maps explicit non-passing statuses', () => {
     const summary = summarizeRun({
       generatedAt: new Date('2026-09-06T01:02:03.004Z'),

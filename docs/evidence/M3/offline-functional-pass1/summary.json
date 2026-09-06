@@ -1,0 +1,399 @@
+{
+  "sourceSha": "5cee27e20fc7e067b70001ff28e50673d7979e75",
+  "generatedAt": "2026-09-06T07:22:13.423Z",
+  "status": "FAILED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "chromium",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5916,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 13117,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 183,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1567,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2784,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-http.spec.ts",
+      "line": 210,
+      "project": "chromium",
+      "title": "keeps identity, owner reads and replay mutations account scoped",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1968,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "chromium",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 292,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 90,
+      "project": "chromium",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3119,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 157,
+      "project": "chromium",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2327,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 205,
+      "project": "chromium",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2505,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 17268,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "webkit",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 5568,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 13326,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 183,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1717,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2816,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "webkit",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 368,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 90,
+      "project": "webkit",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3130,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 157,
+      "project": "webkit",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2468,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 205,
+      "project": "webkit",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 10892,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 17592,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "firefox",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 28884,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 13255,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 183,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2303,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3048,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "firefox",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 342,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 90,
+      "project": "firefox",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 3064,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 157,
+      "project": "firefox",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2929,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 205,
+      "project": "firefox",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2816,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 18872,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

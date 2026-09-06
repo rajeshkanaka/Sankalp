@@ -1,0 +1,91 @@
+{
+  "sourceSha": "e0f163a937bcf56094013e696521efe300fbe234",
+  "generatedAt": "2026-09-06T08:02:11.655Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "chromium",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32237,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 201,
+      "project": "chromium",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16545,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "webkit",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32358,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 201,
+      "project": "webkit",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16760,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "firefox",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32572,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 201,
+      "project": "firefox",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16797,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

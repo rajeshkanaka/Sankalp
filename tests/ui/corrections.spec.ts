@@ -5,9 +5,15 @@ import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, Route } from '@playwright/test';
 
-import type { JourneyDraft, JourneyView, SessionMutationResult } from '../../src/domain/contracts';
+import type {
+  JourneyDraft,
+  JourneyView,
+  SessionMutationResult,
+  SessionRecord,
+} from '../../src/domain/contracts';
 import { expect, test } from './test';
 import { setUiClock } from './helpers/clock';
+import { setUiNetworkDisconnected } from './helpers/network';
 import { capturedSignIn } from './helpers/sign-in';
 
 const M1_NOW = '2026-09-05T00:45:00Z';
@@ -122,207 +128,401 @@ test('@M3 @M3-corrections shows a closure created by another tab without reloadi
   }
 });
 
-test('@M3 @M3-corrections preserves factual chronology through correction and undo', async ({
+test.describe('online-only fallback: simulated retries and NO_CHANGE acknowledgments', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('@M3 @M3-corrections preserves factual chronology through correction and undo', async ({
+    page,
+  }, info) => {
+    test.setTimeout(120000);
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.name));
+    setUiClock(BEFORE_OPEN);
+    try {
+      await capturedSignIn(
+        page,
+        info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
+      );
+      const activated = await createJourney(page, `Correction history ${info.project.name}`);
+      const original = activated.sessions[0];
+      setUiClock(AFTER_CLOSE);
+      await page.goto(`/journeys/${activated.journey.id}/sessions/${original.id}`);
+
+      await expect(page.getByText(/practice window has closed/i)).toBeVisible();
+      const checkbox = page.getByRole('checkbox', { name: 'Opening prayer', exact: true });
+      const numeric = page.getByLabel('Mantra count', { exact: true });
+      const saveNumeric = page.getByRole('button', {
+        name: 'Save value for Mantra count',
+        exact: true,
+      });
+      await expect(checkbox).toBeEnabled();
+      await expect(numeric).toBeEnabled();
+
+      const acknowledgedNumeric = {
+        ...original,
+        practices: original.practices.map((practice) =>
+          practice.id === NUMERIC_ID ? { ...practice, value: 1 } : practice,
+        ),
+      };
+      await page.route(
+        `**/api/sessions/${original.id}/practices`,
+        (route) => noChange(route, 'These practice values are already saved.', acknowledgedNumeric),
+        { times: 1 },
+      );
+      await numeric.fill('1');
+      await saveNumeric.click();
+      await expect(
+        page.getByRole('status').filter({ hasText: /^This value is already saved\.$/ }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'These practice values are already saved.' }),
+      ).toHaveCount(0);
+      await expect(numeric).toHaveValue('1');
+      await expect(saveNumeric).toBeDisabled();
+
+      await numeric.fill('3');
+      await saveNumeric.click();
+      await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
+      await checkbox.check();
+      await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
+
+      const actualTime = page.getByLabel('Actual practice time in Asia/Kolkata', { exact: true });
+      await actualTime.fill('2026-09-05T06:15');
+      const completionResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().endsWith(`/api/sessions/${original.id}/completion`) &&
+          response.request().method() === 'POST' &&
+          response.status() === 200,
+      );
+      await page.getByRole('button', { name: 'Record historical completion', exact: true }).click();
+      const completed = (await completionResponsePromise).json() as Promise<SessionMutationResult>;
+      await expect(page.getByText('Recorded later.', { exact: true })).toBeVisible();
+      await expect(
+        page.getByText('The practice window closed with no saved progress.'),
+      ).toBeVisible();
+      await expect(page.getByText('An in-window practice was recorded later.')).toBeVisible();
+
+      await page.getByRole('button', { name: 'Correct practice time', exact: true }).click();
+      await actualTime.fill('2026-09-05T07:15');
+      const correctionOperationIds: string[] = [];
+      page.on('request', (request) => {
+        if (
+          request.url().endsWith(`/api/sessions/${original.id}/completion`) &&
+          request.method() === 'POST'
+        ) {
+          const body = request.postDataJSON() as { operationId?: unknown } | null;
+          if (typeof body?.operationId === 'string') correctionOperationIds.push(body.operationId);
+        }
+      });
+      await page.route(
+        `**/api/sessions/${original.id}/completion`,
+        (route) =>
+          route.fulfill({
+            status: 503,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              error: {
+                code: 'TEMPORARY_TEST_FAILURE',
+                message: 'Temporary correction failure. The original record remains.',
+                correlationId: 'synthetic-correction-retry',
+              },
+            }),
+          }),
+        { times: 1 },
+      );
+      await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'Temporary correction failure' }),
+      ).toBeVisible();
+      await expect(actualTime).toHaveValue('2026-09-05T07:15');
+
+      const correctionResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().endsWith(`/api/sessions/${original.id}/completion`) &&
+          response.request().method() === 'POST' &&
+          response.status() === 200,
+      );
+      await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
+      const corrected = (await correctionResponsePromise).json() as Promise<SessionMutationResult>;
+      expect(correctionOperationIds).toHaveLength(2);
+      expect(correctionOperationIds[1]).toBe(correctionOperationIds[0]);
+      await expect(page.getByText('Practiced late.', { exact: true })).toBeVisible();
+      await expect(page.getByText('A late practice was recorded.', { exact: true })).toBeVisible();
+
+      await page.getByRole('button', { name: 'Correct practice time', exact: true }).click();
+      await actualTime.fill('2026-09-05T07:30');
+      const correctedResult = await corrected;
+      const acknowledgedTime = {
+        ...correctedResult.session,
+        performedAt: '2026-09-05T02:00:00Z',
+      };
+      await page.route(
+        `**/api/sessions/${original.id}/completion`,
+        (route) => noChange(route, 'This practice time is already recorded.', acknowledgedTime),
+        { times: 1 },
+      );
+      await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
+      await expect(
+        page.getByRole('status').filter({ hasText: /^This practice time is already recorded\.$/ }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'This practice time is already recorded.' }),
+      ).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Cancel time correction' })).toBeEnabled();
+
+      await page.reload();
+      await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
+      await expect(page.getByText(/Saved practice values and history will remain/)).toBeVisible();
+      await page.getByRole('button', { name: 'Keep completion', exact: true }).click();
+      await expect(
+        page.getByRole('button', { name: 'Confirm remove completion', exact: true }),
+      ).toHaveCount(0);
+
+      await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
+      const completedResult = await completed;
+      const acknowledgedRemoval = {
+        ...completedResult.session,
+        revision: correctedResult.session.revision,
+        practices: correctedResult.session.practices,
+        confirmed: false,
+        performedAt: null,
+        recordedAt: null,
+      };
+      await page.route(
+        `**/api/sessions/${original.id}/completion`,
+        (route) =>
+          noChange(route, 'This session is not recorded as complete.', acknowledgedRemoval),
+        { times: 1 },
+      );
+      await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
+      await expect(
+        page.getByRole('status').filter({ hasText: /^The completion is already removed\./ }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('alert').filter({ hasText: 'This session is not recorded as complete.' }),
+      ).toHaveCount(0);
+      await expect(checkbox).toBeChecked();
+      await expect(numeric).toHaveValue('3');
+      await expect(numeric).toBeEnabled();
+
+      await page.reload();
+      await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
+      await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
+      await expect(
+        page
+          .getByRole('status')
+          .filter({ hasText: /^Completion removed\. Your saved practice values remain\.$/ }),
+      ).toBeVisible();
+      await expect(checkbox).toBeChecked();
+      await expect(numeric).toHaveValue('3');
+      await expect(
+        page.getByRole('button', { name: 'Record historical completion', exact: true }),
+      ).toBeEnabled();
+      await expect(
+        page
+          .getByRole('list', { name: 'Session history', exact: true })
+          .getByText('Completion was removed after closing.', { exact: true }),
+      ).toBeVisible();
+
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+      const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
+      mkdirSync(evidence, { recursive: true });
+      await page.screenshot({
+        path: resolve(evidence, 'completion-online-only-corrections.png'),
+        fullPage: true,
+      });
+      expect(pageErrors).toEqual([]);
+    } finally {
+      setUiClock(M1_NOW);
+    }
+  });
+});
+
+async function canonicalSession(page: Page, sessionId: string): Promise<SessionRecord> {
+  const response = await page.request.get(`/api/sessions/${sessionId}`);
+  expect(response.status()).toBe(200);
+  return ((await response.json()) as { session: SessionRecord }).session;
+}
+
+test('@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo', async ({
   page,
 }, info) => {
   test.setTimeout(120000);
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.name));
   setUiClock(BEFORE_OPEN);
   try {
     await capturedSignIn(
       page,
       info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
     );
-    const activated = await createJourney(page, `Correction history ${info.project.name}`);
-    const original = activated.sessions[0];
+    const activated = await createJourney(page, `Unified correction history ${info.project.name}`);
+    const original = activated.sessions[0]!;
+    const sessionPath = `/journeys/${activated.journey.id}/sessions/${original.id}`;
     setUiClock(AFTER_CLOSE);
-    await page.goto(`/journeys/${activated.journey.id}/sessions/${original.id}`);
+    await page.goto(sessionPath);
+    const checklist = page.getByRole('region', { name: 'Practice checklist', exact: true });
+    const history = page.getByRole('list', { name: 'Session history', exact: true });
+    const closure = 'The practice window closed with no saved progress.';
+    const correctedValues = 'Practice values were corrected after closing.';
+    const recordedLater = 'An in-window practice was recorded later.';
+    const practicedLate = 'A late practice was recorded.';
+    const removed = 'Completion was removed after closing.';
+    await expect(
+      checklist.getByText(
+        'This window has closed. Save every practice, then enter when you actually practiced.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(history.getByText(closure, { exact: true })).toHaveCount(1);
+    const checkbox = checklist.getByRole('checkbox', { name: 'Opening prayer', exact: true });
+    const numeric = checklist.getByLabel('Mantra count', { exact: true });
+    const status = checklist.locator('p[role="status"]');
+    await checkbox.check();
+    await expect(status).toHaveText('Saved.');
+    await numeric.fill('3');
+    await checklist
+      .getByRole('button', { name: 'Save value for Mantra count', exact: true })
+      .click();
+    await expect(status).toHaveText('Saved.');
+    expect(await canonicalSession(page, original.id)).toMatchObject({
+      confirmed: false,
+      revision: 2,
+    });
 
-    await expect(page.getByText(/practice window has closed/i)).toBeVisible();
-    const checkbox = page.getByRole('checkbox', { name: 'Opening prayer', exact: true });
-    const numeric = page.getByLabel('Mantra count', { exact: true });
-    const saveNumeric = page.getByRole('button', {
-      name: 'Save value for Mantra count',
+    const actualTime = checklist.getByLabel('Actual practice time in Asia/Kolkata', {
       exact: true,
     });
-    await expect(checkbox).toBeEnabled();
-    await expect(numeric).toBeEnabled();
-
-    const acknowledgedNumeric = {
-      ...original,
-      practices: original.practices.map((practice) =>
-        practice.id === NUMERIC_ID ? { ...practice, value: 1 } : practice,
-      ),
-    };
-    await page.route(
-      `**/api/sessions/${original.id}/practices`,
-      (route) => noChange(route, 'These practice values are already saved.', acknowledgedNumeric),
-      { times: 1 },
-    );
-    await numeric.fill('1');
-    await saveNumeric.click();
-    await expect(
-      page.getByRole('status').filter({ hasText: /^This value is already saved\.$/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('alert').filter({ hasText: 'These practice values are already saved.' }),
-    ).toHaveCount(0);
-    await expect(numeric).toHaveValue('1');
-    await expect(saveNumeric).toBeDisabled();
-
-    await numeric.fill('3');
-    await saveNumeric.click();
-    await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
-    await checkbox.check();
-    await expect(page.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
-
-    const actualTime = page.getByLabel('Actual practice time in Asia/Kolkata', { exact: true });
     await actualTime.fill('2026-09-05T06:15');
-    const completionResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().endsWith(`/api/sessions/${original.id}/completion`) &&
-        response.request().method() === 'POST' &&
-        response.status() === 200,
-    );
-    await page.getByRole('button', { name: 'Record historical completion', exact: true }).click();
-    const completed = (await completionResponsePromise).json() as Promise<SessionMutationResult>;
-    await expect(page.getByText('Recorded later.', { exact: true })).toBeVisible();
-    await expect(
-      page.getByText('The practice window closed with no saved progress.'),
-    ).toBeVisible();
-    await expect(page.getByText('An in-window practice was recorded later.')).toBeVisible();
-
-    await page.getByRole('button', { name: 'Correct practice time', exact: true }).click();
-    await actualTime.fill('2026-09-05T07:15');
-    const correctionOperationIds: string[] = [];
-    page.on('request', (request) => {
-      if (
-        request.url().endsWith(`/api/sessions/${original.id}/completion`) &&
-        request.method() === 'POST'
-      ) {
-        const body = request.postDataJSON() as { operationId?: unknown } | null;
-        if (typeof body?.operationId === 'string') correctionOperationIds.push(body.operationId);
-      }
+    await checklist
+      .getByRole('button', { name: 'Record historical completion', exact: true })
+      .click();
+    await expect(checklist.getByText('Recorded later.', { exact: true })).toBeVisible();
+    expect(await canonicalSession(page, original.id)).toMatchObject({
+      confirmed: true,
+      revision: 3,
+      performedAt: '2026-09-05T00:45:00.000Z',
+      recordedAt: '2026-09-05T02:00:00.000Z',
     });
-    await page.route(
-      `**/api/sessions/${original.id}/completion`,
-      (route) =>
-        route.fulfill({
-          status: 503,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            error: {
-              code: 'TEMPORARY_TEST_FAILURE',
-              message: 'Temporary correction failure. The original record remains.',
-              correlationId: 'synthetic-correction-retry',
-            },
-          }),
-        }),
-      { times: 1 },
-    );
-    await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
-    await expect(
-      page.getByRole('alert').filter({ hasText: 'Temporary correction failure' }),
-    ).toBeVisible();
-    await expect(actualTime).toHaveValue('2026-09-05T07:15');
-
-    const correctionResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().endsWith(`/api/sessions/${original.id}/completion`) &&
-        response.request().method() === 'POST' &&
-        response.status() === 200,
-    );
-    await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
-    const corrected = (await correctionResponsePromise).json() as Promise<SessionMutationResult>;
-    expect(correctionOperationIds).toHaveLength(2);
-    expect(correctionOperationIds[1]).toBe(correctionOperationIds[0]);
-    await expect(page.getByText('Practiced late.', { exact: true })).toBeVisible();
-    await expect(page.getByText('A late practice was recorded.', { exact: true })).toBeVisible();
-
-    await page.getByRole('button', { name: 'Correct practice time', exact: true }).click();
-    await actualTime.fill('2026-09-05T07:30');
-    const correctedResult = await corrected;
-    const acknowledgedTime = {
-      ...correctedResult.session,
-      performedAt: '2026-09-05T02:00:00Z',
-    };
-    await page.route(
-      `**/api/sessions/${original.id}/completion`,
-      (route) => noChange(route, 'This practice time is already recorded.', acknowledgedTime),
-      { times: 1 },
-    );
-    await page.getByRole('button', { name: 'Save corrected practice time', exact: true }).click();
-    await expect(
-      page.getByRole('status').filter({ hasText: /^This practice time is already recorded\.$/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('alert').filter({ hasText: 'This practice time is already recorded.' }),
-    ).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Cancel time correction' })).toBeEnabled();
-
-    await page.reload();
-    await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
-    await expect(page.getByText(/Saved practice values and history will remain/)).toBeVisible();
-    await page.getByRole('button', { name: 'Keep completion', exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Confirm remove completion', exact: true }),
-    ).toHaveCount(0);
-
-    await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
-    const completedResult = await completed;
-    const acknowledgedRemoval = {
-      ...completedResult.session,
-      revision: correctedResult.session.revision,
-      practices: correctedResult.session.practices,
-      confirmed: false,
-      performedAt: null,
-      recordedAt: null,
-    };
-    await page.route(
-      `**/api/sessions/${original.id}/completion`,
-      (route) => noChange(route, 'This session is not recorded as complete.', acknowledgedRemoval),
-      { times: 1 },
-    );
-    await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
-    await expect(
-      page.getByRole('status').filter({ hasText: /^The completion is already removed\./ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('alert').filter({ hasText: 'This session is not recorded as complete.' }),
-    ).toHaveCount(0);
-    await expect(checkbox).toBeChecked();
-    await expect(numeric).toHaveValue('3');
-    await expect(numeric).toBeEnabled();
-
-    await page.reload();
-    await page.getByRole('button', { name: 'Remove completion', exact: true }).click();
-    await page.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
-    await expect(
-      page
-        .getByRole('status')
-        .filter({ hasText: /^Completion removed\. Your saved practice values remain\.$/ }),
-    ).toBeVisible();
-    await expect(checkbox).toBeChecked();
-    await expect(numeric).toHaveValue('3');
-    await expect(
-      page.getByRole('button', { name: 'Record historical completion', exact: true }),
-    ).toBeEnabled();
-    await expect(
-      page
-        .getByRole('list', { name: 'Session history', exact: true })
-        .getByText('Completion was removed after closing.', { exact: true }),
-    ).toBeVisible();
-
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await expect(history.getByRole('listitem').locator('strong')).toHaveText([
+      closure,
+      correctedValues,
+      correctedValues,
+      recordedLater,
+    ]);
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
+    await page.screenshot({ path: resolve(evidence, 'recorded-later.png'), fullPage: true });
+
+    await checklist.getByRole('button', { name: 'Correct practice time', exact: true }).click();
+    await actualTime.fill('2026-09-05T07:15');
+    // The proxy cuts actual connections in every engine. Only Chromium additionally
+    // uses browser-offline simulation; WebKit/Firefox retain navigator.onLine.
+    await setUiNetworkDisconnected(true);
+    if (info.project.name === 'chromium') await page.context().setOffline(true);
+    await checklist
+      .getByRole('button', { name: 'Save corrected practice time', exact: true })
+      .click();
+    await expect(status).toContainText('Saved on this device');
+    await expect(
+      checklist.getByText('1 change(s) saved on this device.', { exact: true }),
+    ).toBeVisible();
+    // Server acknowledgment is still the original in-window completion.
+    await expect(checklist.getByText('Recorded later.', { exact: true })).toBeVisible();
+    await expect(checklist.getByText('Practiced late.', { exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(
+      checklist.getByText('1 change(s) saved on this device.', { exact: true }),
+    ).toBeVisible();
+    await expect(checklist.getByText('Recorded later.', { exact: true })).toBeVisible();
+    await page.screenshot({
+      path: resolve(evidence, 'completion-correction-pending.png'),
+      fullPage: true,
+    });
+    await page.context().setOffline(false);
+    await setUiNetworkDisconnected(false);
+    await page.reload();
+    await expect(checklist.getByText('Practiced late.', { exact: true })).toBeVisible({
+      timeout: 30000,
+    });
+    expect(await canonicalSession(page, original.id)).toMatchObject({
+      confirmed: true,
+      revision: 4,
+      performedAt: '2026-09-05T01:45:00.000Z',
+      recordedAt: '2026-09-05T02:00:00.000Z',
+    });
+    await expect(history.getByRole('listitem').locator('strong')).toHaveText([
+      closure,
+      correctedValues,
+      correctedValues,
+      recordedLater,
+      practicedLate,
+    ]);
+
+    await checklist.getByRole('button', { name: 'Remove completion', exact: true }).click();
+    await expect(
+      checklist.getByText('Saved practice values and history will remain.', { exact: true }),
+    ).toBeVisible();
+    await checklist.getByRole('button', { name: 'Keep completion', exact: true }).click();
+    await expect(
+      checklist.getByRole('button', { name: 'Confirm remove completion', exact: true }),
+    ).toHaveCount(0);
+    expect(await canonicalSession(page, original.id)).toMatchObject({
+      confirmed: true,
+      revision: 4,
+    });
+    await checklist.getByRole('button', { name: 'Remove completion', exact: true }).click();
+    await checklist.getByRole('button', { name: 'Confirm remove completion', exact: true }).click();
+    await expect(status).toHaveText('Saved.');
+    await expect(
+      checklist.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
+    ).toHaveCount(0);
+    await expect(checkbox).toBeChecked();
+    await expect(numeric).toHaveValue('3');
+    await expect(
+      checklist.getByRole('button', { name: 'Record historical completion', exact: true }),
+    ).toBeEnabled();
+    const undone = await canonicalSession(page, original.id);
+    expect(undone).toMatchObject({
+      confirmed: false,
+      revision: 5,
+      performedAt: null,
+      recordedAt: null,
+    });
+    expect(undone.practices.map(({ id, value }) => ({ id, value }))).toEqual([
+      { id: CHECKBOX_ID, value: true },
+      { id: NUMERIC_ID, value: 3 },
+    ]);
+    await expect(history.getByRole('listitem').locator('strong')).toHaveText([
+      closure,
+      correctedValues,
+      correctedValues,
+      recordedLater,
+      practicedLate,
+      removed,
+    ]);
+    await page.reload();
+    await expect(checkbox).toBeChecked();
+    await expect(numeric).toHaveValue('3');
+    await expect(history.getByRole('listitem').locator('strong')).toHaveText([
+      closure,
+      correctedValues,
+      correctedValues,
+      recordedLater,
+      practicedLate,
+      removed,
+    ]);
+    expect(await canonicalSession(page, original.id)).toEqual(undone);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({
       path: resolve(evidence, 'completion-corrections.png'),
       fullPage: true,
     });
-    expect(pageErrors).toEqual([]);
+    await page.getByRole('link', { name: 'Your journey', exact: true }).click();
+    const progress = page.getByRole('region', { name: 'Journey progress', exact: true });
+    await expect(progress.getByText('0 of 2 sessions completed', { exact: true })).toBeVisible();
+    await expect(progress.getByText('1 upcoming', { exact: true })).toBeVisible();
   } finally {
+    await page.context().setOffline(false);
+    await setUiNetworkDisconnected(false);
     setUiClock(M1_NOW);
   }
 });

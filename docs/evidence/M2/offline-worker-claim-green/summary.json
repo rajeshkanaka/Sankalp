@@ -1,0 +1,21 @@
+{
+  "sourceSha": "a808388546fc20935fcd042466c2d305487d6652",
+  "generatedAt": "2026-09-06T09:04:19.328Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5991,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

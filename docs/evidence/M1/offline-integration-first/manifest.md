@@ -1,0 +1,3 @@
+# First offline integration smoke — partial evidence
+
+2026-09-06, source b5699de plus coordinator working changes. Actual local production app, synthetic fixture/time, slot1 PostgreSQL17.6. Run `UI_RUN_ID=offline-integration-first npm run test:ui -- --grep '@smoke|public shell caches'`: **FAILED overall;2PASSED,4FAILED**. Chromium smoke and public-shell scenario passed. WebKit checkbox feedback, Firefox account readiness and WebKit/Firefox emulated-offline navigation failed. Preview screenshots from failed workflows are partial outcomes only. Detailed findings and next substeps are in docs/handoffs/SK-008.md; no completed milestone is implied.

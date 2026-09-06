@@ -1,7 +1,11 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 const mode = process.argv[2];
 if (!['dev', 'start'].includes(mode)) throw new Error('Expected dev or start.');
+if (mode === 'dev') {
+  const built = spawnSync(process.execPath, ['scripts/build-offline.mjs'], { stdio: 'inherit' });
+  if (built.status !== 0) process.exit(built.status ?? 1);
+}
 const child = spawn(
   process.execPath,
   [
