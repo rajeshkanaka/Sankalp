@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import {
   createReminderAttempt,
   fieldsFromPreferences,
   formatPreviewTime,
   readPreferenceView,
   validateFields,
-} from './model';
+} from '../../src/features/reminders/preferences/model';
 
 const preferences = { enabled: false, offsets: [] as number[], quietHours: null, detailed: false };
 

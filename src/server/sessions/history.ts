@@ -177,6 +177,7 @@ export async function readSessionHistory(
   );
   const events = await client.query<EventRow>(
     `select ${eventColumns} from app.notification_event where session_id=$1
+       and kind in ('session_closed','session_corrected')
      order by occurred_at,
        case when kind='session_closed' then 0 else 1 end,
        session_revision,id`,

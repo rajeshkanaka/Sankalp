@@ -95,18 +95,22 @@ async function verifyLocalDatabase(client: pg.Client): Promise<void> {
     'amendment',
     'journey',
     'notification_event',
+    'notification_read',
     'operation_receipt',
     'practice_version',
     'profile',
+    'push_subscription',
     'rate_bucket',
     'reflection',
     'reflection_mood',
+    'reminder_job',
     'schedule_version',
     'session',
     'session_practice',
+    'worker_heartbeat',
   ];
   if (JSON.stringify(tables.rows.map((row) => row.name)) !== JSON.stringify(expected))
-    throw new Error('Local application schema is not the expected M3 schema.');
+    throw new Error('Local application schema is not the expected M4 schema.');
 }
 
 async function verifyFixtureUsersInDatabase(

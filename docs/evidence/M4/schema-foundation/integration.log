@@ -1,0 +1,13 @@
+
+> sankalpa@0.1.0 test:integration
+> node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --project integration
+
+
+ RUN  v5.0.0 /Users/rajesh/sankalpa-worktrees/SK-009-integration
+
+
+ Test Files  11 passed (11)
+      Tests  272 passed (272)
+   Start at  15:24:02
+   Duration  7.93s (tests 89%, import 9%, transform 2%)
+

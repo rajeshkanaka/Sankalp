@@ -1,0 +1,11 @@
+# M4 coordinator integration checkpoint
+
+2026-09-06. Worktree SK-009-integration, branch rajesh_kanaka/reminder-integration, isolated slot2. Accepted base544f3ef; merge PR5's accepted main before cumulative application checks. TASKS alone owns status.
+
+Reviewed source integrated: pure domain2b66431/4c121ec; preference contract67c4704 and version/validationb817885; form3aa243b; database tests0a3a04a; guarded transport e296259. Transport includes212 focused tests and actual local TLS exercises, no real push.
+
+Migrations001–010 are now applied to slot2 (API54521/DB54522/mail54524).010 creates restricted roles, subscription/job/history tables and privileges only; narrow functions and worker runtime remain unfinished. Independent SQL review findings were fixed before first application: locking privileges, event/job context, one attempt outcome, role-membership drift and lease-state constraints. Existing history reads explicitly select legacy session events. Strict seed inventory now includes the four added tables and still refuses unknown schema/data.
+
+Verification:404 unit tests passed after moving six form model tests into the existing Vitest gate. Initial full DB run271 passed/1 failed because the seed safety guard correctly rejected newly introduced tables. After updating its exact inventory, targeted seed recovery1/1 and full DB272/272 passed; typecheck passed. Logs: docs/evidence/M4/schema-foundation/. Slot2 baseline production smoke screenshot is in docs/evidence/M1/2026-09-06T09-20-37-137Z/. No worker/API/device/UI reminder claim is made. Role-specific and new schema tests remain to be added.
+
+Next: integrate preferences no-op fix305a6bb (preserve its added tests in tests/unit/reminder-preferences-model.test.ts), add/test narrow lifecycle functions in a new migration011, assign bounded worker client/loop against frozen signatures, wire settings/device/history UI and actual browser regression. app_worker has no configured password/runtime URL yet. Keep secrets and node_modules untracked. Restart slot2 with fnm use24.20.0; npm run db:start; npm run build; npm run test:smoke. App port3002; no surviving app process assumed. Local/CI reminders must remain explicitly simulated.
