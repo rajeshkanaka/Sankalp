@@ -1,5 +1,26 @@
 # SK-009 reminder preference UI verification handoff
 
+## Break checkpoint — resume this entry first
+
+The user requested an immediate break after the coordinator's API checkpoint `f405c1c`. Implementation stopped before any sign-out guard source or new regression was written.
+
+- Current worker branch: `rajesh_kanaka/reminder-preferences-checkpoint`.
+- Current worker worktree: `/Users/rajesh/sankalpa-worktrees/SK-009-preferences-checkpoint`.
+- Source base: `f405c1c` (coordinator API/page/client checkpoint), which already contains the four preference tests integrated as `0a34cc2` from worker `e7da524`.
+- Owned pending scope: `src/features/reminders/preferences-client.tsx`, `src/features/reminders/preferences/` if needed, `tests/ui/m4-reminder-preferences.spec.ts`, this report, and `tests/unit/reminder-preferences-model.test.ts` only if a meaningful new pure boundary test is needed. Shared tracking, routes and SQL remain coordinator-owned.
+- This break commit changes only this report. No application/test source changed in the new worktree. The existing dependency symlink remains ignored/unstaged; no dependency was installed.
+- No worker runtime, browser, database connection, app process or test fixture was started. No new check was run after the fresh worktree was created. Actual preference UI/API/axe/screenshots remain **NOT RUN** by this worker; retain the earlier static-only results below without promoting them.
+
+Read-only review found a concrete data-preservation gap: `ReminderPreferencesClient` mounts the form without the account editor checkpoint lifecycle. The form owns raw input and retained request envelopes but never registers them or observes the provider's frozen state. Editing a reminder, then clicking **Sign out** or changing device privacy, lets shared controls see no unsaved editor and discard the form. An in-flight PUT is not awaited either. Coordinator assigned this fix and approved the narrow bridge below; it is **not implemented**.
+
+Exact next substep: add an optional browser-neutral form lifecycle bridge `{ frozen, isFrozen, registerEditor }`, passed by the client wrapper from `useOfflineAccount`. Register a getter covering changed/invalid raw preferences, unresolved conflicts, retained uncertain attempts and pending saves, plus settlement of the active request. Block edits, submits and conflict choices synchronously while frozen. Check async continuations too; if a response arrives during an account action, preserve the exact envelope and raw values, explain that retry is needed to verify the save, and require the existing explicit account-control choice. Do not invent another discard flow or persist invalid raw data.
+
+Then add real regressions for invalid/unsaved reminder → sign-out/cancel and pending save → account freeze → retained retry. A proposed deterministic pending-save test uses the existing guarded local test environment to hold a read lock only on the freshly API-created synthetic journey row, starts the real PUT, freezes through **Sign out**, releases the lock, and verifies the identical retry envelope and single revision. No route response mock is needed. This test has **not been written or executed**. Only the coordinator may run it in the assigned slot 2 runtime; never borrow root/slot 1 resources.
+
+Other source-review findings were sent to the coordinator: the new page needs an h1 and CSS-module classes on its navigation links; the coordinator owns those fixes. Activation and schedule revision still need calls to refresh reminder jobs after new sessions are created; this remains a coordinator lifecycle integration gate. Authenticated RLS transactions, stale-base precedence before `NO_CHANGE`, normalized preference comparison and receipt envelopes otherwise matched the frozen contract by source inspection. SQL011 is under a different review owner; no duplicate SQL audit was performed here.
+
+After resuming, first reconcile this branch with the coordinator's current accepted checkpoint and ownership, preserve all dirty work, implement the bounded bridge, run scoped static/model checks, and hand it back for actual slot 2 browser verification. No feature completion, screenshot, successful runtime test or remote push is claimed by this break checkpoint.
+
 2026-09-06. Worker `/root/merge_review`; coordinator `/root`. Task status remains solely in [TASKS](../TASKS.md). This report checkpoints executable tests, not completed application verification.
 
 ## Ownership and checkpoint
