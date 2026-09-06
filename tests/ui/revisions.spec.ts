@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import AxeBuilder from '@axe-core/playwright';
+import type { Route } from '@playwright/test';
 import { expect, test } from './test';
 
 import { setUiClock } from './helpers/clock';
@@ -30,9 +31,40 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
     expect(journeyId).toMatch(/^[a-f0-9-]{36}$/);
     await page.goto(`/journeys/${journeyId}`);
 
+    // Delay actual hydration while retaining the server-rendered journey page.
+    let releaseScripts!: () => void;
+    const scriptsReady = new Promise<void>((resolve) => {
+      releaseScripts = resolve;
+    });
+    let heldScripts = 0;
+    const holdScripts = async (route: Route) => {
+      heldScripts += 1;
+      await scriptsReady;
+      await route.continue();
+    };
+    const nextScripts = /\/_next\/static\/.*\.js(?:\?.*)?$/;
+    await page.route(nextScripts, holdScripts);
+    try {
+      await page.reload({ waitUntil: 'commit' });
+      await expect.poll(() => heldScripts).toBeGreaterThan(0);
+      await expect(page.getByLabel('Journey title', { exact: true })).toBeVisible();
+      await expect(page.getByLabel('Journey title', { exact: true })).toBeDisabled();
+      await expect(page.getByLabel('Journey title', { exact: true })).not.toBeEditable();
+      await expect(page.getByLabel('Personal intention', { exact: true })).toBeDisabled();
+      await expect(page.getByLabel('Personal intention', { exact: true })).not.toBeEditable();
+      await expect(
+        page.getByRole('button', { name: 'Save journey details', exact: true }),
+      ).toBeDisabled();
+    } finally {
+      releaseScripts();
+      await page.unroute(nextScripts, holdScripts);
+    }
+
     await page.getByLabel('Journey title', { exact: true }).fill('Revised night practice');
     await page.getByLabel('Personal intention', { exact: true }).fill('A clearer intention.');
+    let attemptedMetadata: unknown;
     await page.route('**/api/journeys/*/metadata', async (route) => {
+      attemptedMetadata = route.request().postDataJSON();
       await route.fulfill({
         status: 409,
         contentType: 'application/json',
@@ -49,6 +81,9 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
     await expect(
       page.getByRole('alert').filter({ hasText: 'Review the latest journey' }),
     ).toBeVisible();
+    expect(attemptedMetadata).toMatchObject({
+      payload: { title: 'Revised night practice', intention: 'A clearer intention.' },
+    });
     await expect(page.getByLabel('Journey title', { exact: true })).toHaveValue(
       'Revised night practice',
     );
