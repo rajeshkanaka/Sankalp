@@ -3,7 +3,12 @@ import { getDeviceState } from './core';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type BrowserIdentity =
-  { kind: 'verified'; accountId: string } | { kind: 'network_unavailable' } | { kind: 'rejected' };
+  | { kind: 'verified'; accountId: string }
+  | { kind: 'network_unavailable' }
+  | { kind: 'unauthenticated' }
+  | { kind: 'rejected' };
+
+export type AccountVerification = 'verified' | 'unavailable' | 'signed_out' | 'different_account';
 
 /** Fresh cookie verification; server-rendered identity can become stale before hydration. */
 export async function readBrowserIdentity(): Promise<BrowserIdentity> {
@@ -24,6 +29,7 @@ export async function readBrowserIdentity(): Promise<BrowserIdentity> {
           : 'rejected',
     };
   }
+  if (response.status === 401) return { kind: 'unauthenticated' };
   if (!response.ok || response.redirected) return { kind: 'rejected' };
   try {
     const identity: unknown = await response.json();
@@ -44,14 +50,18 @@ export async function readBrowserIdentity(): Promise<BrowserIdentity> {
 export async function verifyBrowserAccount(
   accountId: string,
   allowOffline = false,
-): Promise<boolean> {
+): Promise<AccountVerification> {
   const identity = await readBrowserIdentity();
-  if (identity.kind === 'verified') return identity.accountId === accountId;
-  if (identity.kind !== 'network_unavailable' || !allowOffline) return false;
+  if (identity.kind === 'verified')
+    return identity.accountId === accountId ? 'verified' : 'different_account';
+  if (identity.kind === 'unauthenticated') return 'signed_out';
+  if (identity.kind !== 'network_unavailable' || !allowOffline) return 'unavailable';
   try {
     const device = await getDeviceState();
-    return !device.quarantined && !device.sharedDevice && device.scope?.accountId === accountId;
+    return !device.quarantined && !device.sharedDevice && device.scope?.accountId === accountId
+      ? 'verified'
+      : 'different_account';
   } catch {
-    return false;
+    return 'unavailable';
   }
 }

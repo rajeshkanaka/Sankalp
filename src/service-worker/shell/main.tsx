@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { bindAccount, getDeviceState, read, type LocalView } from '@/offline/core';
-import { readBrowserIdentity } from '@/offline/account-identity';
+import { readBrowserIdentity, type AccountVerification } from '@/offline/account-identity';
 import {
   OfflineAccountBoundary,
   OfflineSavedPage,
@@ -17,17 +17,21 @@ const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f
 const sessionRoute = new RegExp(`^/journeys/(${uuid})/sessions/(${uuid})$`, 'i');
 type Loaded = { accountId: string; view: LocalView | null };
 
-async function verifySavedBrowserAccount(accountId: string): Promise<boolean> {
+async function verifySavedBrowserAccount(accountId: string): Promise<AccountVerification> {
   const identity = await readBrowserIdentity();
-  if (
-    identity.kind === 'rejected' ||
-    (identity.kind === 'verified' && identity.accountId !== accountId)
-  )
-    return false;
+  if (identity.kind === 'rejected') return 'unavailable';
+  if (identity.kind === 'unauthenticated') return 'signed_out';
+  if (identity.kind === 'verified' && identity.accountId !== accountId) return 'different_account';
   // Only this saved-shell path may resume an already bound account after transport loss.
   // It cannot switch accounts, revive a cleared generation or enable shared-device storage.
-  const device = await getDeviceState();
-  return !device.quarantined && !device.sharedDevice && device.scope?.accountId === accountId;
+  try {
+    const device = await getDeviceState();
+    return !device.quarantined && !device.sharedDevice && device.scope?.accountId === accountId
+      ? 'verified'
+      : 'different_account';
+  } catch {
+    return 'unavailable';
+  }
 }
 
 function SavedSession({ view }: { view: LocalView }) {
@@ -73,7 +77,8 @@ function PublicOfflineApp() {
         // Only an actual network failure falls back to the previously bound local account.
         const beforeVerification = await getDeviceState();
         const identity = await readBrowserIdentity();
-        if (identity.kind === 'rejected') throw new Error('Account verification required.');
+        if (identity.kind === 'rejected' || identity.kind === 'unauthenticated')
+          throw new Error('Account verification required.');
         if (identity.kind === 'verified')
           await bindAccount(identity.accountId, {
             expectedGeneration: beforeVerification.bindingGeneration,
