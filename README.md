@@ -1,48 +1,120 @@
+<p align="center"><strong>YOUR INTENTION · YOUR PRACTICE · YOUR OWN RHYTHM</strong></p>
+
 # Sankalpa
 
-**Sankalpa is a personal spiritual commitment companion designed to help users turn a sincere intention into consistent daily practice.** It addresses a common challenge: people take a sankalp with devotion but struggle to maintain the schedule, remember each session, and track their progress through completion.
+**Give a sincere intention a place in every day.**
 
-Whether the commitment is 21 days of stotra pathana, daily puja, mantra japa, meditation, or another practice, the app should help users:
+**Sankalpa is a personal spiritual commitment companion** for turning a sincere intention into consistent daily practice. Define what matters to you, return to it each day, and see your journey honestly—from the sessions you complete to the days you find difficult.
 
-- **Define their sankalp:** Record the intention, practices, daily targets, start date, duration, and preferred practice time.
-- **Arrive prepared:** Receive configurable reminders before and at the scheduled time, with a countdown to the next session.
-- **Record daily practice:** Mark individual activities complete and confirm the session once all required targets are met.
-- **See progress clearly:** View completed sessions, upcoming sessions, missed or partial days, completion percentage, and consistency through a dashboard and calendar.
-- **Maintain accountability:** Keep an honest history of on-time, late, and missed practice, helping users recognize gaps and follow their chosen routine with discipline.
-- **Preserve the journey:** Add private daily reflections and download a summary of their practice and progress.
+Stotra pathana, puja, mantra japa, meditation, or something entirely your own: your tradition and your choices lead the experience.
 
-## Example journey
+**[Run locally](#run-locally-on-macos)** · **[Give a five-minute demo](docs/DEMO.md#the-five-minute-walkthrough)** · **[See what works](#what-you-can-try-today)** · **[Explore the architecture](docs/PROJECT_PLAN.md)**
 
-Someone undertaking **21 days of morning puja at 6 AM** could choose reminders at 5:30 and 5:55 AM, complete the daily checklist, and see:
+![The running Sankalpa welcome screen: a quiet space for daily practice and private email-link sign-in](docs/images/sankalpa-welcome.png)
 
-> 7 of 21 sessions completed · 14 upcoming · 33% complete · Next practice tomorrow at 6 AM.
+<p align="center"><em>A real local app screenshot. Sample data and a simulated practice clock; no external email or notification delivery.</em></p>
 
-## Experience and purpose
+## A small daily practice, a visible journey
 
-The experience should feel calm, spiritually meaningful, personal, and easy to use. Its purpose is to support disciplined follow-through through timely prompts and visible accountability, while respecting the user's own tradition and choices. The planned reminders support this routine; they should not be presented as guaranteed wake-up alarms.
+| Make it personal                                    | Follow through                                       | Keep the meaning                                                    |
+| --------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| Choose your intention, practices and daily targets. | Work through a checklist and confirm your session.   | Add private reflections in your own words.                          |
+| Set your dates, weekdays, local time and timezone.  | See complete, partial, missed and upcoming sessions. | Revisit your journal and preserve an honest history of corrections. |
 
-## Project status
+The aim is simple: help someone who makes a commitment with devotion keep returning to it with attention. There is no prescribed practice, compulsory streak or one-size-fits-all schedule.
 
-Implementation follows the approved repository plan. See [the current project handoff](docs/PROJECT_PROGRESS.md) for the approval gate and exact next action; [TASKS](docs/TASKS.md) is the only task-status register.
+## What you can try today
 
-**Resume from `main`.** Its [progress](docs/PROJECT_PROGRESS.md), [session log](docs/SESSION_LOG.md) and [branch/worktree map](docs/BRANCHES.md) identify the accepted app and any unfinished worker branches. Historical worker copies of these documents are not the current project checkpoint.
+**The accepted `main` branch runs locally with real authentication and PostgreSQL persistence.** This is an implementation in progress, with a working demonstration—not a production launch.
 
-## Documents
+| Working local workflows                                          | Still being developed or validated                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Email-link sign-in through a captured local inbox                | Scheduled reminders, device registration and real phone push                          |
+| Personalized journeys, checkboxes and repetition/minute targets  | PDF downloads, themes and ambient audio                                               |
+| Today, journey progress, calendar and session lists              | Full archive/deletion controls and deployment recovery                                |
+| Completion, late records, corrections and private journal search | Hosted deployment, physical-device testing and remaining accessibility review         |
+| Offline drafts, replay and explicit conflict review              | **Known offline navigation defect:** some query-bearing links fail while disconnected |
 
-- [Shared agent instructions](AGENTS.md) and [Claude adapter](CLAUDE.md): start/resume, checkpoints, ownership and verification rules.
-- [Application specification](docs/APP_SPECIFICATION.md): product behavior and A01–A27 acceptance requirements.
-- [Complete implementation plan](docs/PROJECT_PLAN.md): one stack/architecture, runnable milestones, setup, demos, tests and deployment approach.
-- [Task register](docs/TASKS.md): accountable execution, dependencies, ownership, acceptance and evidence.
-- [Current handoff](docs/PROJECT_PROGRESS.md), [decisions and verified sources](docs/DECISIONS.md), [session log](docs/SESSION_LOG.md): durable project context and approvals.
+Use the **online walkthrough** below for presentations; the guide also documents the current calendar-filter requirement to provide an explicit date. The [independent review](docs/handoffs/SK-008-independent-review.md) and [current checkpoint](docs/PROJECT_PROGRESS.md) retain the offline defect and unfinished work. Planned reminders are supportive prompts, never guaranteed wake-up alarms.
 
-## Personalized journeys
+## Run locally on macOS
 
-Each user chooses their own practices or stotras, targets, duration, weekdays, time, timezone, reminders, theme, and sound. Begin with a blank journey or an editable template. Morning and daytime practices use normal calendar dates; overnight attribution is an explicit option.
+### One-time prerequisites
 
-## Optional example template
+Install Git, [fnm](https://github.com/Schniz/fnm#installation), and [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/). Complete Docker Desktop's first-run setup. No hosted Supabase account or paid service is needed for the local demo.
 
-21 nights of Kunjika and Bhairav Stotra, with chanting scheduled at midnight and opt-in reminders starting at 10 PM. In this template, a night belongs to its evening date, so the night of 5 September has a practice time of 00:00 on 6 September.
+### One command prepares and starts the demo
 
-## Implementation direction
+If you already have the repository, run this from its folder:
 
-Mobile-first installable web application with authenticated private storage and a server-side reminder worker. The selected stack, exact version baseline, rationale and official verification sources are in [DECISIONS](docs/DECISIONS.md). Commands in the implementation plan are explicitly marked planned until their owning task creates and verifies them.
+```sh
+./setup.sh
+```
+
+For a fresh checkout:
+
+```sh
+git clone --branch main https://github.com/rajeshkanaka/Sankalp.git Sankalpa
+cd Sankalpa
+./setup.sh
+```
+
+The script selects the pinned Node/npm versions, installs dependencies, opens Docker Desktop if needed, allocates unused local ports, **starts PostgreSQL and authentication, applies database migrations**, generates the private local configuration, loads sample journeys for a new demo, builds the app, and opens the app and email inbox. Wait for **Ready to present** and keep the terminal open.
+
+**Already set up?** The same command preserves your journeys, reflections and demo clock. If an app or test server is already running, it prints the existing addresses and stops before changing anything. Open that demo, or stop its original terminal before rebuilding. On the maintainer's current Mac, the app is at **[localhost:3001](http://localhost:3001/welcome)**; fresh machines normally use **[localhost:3000](http://localhost:3000/welcome)**. Always use the addresses printed for your checkout.
+
+The first setup downloads packages and container images, so run it **before the meeting**. `./setup.sh --no-open` prints the links without opening browser tabs. [What the script runs, recovery and manual commands](docs/DEMO.md#setup-and-recovery).
+
+### Sign in and show the workflow
+
+1. Enter **`maya@example.test`** and select **Send sign-in link**.
+2. Open the newest message in the local mail inbox and follow its sign-in link **in the same browser profile**.
+3. On **Today**, select **Morning grounding** under **Your journey** and open the practice.
+4. Check **Sit quietly** and **Set an intention**, wait for the saves, then select **Complete this session**.
+5. Return with **Done**. The fresh morning journey shows **1 of 21 sessions completed · 20 upcoming · 5% complete**. Reload to demonstrate persistence.
+
+**This is real authentication.** Supabase validates the sign-in link and session; PostgreSQL stores the account's practice data. Only email delivery is captured in the local inbox, so no test message goes to Gmail or another external account. Real inbox delivery needs the planned SMTP/provider setup.
+
+**[Give the five-minute demo →](docs/DEMO.md#the-five-minute-walkthrough)** for reflections, journal search, historical accountability and the optional 33% progress example.
+
+Press **Ctrl-C** to stop the script's app. The database keeps its data; `fnm exec --using 24.20.0 npm run db:stop` also stops the local backend. Repeatable fixture reset is explicit: `./setup.sh --reset-demo` replaces the marked sample accounts' practice data—read the [reset instructions](docs/DEMO.md#repeat-the-same-presentation) first. These `localhost` links work on the host Mac; use screen sharing to present remotely.
+
+## A closer look
+
+<table>
+  <tr>
+    <td width="50%"><strong>Progress you can see</strong><br><img src="docs/images/sankalpa-progress.png" alt="Today screen with a confirmed practice, five percent progress and upcoming sessions" width="440"></td>
+    <td width="50%"><strong>A journal in your own words</strong><br><img src="docs/images/sankalpa-journal.png" alt="Private journal with a saved synthetic multilingual reflection and search filters" width="440"></td>
+  </tr>
+</table>
+
+These are real screenshots from the M3 presenter walkthrough, using synthetic accounts and a local database. [Screenshot provenance](docs/images/README.md) · [Setup and walkthrough evidence](docs/evidence/demo-launcher/manifest.md)
+
+## Built for careful implementation
+
+**Next.js · React · TypeScript · PostgreSQL · Supabase Auth** form the application. Vitest covers domain and database behavior; Playwright exercises the actual app in Chromium, WebKit and Firefox. GitHub Actions runs the repository's verification workflow. Exact dependency pins and architectural decisions live in [DECISIONS](docs/DECISIONS.md).
+
+For manual development commands, first select Node 24.20.0 in your shell as shown in the [manual setup guide](docs/DEMO.md#setup-and-recovery). Then `npm run dev:demo -- --profile M3` starts the development server with the same seeded clock. For automated verification, install the test browsers once, then run:
+
+```sh
+npm exec -- playwright install chromium webkit firefox
+npm run verify
+npm run test:ui
+```
+
+Run checks before or after a presentation, not during it. The tests use their own synthetic namespaces and test port. CI results and retained evidence describe the checks performed; they do not imply every planned feature is complete.
+
+| Looking for…                                          | Start here                                                                                                 |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| A reliable local presentation                         | [Demo and presenter guide](docs/DEMO.md)                                                                   |
+| Product behavior and acceptance criteria              | [Application specification](docs/APP_SPECIFICATION.md)                                                     |
+| Architecture, milestones and verification             | [Project plan](docs/PROJECT_PLAN.md)                                                                       |
+| Current work, paused checkpoints and branches         | [Progress](docs/PROJECT_PROGRESS.md) · [Branch map](docs/BRANCHES.md) · [Session log](docs/SESSION_LOG.md) |
+| Task ownership and completion status                  | [Authoritative task register](docs/TASKS.md)                                                               |
+| Contributing with Codex, Claude Code or another agent | [Shared instructions](AGENTS.md) · [Claude adapter](CLAUDE.md)                                             |
+
+## About and feedback
+
+Created by **[Rajesh Pandhare](https://github.com/rajeshkanaka)**, under **AI'Gurukul**. For a reproducible bug or project feedback, [open an issue](https://github.com/rajeshkanaka/Sankalp/issues). Include the branch, setup step and observed behavior; leave out credentials and personal reflections.
+
+This repository is available for review, education and portfolio evaluation under its **[custom license](LICENSE)**. Review those terms before reuse or distribution.

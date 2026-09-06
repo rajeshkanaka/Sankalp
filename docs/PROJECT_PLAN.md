@@ -176,6 +176,8 @@ For each milestone retain `docs/evidence/M<n>/<run-id>/manifest.md` with integra
 
 ## 5. Reproducible setup, execution and checks
 
+User-requested local presentation entry point: `./setup.sh` automates the commands below with resource/data guards. [DEMO](DEMO.md) owns presenter instructions, reset/recovery guidance and the real-auth/captured-delivery explanation; SK-020 records its scope and verification. This convenience tool does not change the selected stack or application milestones.
+
 ### 5.1 Current verified baseline versus planned commands
 
 Planning inspection found a documentation-only repository at `b223f50`; that historical snapshot is preserved in SESSION_LOG. As verified on **2026-09-06**, the repository now has a pinned npm manifest/lock, Next app, real local Supabase authentication/PostgreSQL services, domain logic, migrations, setup/practice UI, test suites, local wrappers and CI workflow. Source/task checkpoints and remaining manual gates are in PROJECT_PROGRESS/TASKS, without duplicating task status here.

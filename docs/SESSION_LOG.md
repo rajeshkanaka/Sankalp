@@ -155,3 +155,40 @@ M4 preparation moved into one coordinator worktree/branch with independent slot2
 Exact next: finish PR5 evidence/checks/normal merge; merge accepted main into M4 coordinator feature, finish narrow SQL/role/job lifecycle, execute independent DB tests, wire the saved-preference form and complete device/worker/history integration. TASKS alone records completion. B06 remains observable VoiceOver speech; B01–B05 remain external launch prerequisites.
 
 Final follow-up: applicationce56222 passed the same numeric real-offline workflow in all3engines; safe summary/screens in M2/offline-final-port-check. Full unit suite216/216 passed after the reporter regression. Independent preference DB tests291f2ac integrated0a3a04a into M4 and passed188/188 against actual slot2 PostgreSQL. No job/worker/device completion is inferred.
+
+
+### 2026-09-06 — PR5 accepted and M4 continuation consolidated
+
+Normal PR5 merge23f15b2 accepted source526e947 after exact-head hosted CI34025184143 passed verify, full three-engine UI, both offline harnesses and both dependency audits. Local main/origin/main reconciled; no administrator bypass or history rewrite. M4 coordinator merged accepted main as3be8815. Root retains the reviewed production demo on3001; no process survival assumed. Main-first resume remains authoritative.
+
+M4 isolated slot2 schema010 passed272 DB regressions after updating the exact seed inventory; the prior guard rejection is preserved in SK-009-integration. Reviewed form no-op fix177ab8b passes9 focused tests; transport e296259 includes212 focused tests and real local TLS failure checks. Frozen worker contract32333fe establishes restricted SQL DTOs before parallel implementation. New schema/UI test workers and worker-loop owner are recorded in TASKS/BRANCHES.011 lifecycle SQL and preference API/UI source remain under integration, not a tested reminder feature. Next: review/apply/test011, integrate transaction hooks and actual browser/worker verification. B06 and external inputs remain unresolved.
+
+
+### 2026-09-06 15:52 IST — Emergency stop requested
+
+All implementation paused. User supplied outside PR5 review; main23f15b2 had already merged before review arrived. P1 offline navigation query rejection is unaddressed and is the exact first resume action. Review preserved verbatim in SK-008-independent-review. No reproduction/fix claimed.
+
+M4 migration011 applied; first actual combined suite65 passed/9 failed. Details/errors/next012 repairs retained in SK-009-integration, including actual auth schema/owner probe permissions and earlier reviewed locking fixes. Settings API typecheck passed, actual UI NOT RUN. Workerfd613d4 locally passes82 focused/489 full unit/static; not integrated or SQL/runtime-tested. Schemaa57388b and preferences-report e26bffe preserved. No secrets/private DB data staged, no new services/deployment. Resume from main's checkpoint then emergency/M4 reports; never assume a process survived.
+
+Root documentation-only emergency checkpoint is branched from main23f15b2. M4 complete WIP source4d9fd1d is pushed separately; worker recovery refs are pushed without integrating unverified source. No P1 fix is included.
+
+
+### 2026-09-06 — SK-020 local demo script and README showcase
+
+During the emergency pause, user requested a polished README and presenter instructions, confirmed that database setup must be covered, then explicitly requested a one-command setup script. User also asked why captured email was used; clarified real Supabase Auth/PostgreSQL versus local delivery. Application feature work remains paused, P1 first on resume.
+
+Created `setup.sh`, built-in-only `scripts/setup-demo.mjs`,16 focused launcher tests, README/demo guide and real screenshots/provenance. Independent review caught inherited environment precedence, running test-server overlap and two process-group shutdown edge cases; fixes and direct regressions pass. Default preserves existing demo records; first allocation excludes stopped Docker resources, and only explicit reset can replace an existing fixture. No manifest, migration or application feature code changed.
+
+Actually ran the script in a fresh ignored clone, `.local/demo-check-jqo36hoh`: automatic slot3, locked install, PostgreSQL/auth/inbox startup, schema migration, M3 seed, production build and ready page passed. Repeated launch preserved metadata/clock byte-for-byte and real saved completion/reflection. Full isolated `npm run verify` passed formatting/lint/types,232unit/84DB/build/1Chromiumsmoke; root static/unit gates also passed. Both dependency audits found0 vulnerabilities. Actual Chromium exercised captured-link sign-in, on-schedule completion, online Done/reload, positive/negative Unicode journal search, partial night history and explicit-date calendar grid/list. Retained evidence/limits are in `docs/evidence/demo-launcher/manifest.md`; private raw logs/auth state stay ignored.
+
+Real demo discovered SK-005-P2: blank optional calendar date/All journeys values are rejected by URL validation. Recorded reproduction and next fix; guide uses an explicit date/journey. No application fix claimed. Initial probes had an incorrect checklist landmark, reused Open practice after a partial save and selected a same-named old-page link before navigation settled; corrected probes passed, and lessons are retained. Existing root3001 was left intact. Normal PR route is required for this checkpoint/tooling; required hosted checks and main acceptance remain separate from local verification. Exact next feature task remains SK-008-P1 after the user resumes.
+
+Verification shutdown: the isolated slot3 app exited after Ctrl-C, then `npm run db:stop` completed successfully. Its database volumes and private ignored clone remain available for evidence/recovery; no service process is assumed to survive. The later repeated history/calendar probe was corrected to wait for the Journeys page before selecting its same-named link and passed.
+
+Publication checkpoint: SK-020 source/tests/showcase committed and pushed as `a1c31b9`; PR6 opened at https://github.com/rajeshkanaka/Sankalp/pull/6. Hosted verify was IN_PROGRESS when inspected (run34030235913), not a pass. The following tracking-only commit records this route. Main remains accepted application23f15b2 until normal checked PR merge; inspect the latest head/run on resume. Root tracked tree was clean after the source push. No automatic application resumption or deployment was scheduled.
+
+### 2026-09-06 17:16 IST — PR6 review corrections and publication continuation
+
+User asked why README was absent from main, then explicitly instructed resolving all PR issues and merging. The earlier publication checkpoint stopped at an open PR; it had not published to main. Continue through actual current-head CI and normal merge under existing authorization; no approval bypass or unrelated feature restart.
+
+Validated review findings with an independent read-only audit and pinned Supabase source. Fixed mixed Docker endpoint isolation, removed inherited Supabase service hostname, preserved non-EEXIST lock errors and repaired test cleanup/spawn-error handling. Mixed-context regression was observed failing before the fix. Fresh focused20/full236 unit, formatting, lint, typecheck and diff whitespace checks all passed. Kept intentional space-containing path tests. The manifest records the new source hash separately from earlier real local setup/browser evidence. Root3001 and preserved slot2/slot3 data were not rebuilt, migrated or reseeded. Exact next: push this correction, reply/resolve review threads, observe full CI on that pushed head, normally merge PR6 and verify main's README/setup/checkpoint.

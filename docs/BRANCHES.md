@@ -8,12 +8,19 @@ All paths below are absolute. Branches are preserved; no cleanup/history rewrite
 
 | Purpose | Branch / checkpoint | Worktree and responsibility |
 |---|---|---|
-| Accepted application/context | `main` / last verified544f3ef, PR4 | Fetch origin/main first; inspect PR5 before promoting its source. |
-| Offline PR5 integration | `rajesh_kanaka/offline-recovery` / applicationce56222, evidence/reporter5c14a13 | `/Users/rajesh/sankalpa`; coordinator, slot1.98UI passed on5c8962f; ce56222 full verify passed; final checks/PR merge pending. |
-| M4 coordinator | `rajesh_kanaka/reminder-integration` /0a3a04a | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot2. Own SQL/API/config/integration. Unapplied010 migration draft preserved; merge accepted PR5 main before cumulative app checks. |
-| Preferences UI | `rajesh_kanaka/reminder-preferences` /41a0d21 | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. Owned UI/handoff integrated into M4 as3aa243b; no runtime. |
+| Accepted application/context | `main` /23f15b2, PR5 | Fetch origin/main first. PR5 exact-head CI34025184143 passed; normal merge verified. |
+| Presentation tooling / emergency checkpoint | `rajesh_kanaka/emergency-checkpoint`, base638be75 | `/Users/rajesh/sankalpa`; coordinator owns SK-020 README/setup tooling. Application features remain paused. See its handoff for the ignored isolated verification clone; this is the normal PR route for the saved emergency context and tooling. |
+| Offline PR5 integration | `rajesh_kanaka/offline-recovery` /526e947 (merged) | `/Users/rajesh/sankalpa`; coordinator, slot1.98UI passed on5c8962f; ce56222 full verify passed; accepted by PR5. Root retains runnable3001 demo; no feature writes here. |
+| M4 coordinator | `rajesh_kanaka/reminder-integration` /3be8815 | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot2. Own SQL/API/config/integration. Main23f15b2 merged;010 applied;011 draft under review. Own SQL/API/config/shared tracking; unfinished source preserved. |
+| Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated3aa243b/177ab8b; historical no runtime. |
 | Preference database tests | `rajesh_kanaka/reminder-database-tests` /291f2ac | `/Users/rajesh/sankalpa-worktrees/SK-009-database-tests`; /root/branch_audit. Own specified test/handoff only; coordinator runs DB checks. |
-| Guarded push adapter | `rajesh_kanaka/push-transport` /base0d74076 | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Own endpoint/transport tests/source/handoff; no DB or real subscription sends. |
+| Guarded push adapter | `rajesh_kanaka/push-transport` /8158aaa | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Reviewed transport integratede296259; historical, no DB/real sends. |
+
+## Current bounded continuation assignments
+
+- /root/branch_audit: `rajesh_kanaka/reminder-schema-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-schema-tests`, base177ab8b; owns only schema integration test and task report. Coordinator executes slot2 database tests.
+- /root/merge_review: `rajesh_kanaka/reminder-ui-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-ui-tests`, base177ab8b; owns only M4 preference UI tests/report. Actual server/DB use remains coordinator-owned.
+- /root/ci_triage: `rajesh_kanaka/reminder-worker`, `/Users/rajesh/sankalpa-worktrees/SK-011-worker`, base32333fe; owns src/worker, specified unit tests/report under frozen SK-011-worker-contract. No borrowed runtime, env, dependency or SQL edits.
 
 ## Preserved recent checkpoints
 
@@ -65,3 +72,10 @@ All worker paths below are relative to `/Users/rajesh/sankalpa-worktrees/`. Ever
 - Before every accepted PR, update this map for actual new assignments/checkpoints. Future sessions reconcile live Git with it; no assumption that a process or agent survived.
 
 Coordinator checkpoint branch `rajesh_kanaka/checkpoint-policy` at `/Users/rajesh/sankalpa-worktrees/project-checkpoint` is historical after PR4 merged. No runtime or future work there. Every main update must use a PR; do not repeat the observed administrator bypass on d7a1096.
+
+
+## Emergency pause pointers — 2026-09-06 15:52 IST
+
+All agents stopped. Main23f15b2 contains accepted PR5, but new independent P1 review is unresolved. Root checkpoint branch is `rajesh_kanaka/emergency-checkpoint` in `/Users/rajesh/sankalpa`; it preserves the outside review and next corrective task. Resume that P1 before M4.
+
+M4 current source/report4d9fd1d is saved on `rajesh_kanaka/reminder-integration`, SK-009-integration, slot2; migration011 applied and65/74 combined tests passed,9 failed. Read its emergency handoff before any migration; corrections must be012. Pending source refs: reminder-schema-testsa57388b (one extra timestamp regression), reminder-workerfd613d4 (worker code), reminder-preferences-checkpointe26bffe (report only; no bridge source yet). The latter worktree is `/Users/rajesh/sankalpa-worktrees/SK-009-preferences-checkpoint`. Previous preferencesUI/UI-test/transport/domain commits remain preserved. No worker has active ownership to continue during this break. Secrets, node_modules symlinks and private runtime data remain untracked/ignored.
