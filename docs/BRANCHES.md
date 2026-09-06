@@ -1,26 +1,30 @@
 # Branches and worktrees
 
-Coordinator-owned map, reconciled2026-09-06. Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and SESSION_LOG. Read active feature reports only after that accepted checkpoint. TASKS owns status; this file records locations and Git disposition.
+Coordinator-owned map, reconciled 2026-09-06. Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and SESSION_LOG. Read active feature reports only after that accepted checkpoint. TASKS owns status; this file records locations and Git disposition.
 
-## Active integration and worker map
+## Accepted integration and paused feature map
 
 All paths below are absolute. Branches are preserved; no cleanup/history rewrite was performed. Commit values are checkpoints, not a promise that a running worker has stopped making owned changes.
 
 | Purpose | Branch / checkpoint | Worktree and responsibility |
 |---|---|---|
-| Accepted application/context | `main` /23f15b2, PR5 | Fetch origin/main first. PR5 exact-head CI34025184143 passed; normal merge verified. |
-| Presentation tooling / emergency checkpoint | `rajesh_kanaka/emergency-checkpoint`, base638be75 | `/Users/rajesh/sankalpa`; coordinator owns SK-020 README/setup tooling. Application features remain paused. See its handoff for the ignored isolated verification clone; this is the normal PR route for the saved emergency context and tooling. |
-| Offline PR5 integration | `rajesh_kanaka/offline-recovery` /526e947 (merged) | `/Users/rajesh/sankalpa`; coordinator, slot1.98UI passed on5c8962f; ce56222 full verify passed; accepted by PR5. Root retains runnable3001 demo; no feature writes here. |
-| M4 coordinator | `rajesh_kanaka/reminder-integration` /3be8815 | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot2. Own SQL/API/config/integration. Main23f15b2 merged;010 applied;011 draft under review. Own SQL/API/config/shared tracking; unfinished source preserved. |
-| Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated3aa243b/177ab8b; historical no runtime. |
+| Accepted application/context | `main` / PR6 application checkpoint `ff6a479`; later tracking commits are documentation only | `/Users/rajesh/sankalpa`, slot 1. Fetch origin/main first. PR6 head `f42f1c1` passed CI 34031227206; normal merge and remote README/setup blobs verified. Local main was fast-forwarded before the tracking follow-up. |
+| Presentation tooling / emergency checkpoint | `rajesh_kanaka/emergency-checkpoint` /`f42f1c1`, merged by PR6 | Historical source ref; no separate worktree. README/setup/emergency context now belong to main. See SK-020 for the stopped, ignored slot 3 verification clone. |
+| Documentation publication | `rajesh_kanaka/main-resume-checkpoint`, based on `ff6a479` | Coordinator-only documentation publication ref; no separate worktree or runtime. Main owns the accepted checkpoint. Use Git/PR history for the publication receipt and do not resume feature work on this branch. |
+| Offline PR5 integration | `rajesh_kanaka/offline-recovery` /526e947, merged by PR5 | Historical source ref, no separate worktree. Accepted into main `23f15b2` and retained by PR6; root is no longer checked out on this branch. |
+| Paused M4 coordinator | `rajesh_kanaka/reminder-integration` /`4d9fd1d` | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot 2. Main `23f15b2` merged; migration 011 applied, latest combined SQL: 65 passed / 9 failed. New migration 012 required. Own SQL/API/config/integration; preserve unfinished source and the emergency handoff. |
+| Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated as `3aa243b`/177ab8b; historical no runtime. |
 | Preference database tests | `rajesh_kanaka/reminder-database-tests` /291f2ac | `/Users/rajesh/sankalpa-worktrees/SK-009-database-tests`; /root/branch_audit. Own specified test/handoff only; coordinator runs DB checks. |
-| Guarded push adapter | `rajesh_kanaka/push-transport` /8158aaa | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Reviewed transport integratede296259; historical, no DB/real sends. |
+| Guarded push adapter | `rajesh_kanaka/push-transport` /8158aaa | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Reviewed transport integrated as `e296259`; historical, no DB/real sends. |
 
-## Current bounded continuation assignments
+## Paused feature recovery scopes
 
-- /root/branch_audit: `rajesh_kanaka/reminder-schema-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-schema-tests`, base177ab8b; owns only schema integration test and task report. Coordinator executes slot2 database tests.
-- /root/merge_review: `rajesh_kanaka/reminder-ui-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-ui-tests`, base177ab8b; owns only M4 preference UI tests/report. Actual server/DB use remains coordinator-owned.
-- /root/ci_triage: `rajesh_kanaka/reminder-worker`, `/Users/rajesh/sankalpa-worktrees/SK-011-worker`, base32333fe; owns src/worker, specified unit tests/report under frozen SK-011-worker-contract. No borrowed runtime, env, dependency or SQL edits.
+All feature workers stopped for the emergency break. These are preserved responsibilities and recovery refs, not instructions to restart a worker. Resume order: user resumes → SK-008-P1 → SK-005-P2 → M4. Coordinator explicitly reassigns owners after reconciling current main and these handoffs.
+
+- /root/branch_audit: `rajesh_kanaka/reminder-schema-tests` /`a57388b`, `/Users/rajesh/sankalpa-worktrees/SK-009-schema-tests`, base `177ab8b`; owns only schema integration test and task report. Pending integration; coordinator executes slot 2 database tests.
+- /root/merge_review: `rajesh_kanaka/reminder-ui-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-ui-tests`, base `177ab8b`; owns only M4 preference UI tests/report. Actual server/DB use remains coordinator-owned.
+- /root/ci_triage: `rajesh_kanaka/reminder-worker` /`fd613d4`, `/Users/rajesh/sankalpa-worktrees/SK-011-worker`, base `32333fe`; owns src/worker, specified unit tests/report under frozen SK-011-worker-contract. Pending integration; no borrowed runtime, env, dependency or SQL edits.
+- Preferences report: `rajesh_kanaka/reminder-preferences-checkpoint` /`e26bffe`, `/Users/rajesh/sankalpa-worktrees/SK-009-preferences-checkpoint`. Report only; lifecycle bridge source not started.
 
 ## Preserved recent checkpoints
 

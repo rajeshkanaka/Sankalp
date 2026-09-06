@@ -1,0 +1,80 @@
+{
+  "pr": 6,
+  "run_url": "https://github.com/rajeshkanaka/Sankalp/actions/runs/34031227206",
+  "pr_head": "f42f1c1386ceaeab9f629777b0c6161045d73495",
+  "ci_checkout": "a8dd59065257ebd71561e5ccc70330647d6dde85",
+  "merged_commit": "ff6a4790f74ebf1e5d40bd6557d3a38992d7e45b",
+  "ci_and_merged_tree_equal": true,
+  "unit_passed": 236,
+  "database_passed": 84,
+  "smoke_passed": 1,
+  "ui": {
+    "status": "PASSED",
+    "passed": 98,
+    "by_browser": {
+      "chromium": 40,
+      "webkit": 29,
+      "firefox": 29
+    }
+  },
+  "audits": {
+    "production_vulnerabilities": 0,
+    "all_dependencies_vulnerabilities": 0
+  },
+  "offline-core": {
+    "source_commit": "a8dd59065257ebd71561e5ccc70330647d6dde85",
+    "reported_source_dirty": true,
+    "integration": "Synthetic transport; real browser IndexedDB, Web Locks and document reload.",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "version": "153.0.8010.12",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      },
+      {
+        "browser": "webkit",
+        "version": "26.6",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      },
+      {
+        "browser": "firefox",
+        "version": "155.0",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      }
+    ]
+  },
+  "offline-ui": {
+    "source_commit": "a8dd59065257ebd71561e5ccc70330647d6dde85",
+    "reported_source_dirty": true,
+    "integration": "SIMULATED_BACKEND_AND_PUBLIC_SHELL_READINESS",
+    "browsers": [
+      {
+        "browser": "chromium",
+        "version": "153.0.8010.12",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      },
+      {
+        "browser": "webkit",
+        "version": "26.6",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      },
+      {
+        "browser": "firefox",
+        "version": "155.0",
+        "status": "PASS",
+        "scenario_groups": 25,
+        "page_errors": 0
+      }
+    ]
+  }
+}
