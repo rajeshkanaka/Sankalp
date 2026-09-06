@@ -634,6 +634,24 @@ describe('reminder schema PostgreSQL integrity and privilege boundaries', () => 
     });
   });
 
+  it('rejects an event recorded before it occurred while allowing the exact boundary', async () => {
+    await transaction(async (client) => {
+      const occurredAt = mayaSession.opensAt;
+      const row = event(mayaJob, {
+        kind: 'reminder_canceled',
+        occurred_at: occurredAt,
+        recorded_at: new Date(new Date(occurredAt).getTime() - 1).toISOString(),
+      });
+      await rejectStatement(client, () => insert(client, 'notification_event', row), '23514');
+      await insert(client, 'notification_event', { ...row, recorded_at: occurredAt });
+      const saved = await client.query(
+        'select recorded_at=occurred_at as exact_boundary from app.notification_event where id=$1',
+        [row.id],
+      );
+      expect(saved.rows).toEqual([{ exact_boundary: true }]);
+    });
+  });
+
   it.each(['service_accepted', 'dispatch_failed', 'dispatch_uncertain'])(
     'allows one terminal outcome for an attempt first recorded as %s',
     async (kind) => {

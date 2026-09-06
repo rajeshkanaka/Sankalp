@@ -2,7 +2,7 @@
 
 2026-09-06, Asia/Kolkata. Worker `/root/branch_audit`; worktree `/Users/rajesh/sankalpa-worktrees/SK-009-schema-tests`; branch `rajesh_kanaka/reminder-schema-tests`; base `177ab8b` containing coordinator migration010 commit `90f4617`. Owned files are [the schema test](../../tests/integration/reminder-schema.test.ts) and this report only. [TASKS](../TASKS.md) remains authoritative. No application task is marked complete here.
 
-The coordinator reported migration010 applied in its own slot2. This worker inspected its committed source and wrote **66 real PostgreSQL test cases**, but has no assigned runtime and did not execute their database actions.
+The coordinator reported migration010 applied in its own slot2. This worker inspected its committed source and wrote **67 real PostgreSQL test cases**, but has no assigned runtime and did not execute their database actions. Initial checkpoint `274a621` contained 66 cases. The coordinator's attempted run stopped during fixture setup: the retained legacy `notification_event_check1` rejected worker event kinds. No test-body result was obtained from that attempt. The coordinator's migration011 source, inspected before application, repairs this by dropping that old kind guard while preserving the stronger replacement context guard, and restoring `recorded_at >= occurred_at` under the explicit name `notification_event_recorded_order`. The added 67th case rejects a record timestamp one millisecond before occurrence and positively accepts equality.
 
 Coverage includes nullable explicit-test context versus required ordinary-job context; composite owner/session/version/device integrity; offset and request deduplication across devices/generations; temporal and dispatch-state constraints; one active endpoint binding with retained revoked history; event-to-job context consistency; one terminal outcome per attempt; dispatch attempt zero rejection; unchanged closure uniqueness; and read-receipt ownership/deduplication. Positive cases accompany rejection probes.
 
@@ -19,20 +19,20 @@ Fixture safety follows the existing integration contract: guard the worktree/loo
 | `fnm exec --using 24.20.0 npx prettier --check tests/integration/reminder-schema.test.ts docs/handoffs/SK-009-schema-tests.md`   | PASS.                                                                                                            |
 | `fnm exec --using 24.20.0 npx eslint tests/integration/reminder-schema.test.ts --max-warnings 0`                                 | PASS.                                                                                                            |
 | `fnm exec --using 24.20.0 npx tsc --noEmit --incremental false`                                                                  | PASS, full current worktree source.                                                                              |
-| `fnm exec --using 24.20.0 npx vitest run --project integration tests/integration/reminder-schema.test.ts --testNamePattern '^$'` | Collection completed; **66 tests skipped**, zero test bodies or database hooks executed. This is not a SQL pass. |
+| `fnm exec --using 24.20.0 npx vitest run --project integration tests/integration/reminder-schema.test.ts --testNamePattern '^$'` | Collection completed; **67 tests skipped**, zero test bodies or database hooks executed. This is not a SQL pass. |
 | `git diff --cached --check`                                                                                                      | PASS at commit.                                                                                                  |
-| All 66 PostgreSQL cases; actual worker login/functions; application smoke/build/UI                                               | **NOT RUN** by this worker.                                                                                      |
+| All 67 PostgreSQL cases; actual worker login/functions; application smoke/build/UI                                               | **NOT RUN** by this worker.                                                                                      |
 
-An initial `vitest list --json` used static discovery and misidentified the old `testJob` fixture helper as tests without expanding parameterized cases. The helper is now `explicitTestJob`; the all-filtered runtime collection above establishes the actual66 cases. Never report the static list as executed tests.
+An initial `vitest list --json` used static discovery and misidentified the old `testJob` fixture helper as tests without expanding parameterized cases. The helper is now `explicitTestJob`; all-filtered runtime collection establishes the case count. Never report the static list as executed tests.
 
 ## Exact next action
 
-Coordinator reviews/integrates this narrow test commit, then runs in its own guarded checkout with migration010 applied:
+Coordinator reviews/integrates this narrow test commit, ensures its reviewed migration011 repair is applied, then runs in its own guarded checkout:
 
 ```sh
 fnm exec --using 24.20.0 npm run test:integration -- tests/integration/reminder-schema.test.ts
 ```
 
-Record actual66-case results in the integration handoff. If a grant or invariant fails, preserve the assertion and repair the production boundary; do not treat administrative probes as worker runtime evidence. Migration011 lifecycle/claim/revalidate/settle tests and real worker-login verification remain additional work.
+Record actual67-case results in the integration handoff. If a grant or invariant fails, preserve the assertion and repair the production boundary; do not treat administrative probes as worker runtime evidence. Migration011 lifecycle/claim/revalidate/settle tests and real worker-login verification remain additional work.
 
 Only these two owned files are committed. The authorized dependency symlink to the existing M4 installation remains untracked. No SQL/shared files, dependency manifests, existing worktrees, services, databases, remote branches or runtime secrets were changed or accessed by this worker.
