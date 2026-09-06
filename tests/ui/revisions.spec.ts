@@ -11,6 +11,9 @@ import { capturedSignIn } from './helpers/sign-in';
 const M1_NOW = '2026-09-05T00:45:00Z';
 const M2_NOW = '2026-09-12T04:01:00+05:30';
 
+// This scenario exercises online hydration/recovery; offline workflows test the worker.
+test.use({ serviceWorkers: 'block' });
+
 test('@M2 @M2-revisions future changes preserve opened labels and metadata remains separate', async ({
   page,
 }, info) => {
@@ -72,7 +75,8 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
       }
     } finally {
       releaseScripts();
-      await page.unroute(nextScripts, holdScripts);
+      // Drain already-running handlers before removing this scenario's only route.
+      await page.unrouteAll({ behavior: 'wait' });
     }
     await expect(metadataTitle).toBeEnabled();
     await expect(metadataIntention).toBeEnabled();
