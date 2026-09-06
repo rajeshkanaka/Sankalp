@@ -291,12 +291,10 @@ Additional launch coverage: email-link states/privacy/rate limits (001/002/014/0
 
 ## Current bounded assignments — 2026-09-06
 
-All task status remains in the register above. Coordinator owns integration and shared files; worker commits alone do not complete a task. See BRANCHES for exact worktree/resource locations.
+Task status remains in the register above. Coordinator owns shared files/integration. Accepted PR5 main23f15b2 was merged into M4 as3be8815; upstream B06 remains explicit.
 
-- SK-008: root `rajesh_kanaka/offline-recovery`, slot1; only final evidence/reporter/PR integration remains. Full98UI passed on the documented build; current-head CI still required.
-- SK-009 coordinator: `rajesh_kanaka/reminder-integration`, slot2, owns migrations/config/contracts/API/integration. Database001–009 running;010 is unapplied draft. Pure domain and UI preparation are committed, with cumulative API/UI checks pending.
-- SK-009 preferences UI: /root/merge_review, `rajesh_kanaka/reminder-preferences`, owns only `src/features/reminders/preferences/` and its handoff. Worker41a0d21 integrated as3aa243b; worker is available for the next assigned scope. Integrated browser checks remain NOT RUN.
-- SK-009 database tests: /root/branch_audit, `rajesh_kanaka/reminder-database-tests`, owns only `tests/integration/reminder-preferences.test.ts` and its handoff. No runtime borrowing or migration edits; integrated0a3a04a passed188/188 cases against coordinator slot2.
-- SK-011 transport: /root/ci_triage, `rajesh_kanaka/push-transport`, owns only endpoint-policy/transport implementation, two assigned unit files and its handoff under SK-011-transport-contract. No app/database/worker loop or real push sending.
-
-Independent preparation remains D12 work; B06 and all release/device gates are preserved. Subsequent assignments must replace the current owner explicitly and preserve historical branch pointers.
+- SK-009 C: reminder-integration slot2, owns SQL/API/config/contracts.010 applied;272 existing DB regressions pass.011 is under review and not applied yet. Actual reminder API/UI verification pending.
+- SK-009 schema tests: /root/branch_audit, reminder-schema-tests from177ab8b; only tests/integration/reminder-schema.test.ts and its handoff, no runtime or migration writes.
+- SK-009 UI tests: /root/merge_review, reminder-ui-tests from177ab8b; only tests/ui/m4-reminder-preferences.spec.ts and its handoff, actual API-driven fixtures, no mocked persistence/runtime borrowing.
+- SK-011 worker: /root/ci_triage, reminder-worker from32333fe; only src/worker/*.ts, tests/unit/worker*.test.ts and its handoff under SK-011-worker-contract. C supplies SQL/config/tsc/scripts and actual role/runtime tests.
+- Reviewed domain, preference UI, preference DB tests and guarded transport are integrated substeps. BRANCHES preserves their historical source refs. They do not establish reminder delivery or milestone completion.
