@@ -266,3 +266,74 @@ test('@M3 @M3-offline failed remote sign-out remains explicit and retryable afte
     setUiClock(NOW);
   }
 });
+
+test('@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state', async ({
+  page,
+}, info) => {
+  setUiClock(NOW);
+  const firstLogout = gate();
+  let logoutRequests = 0;
+  let serverLogoutStatus: number | null = null;
+  try {
+    await capturedSignIn(page, 'ui-maya@example.test');
+    const accountId = await identity(page);
+    const practice = await createPractice(page, 'unreadable logout response');
+    await page.route('**/api/auth/sign-out', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      logoutRequests += 1;
+      if (logoutRequests !== 1) return route.continue();
+      await firstLogout.ready;
+      // Logout executes against real auth. Only its response body is corrupted;
+      // preserve the actual response and cookie-clearing headers in memory.
+      const response = await route.fetch({ maxRedirects: 0, maxRetries: 0 });
+      serverLogoutStatus = response.status();
+      expect(serverLogoutStatus).toBe(200);
+      expect(await response.json()).toEqual({ ok: true });
+      const body = '{"ok":';
+      const headers: Record<string, string> = {
+        ...response.headers(),
+        'content-length': String(Buffer.byteLength(body)),
+      };
+      expect(Boolean(headers['set-cookie'])).toBe(true);
+      await route.fulfill({ response, headers, body });
+    });
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect.poll(() => logoutRequests).toBe(1);
+    await expect(
+      page.getByRole('heading', { name: 'Finishing sign out…', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: practice.title, exact: true })).toHaveCount(0);
+    expect((await deviceBinding(page)).activeAccountId).toBeNull();
+    expect(await identity(page)).toBe(accountId);
+    const saved = await page.request.get(practice.reflectionPath);
+    expect(saved.status()).toBe(200);
+    expect(await saved.json()).toMatchObject({ text: practice.note, moods: [], revision: 1 });
+
+    firstLogout.release();
+    await expect(
+      page.getByRole('heading', { name: 'Sign-out did not finish', exact: true }),
+    ).toBeVisible();
+    expect(serverLogoutStatus).toBe(200);
+    expect((await page.request.get('/api/auth/session')).status()).toBe(401);
+    await expect(page.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+    expect((await deviceBinding(page)).activeAccountId).toBeNull();
+    await page.getByRole('button', { name: 'Retry sign out', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Signed out', exact: true })).toBeVisible();
+    await expect(page.getByText('The server confirmed sign-out.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry sign out', exact: true })).toHaveCount(0);
+    await expect(page.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: practice.title, exact: true })).toHaveCount(0);
+    expect((await page.request.get('/api/auth/session')).status()).toBe(401);
+    expect(logoutRequests).toBe(1);
+    await screenshot(page, info, 'unreadable-signout-response-recovered.png');
+    await page.getByRole('link', { name: 'Return to sign in', exact: true }).click();
+    await expect(page).toHaveURL('/welcome');
+    expect((await page.request.get('/api/auth/session')).status()).toBe(401);
+    expect(logoutRequests).toBe(1);
+  } finally {
+    firstLogout.release();
+    await page.unrouteAll({ behavior: 'wait' });
+    setUiClock(NOW);
+  }
+});
