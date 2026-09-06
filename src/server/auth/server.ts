@@ -68,8 +68,8 @@ export async function createAuthClient(response?: NextResponse) {
     },
   });
 }
-export async function getApiUser() {
-  const auth = await createAuthClient();
+export async function getApiUser(authClient?: Awaited<ReturnType<typeof createAuthClient>>) {
+  const auth = authClient ?? (await createAuthClient());
   let result: Awaited<ReturnType<typeof auth.auth.getUser>>;
   try {
     result = await auth.auth.getUser();
