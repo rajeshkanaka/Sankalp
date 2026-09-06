@@ -72,6 +72,8 @@ export interface LocalView {
   heads: Record<Stream, Id | null>;
 }
 export interface DeviceState {
+  /** Compare-and-set token for account binding, even when no account is active. */
+  bindingGeneration: Id;
   scope: AccountScope | null;
   /** Account/generation management only; shared mode still rejects every private read/write. */
   managementScope: AccountScope | null;
@@ -134,7 +136,10 @@ export interface CoreOptions {
   now?: () => IsoInstant;
 }
 export interface OfflineCore {
-  bindAccount(accountId: Id, options?: { discardPrevious?: boolean }): Promise<AccountScope>;
+  bindAccount(
+    accountId: Id,
+    options?: { discardPrevious?: boolean; expectedGeneration?: Id },
+  ): Promise<AccountScope>;
   getDeviceState(): Promise<DeviceState>;
   saveSnapshot(scope: AccountScope, snapshot: Snapshot): Promise<void>;
   saveDraft(
