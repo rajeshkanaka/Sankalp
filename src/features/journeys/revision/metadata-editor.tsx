@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { RequestError, requestJson } from '@/components/api';
@@ -12,10 +12,16 @@ export function MetadataEditor({ view }: { view: JourneyView }) {
   const router = useRouter();
   const [title, setTitle] = useState(view.journey.title);
   const [intention, setIntention] = useState(view.journey.intention);
+  const [hydrated, setHydrated] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [saved, setSaved] = useState(false);
   const attempt = useRef<{ signature: string; operationId: string } | null>(null);
+
+  // Server-rendered fields must not accept edits before their change handlers exist.
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,7 +62,7 @@ export function MetadataEditor({ view }: { view: JourneyView }) {
   return (
     <form className={shared.panel} onSubmit={save}>
       <h2>Edit journey details</h2>
-      <fieldset className={shared.formSection} disabled={pending}>
+      <fieldset className={shared.formSection} disabled={!hydrated || pending}>
         <div className={shared.field}>
           <label htmlFor={`metadata-title-${view.journey.id}`}>Journey title</label>
           <input
@@ -94,7 +100,7 @@ export function MetadataEditor({ view }: { view: JourneyView }) {
           Reload latest journey
         </button>
       )}
-      <button type="submit" className={shared.button} disabled={pending}>
+      <button type="submit" className={shared.button} disabled={!hydrated || pending}>
         {pending ? 'Saving details…' : 'Save journey details'}
       </button>
     </form>
