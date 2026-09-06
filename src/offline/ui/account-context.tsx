@@ -173,9 +173,17 @@ function AccountProvider({
     async (nextScope: AccountScope) => {
       scopeRef.current = nextScope;
       setScope(nextScope);
-      setStatus('loading');
+      unverifiedRef.current = true;
+      setUnverified(true);
       const ticket = ++epoch.current;
-      const next = await getDeviceState();
+      let next: DeviceState;
+      try {
+        next = await getDeviceState();
+      } catch (error) {
+        // The privacy mutation already succeeded; retain the editor while recovery verifies it.
+        if (alive.current && ticket === epoch.current) flushController.current?.abort();
+        throw error;
+      }
       if (!alive.current || ticket !== epoch.current) return;
       if (
         nextScope.accountId !== accountId ||

@@ -314,7 +314,7 @@ function SessionEditor({
   }, [flushNow, frozen, invalidate, load, scope]);
 
   useEffect(() => {
-    if (status !== 'ready' || !scope) return;
+    if (status !== 'ready' || !scope || isFrozen()) return;
     let active = true;
     initialized.current = false;
     const prepare = async () => {
@@ -388,6 +388,7 @@ function SessionEditor({
     demo,
     flushAndRefresh,
     invalidate,
+    isFrozen,
     load,
     now,
     onlineOnly,
