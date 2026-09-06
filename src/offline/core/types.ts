@@ -12,6 +12,8 @@ export interface AccountScope {
   accountId: Id;
   generation: Id;
 }
+/** Browser identity observation; temporary unavailability must not discard an editor. */
+export type AccountVerification = 'verified' | 'unavailable' | 'signed_out' | 'different_account';
 export type Intent =
   | { kind: 'practices'; payload: { values: Record<Id, boolean | number> } }
   | { kind: 'completion'; payload: { performedAt: IsoInstant } }

@@ -1,4 +1,5 @@
-import { getDeviceState } from './core';
+import { getDeviceState, type AccountVerification } from './core';
+export type { AccountVerification } from './core';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -7,8 +8,6 @@ type BrowserIdentity =
   | { kind: 'network_unavailable' }
   | { kind: 'unauthenticated' }
   | { kind: 'rejected' };
-
-export type AccountVerification = 'verified' | 'unavailable' | 'signed_out' | 'different_account';
 
 /** Fresh cookie verification; server-rendered identity can become stale before hydration. */
 export async function readBrowserIdentity(): Promise<BrowserIdentity> {
