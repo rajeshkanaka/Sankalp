@@ -17,6 +17,7 @@ const scenarioNames = [
   'failed-draft-preservation',
   'storage-read-withholding',
   'canonical-change-notification',
+  'canonical-save-feedback-after-prop-refresh',
   'immediate-checkbox',
   'shared-device-roundtrip',
   'dirty-online-input-guards-private-mode',
@@ -242,6 +243,11 @@ try {
         await h.core.saveSnapshot(d.scope, h.snapshot);
       });
       await expect(note).toHaveValue('Synthetic note preserved through storage failure.');
+      await page.evaluate(() => window.offlineUiHarness.refreshCanonicalProps(['noticed']));
+      await expect(page.getByText('What did you notice?', { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('region', { name: 'Private reflection' }).getByRole('status'),
+      ).toHaveText('Not saved on this device. Keep this page open.');
       await page.evaluate(() => {
         window.offlineUiHarness.denyReads(true);
         window.dispatchEvent(new window.Event('pageshow'));
@@ -265,6 +271,12 @@ try {
       const checkbox = page.getByRole('checkbox', { name: 'Synthetic checklist', exact: true });
       await checkbox.check();
       await expect(checkbox).toBeChecked();
+      await expect(
+        page.getByRole('region', { name: 'Practice checklist' }).locator('p[role=status]'),
+      ).toHaveText('Saved.');
+      assert.equal(await page.evaluate(() => window.offlineUiHarness.canonicalChanges()), 2);
+      await page.evaluate(() => window.offlineUiHarness.refreshCanonicalProps([]));
+      await expect(page.getByText('What did you notice?', { exact: true })).toHaveCount(0);
       await expect(
         page.getByRole('region', { name: 'Practice checklist' }).locator('p[role=status]'),
       ).toHaveText('Saved.');
@@ -303,10 +315,20 @@ try {
       ).toHaveText('Draft saved on this device.');
       await page.reload();
       await expect(numeric).toHaveValue('1e-');
+      await page.evaluate(() => window.offlineUiHarness.refreshCanonicalProps(['noticed']));
+      await expect(page.getByText('What did you notice?', { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('region', { name: 'Practice checklist' }).locator('p[role=status]'),
+      ).toHaveText('Draft saved on this device.');
       await page.route('**/api/**', (route) => route.abort());
       await page
         .getByLabel('Your reflection', { exact: true })
         .fill('Synthetic note belongs only to the original account.');
+      await expect(
+        page.getByRole('region', { name: 'Private reflection' }).getByRole('status'),
+      ).toContainText('Saved on this device');
+      await page.evaluate(() => window.offlineUiHarness.refreshCanonicalProps([]));
+      await expect(page.getByText('What did you notice?', { exact: true })).toHaveCount(0);
       await expect(
         page.getByRole('region', { name: 'Private reflection' }).getByRole('status'),
       ).toContainText('Saved on this device');
@@ -331,6 +353,7 @@ try {
             'failed-draft-preservation',
             'storage-read-withholding',
             'canonical-change-notification',
+            'canonical-save-feedback-after-prop-refresh',
             'immediate-checkbox',
             'shared-device-roundtrip',
             'dirty-online-input-guards-private-mode',
@@ -415,6 +438,11 @@ try {
       await expect(conflict.getByRole('region', { name: 'Your unsynced version' })).toContainText(
         'Synthetic minutes: later',
       );
+      await conflict.evaluate(() => window.offlineUiHarness.refreshCanonicalProps(['noticed']));
+      await expect(conflict.getByText('What did you notice?', { exact: true })).toBeVisible();
+      await expect(
+        conflict.getByRole('region', { name: 'Practice checklist' }).locator('p[role=status]'),
+      ).toHaveText('Saved on this device. Review the conflict below.');
       await conflict.getByRole('button', { name: 'Keep my reviewed version', exact: true }).click();
       await expect(
         conflict.getByRole('heading', { name: 'This saved practice changed elsewhere' }),

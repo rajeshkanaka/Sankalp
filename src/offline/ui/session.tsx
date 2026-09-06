@@ -57,6 +57,17 @@ function pendingCount(view: LocalView): number {
     .length;
 }
 
+function savedViewMessage(view: LocalView, stream: Stream, queued: string, settled: string) {
+  if (view.operations.some(({ state }) => state === 'conflict' || state === 'review_required'))
+    return 'Saved on this device. Review the conflict below.';
+  if (pendingCount(view)) return queued;
+  const draft =
+    stream === 'reflection'
+      ? view.draft?.reflection
+      : Object.keys(view.draft?.numericValues ?? {}).length > 0;
+  return draft ? 'Draft saved on this device.' : settled;
+}
+
 function retryMessage(result: FlushResult): string {
   switch (result.reason) {
     case 'drained':
@@ -293,12 +304,17 @@ function SessionEditor({
             : result.reason === 'drained'
               ? 'Saved.'
               : retryMessage(result);
-      setMessage(nextMessage);
-      setReflectionMessage(
-        next.snapshot.reflection || next.operations.some(({ stream }) => stream === 'reflection')
-          ? nextMessage
-          : 'No reflection saved yet.',
-      );
+      if (!inputDirty.current && !pendingRetry.current) {
+        setMessage(savedViewMessage(next, 'session', nextMessage, nextMessage));
+        setReflectionMessage(
+          savedViewMessage(
+            next,
+            'reflection',
+            nextMessage,
+            next.snapshot.reflection ? nextMessage : 'No reflection saved yet.',
+          ),
+        );
+      }
       setError(null);
     } catch (cause) {
       if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
@@ -343,18 +359,24 @@ function SessionEditor({
             ),
           );
         const waiting = pendingCount(next);
-        setMessage(
-          waiting
-            ? `Saved on this device. ${waiting} change(s) waiting to sync.`
-            : 'Changes are saved individually.',
-        );
-        setReflectionMessage(
-          waiting
-            ? 'Saved on this device. Waiting to sync.'
-            : next.snapshot.reflection
-              ? 'Saved.'
-              : 'No reflection saved yet.',
-        );
+        if (!inputDirty.current && !pendingRetry.current) {
+          setMessage(
+            savedViewMessage(
+              next,
+              'session',
+              `Saved on this device. ${waiting} change(s) waiting to sync.`,
+              next.snapshot.session.revision > 0 ? 'Saved.' : 'Changes are saved individually.',
+            ),
+          );
+          setReflectionMessage(
+            savedViewMessage(
+              next,
+              'reflection',
+              'Saved on this device. Waiting to sync.',
+              next.snapshot.reflection ? 'Saved.' : 'No reflection saved yet.',
+            ),
+          );
+        }
         initialized.current = true;
         if (waiting) void flushAndRefresh();
       } catch (cause) {

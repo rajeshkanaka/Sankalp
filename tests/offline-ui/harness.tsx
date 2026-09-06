@@ -26,6 +26,7 @@ IDBObjectStore.prototype.put = function (...args: Parameters<IDBObjectStore['put
   return originalPut.apply(this, args);
 };
 let switchAccount: (accountId: string) => void = () => undefined;
+let refreshSnapshotProps: (snapshot: core.Snapshot) => void = () => undefined;
 let signOutFails = false;
 let verificationResult: core.AccountVerification = 'verified';
 let verificationCalls = 0;
@@ -84,13 +85,15 @@ function OnlineInput() {
 }
 function Content() {
   const { status } = useOfflineAccount();
+  const [serverSnapshot, setServerSnapshot] = React.useState(snapshot);
+  refreshSnapshotProps = setServerSnapshot;
   return (
     <>
       <p>Offline state: {status}</p>
       {status === 'ready' ? (
         <OfflineSession
-          snapshot={snapshot}
-          now={snapshot.clock.serverNow}
+          snapshot={serverSnapshot}
+          now={serverSnapshot.clock.serverNow}
           demo
           onCanonicalChange={() => {
             canonicalChanges++;
@@ -164,6 +167,15 @@ window.offlineUiHarness = {
     // Let the same-origin invalidation deliver the other tab's revision before cleanup.
     await new Promise((done) => setTimeout(done, 50));
   },
+  async refreshCanonicalProps(prompts: core.Snapshot['preferences']['prompts']) {
+    const device = await core.getDeviceState();
+    if (!device.scope) throw new Error('Harness account unavailable');
+    const current = await core.read(device.scope, snapshot.session.id);
+    if (!current) throw new Error('Harness session unavailable');
+    // Simulated server-prop delivery after the actual local acknowledgment.
+    // Prompt rendering identifies when the editor applied this new snapshot.
+    refreshSnapshotProps({ ...current.snapshot, preferences: { prompts } });
+  },
   canonicalChanges() {
     return canonicalChanges;
   },
@@ -233,6 +245,7 @@ declare global {
       afterPrivacyMutation(): void;
       replaceDraftAfterEnqueue(draft: core.RawDraft): void;
       afterEnqueue(): Promise<void>;
+      refreshCanonicalProps(prompts: core.Snapshot['preferences']['prompts']): Promise<void>;
       canonicalChanges(): number;
       verificationCalls(): number;
       offlineVerificationCalls(): number;
