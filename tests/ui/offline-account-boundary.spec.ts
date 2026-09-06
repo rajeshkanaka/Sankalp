@@ -137,6 +137,86 @@ async function screenshot(page: Page, info: TestInfo, name: string) {
   await page.screenshot({ path: resolve(directory, name), fullPage: true });
 }
 
+test('@M3 @M3-offline an old tab cannot sign out an account that changed after verification', async ({
+  page,
+  context,
+}, info) => {
+  test.setTimeout(120000);
+  setUiClock(NOW);
+  const newSignIn = gate();
+  const oldVerification = gate();
+  let other: Page | undefined;
+  let signingIn: Promise<void> | undefined;
+  let confirmationHeld = false;
+  let verificationHeld = false;
+  let logoutStatus: number | null = null;
+  let logoutCount = 0;
+  try {
+    await capturedSignIn(page, 'ui-maya@example.test');
+    const originalAccount = await identity(page);
+    const original = await createPractice(page, 'stale sign-out');
+    other = await context.newPage();
+    // Prepare real captured-mail sign-in before the five-second identity deadline.
+    // Hold only its final confirmation navigation; no credentials leave this run.
+    await other.route('**/auth/confirm?**', async (route) => {
+      confirmationHeld = true;
+      await newSignIn.ready;
+      await route.continue();
+    });
+    signingIn = capturedSignIn(other, 'ui-arun@example.test');
+    void signingIn.catch(() => undefined);
+    await expect.poll(() => confirmationHeld).toBe(true);
+    expect(await identity(page)).toBe(originalAccount);
+
+    await page.route('**/api/auth/session', async (route) => {
+      const response = await route.fetch({ maxRedirects: 0, maxRetries: 0 });
+      const binding = await deviceBinding(page);
+      if (response.status() === 200 && binding.activeAccountId === null && !verificationHeld) {
+        expect(await response.json()).toMatchObject({ accountId: originalAccount });
+        verificationHeld = true;
+        await oldVerification.ready;
+      }
+      await route.fulfill({ response });
+    });
+    page.on('response', (response) => {
+      if (response.url().endsWith('/api/auth/sign-out') && response.request().method() === 'POST') {
+        logoutCount += 1;
+        logoutStatus = response.status();
+      }
+    });
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect.poll(() => verificationHeld).toBe(true);
+    await expect(page.getByRole('heading', { name: original.title, exact: true })).toHaveCount(0);
+    newSignIn.release();
+    await expect.poll(() => identity(other!)).not.toBe(originalAccount);
+    const currentAccount = await identity(other);
+    oldVerification.release();
+    await expect.poll(() => logoutStatus).toBe(409);
+    await expect(
+      page.getByRole('heading', { name: 'Sign-out did not finish', exact: true }),
+    ).toBeVisible();
+    await signingIn;
+    expect(await identity(other)).toBe(currentAccount);
+    expect(logoutCount).toBe(1);
+    await page.getByRole('button', { name: 'Retry sign out', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Sign-out did not finish', exact: true }),
+    ).toBeVisible();
+    expect(logoutCount).toBe(1);
+    expect(await identity(other)).toBe(currentAccount);
+    await expect(page.getByLabel('Your reflection', { exact: true })).toHaveCount(0);
+    await screenshot(page, info, 'stale-signout-current-account-preserved.png');
+  } finally {
+    newSignIn.release();
+    oldVerification.release();
+    await page.unrouteAll({ behavior: 'wait' });
+    await other?.unrouteAll({ behavior: 'wait' });
+    await signingIn?.catch(() => undefined);
+    await other?.close();
+    setUiClock(NOW);
+  }
+});
+
 test('@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes', async ({
   page,
   context,

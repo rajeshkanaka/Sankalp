@@ -57,15 +57,17 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
 
 export function AppShell({
   children,
+  accountId,
   email,
   demo,
 }: {
   children: ReactNode;
+  accountId: string;
   email?: string;
   demo: boolean;
 }) {
   async function signOut() {
-    await requestJson('/api/auth/sign-out', 'POST', {});
+    await requestJson('/api/auth/sign-out', 'POST', { accountId });
     window.location.replace('/welcome');
   }
   const brand = (

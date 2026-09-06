@@ -10,7 +10,7 @@ export default async function PrivateLayout({ children }: { children: ReactNode 
   const runtime = getRuntimeInfo();
   return (
     <OfflineProvider accountId={user.id}>
-      <AppShell email={user.email} demo={runtime.demo}>
+      <AppShell accountId={user.id} email={user.email} demo={runtime.demo}>
         {children}
       </AppShell>
     </OfflineProvider>
