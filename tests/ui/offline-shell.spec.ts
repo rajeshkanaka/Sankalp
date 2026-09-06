@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { setUiNetworkDisconnected } from './helpers/network';
 
 test('@M3 @M3-offline public shell caches only public assets and withholds unsaved private data', async ({
   page,
   context,
   request,
-}) => {
+}, info) => {
   const manifestResponse = await request.get('/offline/asset-manifest.json');
   expect(manifestResponse.status()).toBe(200);
   expect(manifestResponse.headers()['set-cookie']).toBeUndefined();
@@ -50,32 +51,46 @@ test('@M3 @M3-offline public shell caches only public assets and withholds unsav
   expect(privateRead.headers()['cache-control']).toContain('no-store');
   expect(await cachedPaths()).toEqual(publicPaths);
 
-  await context.setOffline(true);
-  await page.goto('/offline/saved');
-  await expect(
-    page.getByRole('heading', { name: 'Your private practice', exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText('No private session is available here.', { exact: false }),
-  ).toBeVisible();
-  expect(await cachedPaths()).toEqual(publicPaths);
-  const privateFetch = await page.evaluate(async () => {
-    try {
-      await fetch('/api/auth/session');
-      return 'unexpected_response';
-    } catch {
-      return 'network_unavailable';
+  await setUiNetworkDisconnected(true);
+  try {
+    await page.goto('/offline/saved');
+    await expect(
+      page.getByRole('heading', { name: 'Your private practice', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('No private session is available here.', { exact: false }),
+    ).toBeVisible();
+    expect(await cachedPaths()).toEqual(publicPaths);
+    const privateFetch = await page.evaluate(async () => {
+      try {
+        await fetch('/api/auth/session');
+        return 'unexpected_response';
+      } catch {
+        return 'network_unavailable';
+      }
+    });
+    expect(privateFetch).toBe('network_unavailable');
+    const rscFetch = await page.evaluate(async () => {
+      try {
+        await fetch('/today', { headers: { RSC: '1' } });
+        return 'unexpected_response';
+      } catch {
+        return 'network_unavailable';
+      }
+    });
+    expect(rscFetch).toBe('network_unavailable');
+    // Playwright's worker offline emulation is verified only in Chromium. All
+    // engines above use an actual network cutoff, including worker requests.
+    if (info.project.name === 'chromium') {
+      await context.setOffline(true);
+      await page.reload();
+      expect(await page.evaluate(() => navigator.onLine)).toBe(false);
+      await expect(
+        page.getByRole('heading', { name: 'Your private practice', exact: true }),
+      ).toBeVisible();
     }
-  });
-  expect(privateFetch).toBe('network_unavailable');
-  const rscFetch = await page.evaluate(async () => {
-    try {
-      await fetch('/today', { headers: { RSC: '1' } });
-      return 'unexpected_response';
-    } catch {
-      return 'network_unavailable';
-    }
-  });
-  expect(rscFetch).toBe('network_unavailable');
-  await context.setOffline(false);
+  } finally {
+    await context.setOffline(false);
+    await setUiNetworkDisconnected(false);
+  }
 });

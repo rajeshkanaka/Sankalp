@@ -31,7 +31,8 @@
     "dev:demo": "node scripts/local.mjs demo",
     "demo:clock": "node scripts/local.mjs clock",
     "build:offline": "node scripts/build-offline.mjs",
-    "test:offline-core": "node tests/offline-core/run-browser.mjs"
+    "test:offline-core": "node tests/offline-core/run-browser.mjs",
+    "test:offline-ui": "node tests/offline-ui/run-browser.mjs"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
