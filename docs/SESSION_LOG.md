@@ -155,3 +155,19 @@ M4 preparation moved into one coordinator worktree/branch with independent slot2
 Exact next: finish PR5 evidence/checks/normal merge; merge accepted main into M4 coordinator feature, finish narrow SQL/role/job lifecycle, execute independent DB tests, wire the saved-preference form and complete device/worker/history integration. TASKS alone records completion. B06 remains observable VoiceOver speech; B01–B05 remain external launch prerequisites.
 
 Final follow-up: applicationce56222 passed the same numeric real-offline workflow in all3engines; safe summary/screens in M2/offline-final-port-check. Full unit suite216/216 passed after the reporter regression. Independent preference DB tests291f2ac integrated0a3a04a into M4 and passed188/188 against actual slot2 PostgreSQL. No job/worker/device completion is inferred.
+
+
+### 2026-09-06 — PR5 accepted and M4 continuation consolidated
+
+Normal PR5 merge23f15b2 accepted source526e947 after exact-head hosted CI34025184143 passed verify, full three-engine UI, both offline harnesses and both dependency audits. Local main/origin/main reconciled; no administrator bypass or history rewrite. M4 coordinator merged accepted main as3be8815. Root retains the reviewed production demo on3001; no process survival assumed. Main-first resume remains authoritative.
+
+M4 isolated slot2 schema010 passed272 DB regressions after updating the exact seed inventory; the prior guard rejection is preserved in SK-009-integration. Reviewed form no-op fix177ab8b passes9 focused tests; transport e296259 includes212 focused tests and real local TLS failure checks. Frozen worker contract32333fe establishes restricted SQL DTOs before parallel implementation. New schema/UI test workers and worker-loop owner are recorded in TASKS/BRANCHES.011 lifecycle SQL and preference API/UI source remain under integration, not a tested reminder feature. Next: review/apply/test011, integrate transaction hooks and actual browser/worker verification. B06 and external inputs remain unresolved.
+
+
+### 2026-09-06 15:52 IST — Emergency stop requested
+
+All implementation paused. User supplied outside PR5 review; main23f15b2 had already merged before review arrived. P1 offline navigation query rejection is unaddressed and is the exact first resume action. Review preserved verbatim in SK-008-independent-review. No reproduction/fix claimed.
+
+M4 migration011 applied; first actual combined suite65 passed/9 failed. Details/errors/next012 repairs retained in SK-009-integration, including actual auth schema/owner probe permissions and earlier reviewed locking fixes. Settings API typecheck passed, actual UI NOT RUN. Workerfd613d4 locally passes82 focused/489 full unit/static; not integrated or SQL/runtime-tested. Schemaa57388b and preferences-report e26bffe preserved. No secrets/private DB data staged, no new services/deployment. Resume from main's checkpoint then emergency/M4 reports; never assume a process survived.
+
+Root documentation-only emergency checkpoint is branched from main23f15b2. M4 complete WIP source4d9fd1d is pushed separately; worker recovery refs are pushed without integrating unverified source. No P1 fix is included.
