@@ -103,3 +103,10 @@ Hosted CI33995477654 on ef6e0a9 is now verified SUCCESS (verify, fullUI and audi
 ## 2026-09-06 — PR3 integrated correction regression
 
 Opened draftPR3 from rajesh_kanaka/consolidate-main. Tests1b33394 reproduced the reviewed closure omission in both real database and Chromium UI: another tab creates the immutable marker, but an already-open page receives none after correction. Fixad78c5c returns the existing marker and preserves client ID deduplication. Fresh npm verify PASS112unit/84DB/build/smoke; full UI53/53PASS in2.3minutes acrossall3engines. Retained safe sourceSHA summary and synthetic screenshots in M1/M2/M3 main-consolidation; inspected Chromium closing history. Local logs remain ignored. Required PRCI pending before merge; no release claim. Core resume review records exact stale-comparison/account-change/replay-exclusion defects and required regression design before resuming WIP.
+
+
+## 2026-09-06 — Main accepted; offline work reassigned
+
+PR3 merged as eac5cdcccef7d860911cd61d53f0d0571f8e9447 at06:15:03UTC after finalCI34015719614SUCCESS; local main fast-forwarded and clean. Full and production-only local audits found0vulnerabilities (one fnm process interruption was retried successfully). Main now contains accepted code, evidence and the branch map. Copilot's two nonblocking diagnostics suggestions (specific malformed idempotency-header message, explicit proxy configuration guard) are retained for the upcoming owned HTTP/configuration slice; existing malformed input is rejected and missing configuration fails closed.
+
+Created main-based rajesh_kanaka/offline-recovery plus offline-core/UI branches, reusing their existing worktree directories and preserving old WIP refs. Core owner /root/branch_audit; UI owner /root/merge_review; coordinator owns shared contracts/build/app integration. Exact next substeps: token-bound conflict comparison, full reviewed replacement sequence with raw-draft preservation, immediate account quarantine/replay-excluded purge, UI failed-save/account lifecycle fixes, then actual offline app tests. No task completion or external prerequisites were invented.

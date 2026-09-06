@@ -4,20 +4,21 @@ Coordinator-owned map, reconciled 2026-09-06. **Begin every resume with `origin/
 
 ## Current integration route
 
-The first application [PR3](https://github.com/rajeshkanaka/Sankalp/pull/3) uses `rajesh_kanaka/consolidate-main`, based on the verified `implementation/sankalpa` checkpoint `ef6e0a9`. It brings tested sign-in, personalized schedules, progress, correction history, journal and HTTP account guards to main. Seven inactive offline source/test files are intentionally excluded and remain recoverable at `ef6e0a9`. No unfinished core/UI work is included. D18 governs later PRs.
+The first application [PR3](https://github.com/rajeshkanaka/Sankalp/pull/3), merged to main as **eac5cdc** on2026-09-06, used `rajesh_kanaka/consolidate-main`, based on the verified `implementation/sankalpa` checkpoint `ef6e0a9`. It brings tested sign-in, personalized schedules, progress, correction history, journal and HTTP account guards to main. Seven inactive offline source/test files are intentionally excluded and remain recoverable at `ef6e0a9`. No unfinished core/UI work is included. D18 governs later PRs.
 
-After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from merged main at `/Users/rajesh/sankalpa` (slot 1) for integrated SK-008 work. This branch is planned until its actual creation is recorded below. Workers resume only after coordinator assignment; old agent names do not imply a live owner.
+After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from merged main at `/Users/rajesh/sankalpa` (slot 1) for integrated SK-008 work. The feature and both main-based worker branches now exist from PR3/eac5cdc. The assignments below are current; only the coordinator changes shared tracking/configuration.
 
 | Purpose | Branch / saved HEAD | Location and next action |
 |---|---|---|
 | Accepted source of context | `main` / inspect fetched HEAD | Start here; use `git show origin/main:docs/PROJECT_PROGRESS.md` without switching dirty worktrees. |
-| Consolidation PR | `rajesh_kanaka/consolidate-main` | Root `/Users/rajesh/sankalpa`; coordinator only. Review, verify, PR and merge before further feature integration. |
+| Active coordinator feature | `rajesh_kanaka/offline-recovery` / source base `eac5cdc` | Root `/Users/rajesh/sankalpa`, slot1; /root owns shared contract, app/API/build/SW and integrated regression. |
+| Accepted consolidation | `rajesh_kanaka/consolidate-main` / `30f80ca` | Historical PR3 head; merged eac5cdc. No future work here. |
 | Preserved overnight checkpoint | `implementation/sankalpa` / `ef6e0a9` | Historical branch, no future integration here. Retains all prepared SW sources. |
 | Closure-history review fix | `rajesh_kanaka/closure-history-fix` / `71c8bd8` | `../sankalpa-worktrees/SK-006-closure-review`; `/root/merge_review` owns the narrow SK-006 service/regressions/report. No runtime. Integrated as ad78c5c after tests1b33394; coordinator full verification and53UI passed. Historical after PR3 merges. |
-| Offline core WIP | `task/SK-008-core` / `86769b5` | `../sankalpa-worktrees/SK-008-core`; preserved, no active implementation owner until reassigned. Repair stale conflict comparison and finish failure/limit tests. |
-| Offline UI WIP | `task/SK-008-ui` / `3d54c3b` | `../sankalpa-worktrees/SK-008-ui`; preserved, no active implementation owner until reassigned. Finish CSS, core integration and actual offline browser workflows. |
+| Active offline core | `rajesh_kanaka/offline-core` / source base `eac5cdc` | `../sankalpa-worktrees/SK-008-core`; /root/branch_audit owns core implementation/tests/handoff. No database; own random-loopback browser harness. Saved WIP source remains task/SK-008-core86769b5. |
+| Active offline UI | `rajesh_kanaka/offline-ui` / source base `eac5cdc` | `../sankalpa-worktrees/SK-008-ui`; /root/merge_review owns offline UI/CSS/UI regressions/handoff. No database/runtime. Saved WIP source remains task/SK-008-ui3d54c3b. |
 
-Existing worker branches remain named as recorded; new branches use `rajesh_kanaka/`. Keep the original WIP commits reachable. To resume on a fresh main-based worker, carry only its owned source/test/handoff commits; never overwrite coordinator tracking with an old branch's PROJECT_PROGRESS/TASKS/SESSION_LOG. Shared core contract changes must be reconciled by the coordinator first.
+Original worker branches remain preserved without active worktrees; current workers reuse the existing directories on the new names above. New branches use `rajesh_kanaka/`. Keep the original WIP commits reachable. To resume on a fresh main-based worker, carry only its owned source/test/handoff commits; never overwrite coordinator tracking with an old branch's PROJECT_PROGRESS/TASKS/SESSION_LOG. Shared core contract changes must be reconciled by the coordinator first.
 
 ## Historical branches: do not resume their task lists
 
