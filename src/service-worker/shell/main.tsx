@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { bindAccount, getDeviceState, read, type LocalView } from '@/offline/core';
+import { readBrowserIdentity } from '@/offline/account-identity';
 import {
   OfflineAccountBoundary,
   OfflineSavedPage,
@@ -15,6 +16,19 @@ import './shell.css';
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 const sessionRoute = new RegExp(`^/journeys/(${uuid})/sessions/(${uuid})$`, 'i');
 type Loaded = { accountId: string; view: LocalView | null };
+
+async function verifySavedBrowserAccount(accountId: string): Promise<boolean> {
+  const identity = await readBrowserIdentity();
+  if (
+    identity.kind === 'rejected' ||
+    (identity.kind === 'verified' && identity.accountId !== accountId)
+  )
+    return false;
+  // Only this saved-shell path may resume an already bound account after transport loss.
+  // It cannot switch accounts, revive a cleared generation or enable shared-device storage.
+  const device = await getDeviceState();
+  return !device.quarantined && !device.sharedDevice && device.scope?.accountId === accountId;
+}
 
 function SavedSession({ view }: { view: LocalView }) {
   const { status } = useOfflineAccount();
@@ -57,37 +71,13 @@ function PublicOfflineApp() {
       try {
         // A fresh online document verifies the cookie before displaying cached private data.
         // Only an actual network failure falls back to the previously bound local account.
-        if (navigator.onLine) {
-          let response: Response | undefined;
-          try {
-            response = await fetch('/api/auth/session', {
-              credentials: 'same-origin',
-              cache: 'no-store',
-              signal: AbortSignal.timeout(5000),
-            });
-          } catch (error) {
-            if (
-              !(error instanceof TypeError) &&
-              !(
-                error instanceof DOMException && ['AbortError', 'TimeoutError'].includes(error.name)
-              )
-            )
-              throw error;
-          }
-          if (response) {
-            if (!response.ok) throw new Error('Account verification required.');
-            const identity: unknown = await response.json();
-            if (
-              !identity ||
-              typeof identity !== 'object' ||
-              !('accountId' in identity) ||
-              typeof identity.accountId !== 'string' ||
-              !new RegExp(`^${uuid}$`, 'i').test(identity.accountId)
-            )
-              throw new Error('Account verification required.');
-            await bindAccount(identity.accountId);
-          }
-        }
+        const beforeVerification = await getDeviceState();
+        const identity = await readBrowserIdentity();
+        if (identity.kind === 'rejected') throw new Error('Account verification required.');
+        if (identity.kind === 'verified')
+          await bindAccount(identity.accountId, {
+            expectedGeneration: beforeVerification.bindingGeneration,
+          });
         const device = await getDeviceState();
         if (device.quarantined || device.sharedDevice || !device.scope) {
           if (current) setLocked(true);
@@ -124,7 +114,11 @@ function PublicOfflineApp() {
       </main>
     );
   return (
-    <OfflineAccountBoundary accountId={loaded.accountId} ensureOfflineReady={hasReadyPublicShell}>
+    <OfflineAccountBoundary
+      accountId={loaded.accountId}
+      ensureOfflineReady={hasReadyPublicShell}
+      verifyAccount={verifySavedBrowserAccount}
+    >
       {loaded.view ? <SavedSession view={loaded.view} /> : <OfflineSavedPage />}
     </OfflineAccountBoundary>
   );

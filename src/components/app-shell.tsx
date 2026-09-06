@@ -95,7 +95,7 @@ export function AppShell({
           <span className={styles.topbarTitle}>Your personal practice space</span>
           <div className={styles.topbarTools}>
             {email && <span className={styles.userEmail}>{email}</span>}
-            <OfflineAccountControls onSignOut={signOut} />
+            <OfflineAccountControls compact onSignOut={signOut} />
           </div>
           {demo && <span className={styles.demo}>Demo data · simulated clock</span>}
         </header>

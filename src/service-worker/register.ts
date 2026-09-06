@@ -4,14 +4,9 @@ export async function ensurePublicShell(): Promise<boolean> {
     return false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   try {
-    // An installed, verified shell can be used without waiting for a network update
-    // check. Registration may stall during connectivity changes in some browsers.
-    if (navigator.serviceWorker.controller && (await hasReadyPublicShell())) {
-      void navigator.serviceWorker
-        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-        .catch(() => undefined);
-      return true;
-    }
+    // Navigations already trigger the browser's worker update check. Reuse a
+    // verified controller instead of registering again during every page change.
+    if (navigator.serviceWorker.controller && (await hasReadyPublicShell())) return true;
     return await Promise.race([
       establishPublicShell(),
       new Promise<boolean>((resolve) => {
