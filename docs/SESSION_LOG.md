@@ -138,3 +138,10 @@ Full M1–M3/offline regression still waits for the final UI focus/race harness 
 ### 2026-09-06 — Final offline source and cumulative regression
 
 Current account verification now distinguishes unavailable identity, confirmed logout and changed account; only explicit SIGN_IN_REQUIRED401 authorizes the signed-out result. Server Auth tests classify provider/network/unknown failures503. Source389e493 passed full verify198unit/84DB/build/smoke,25core/24UI simulated-transport browser scenarios perengine, both audits0. Real offline12/12 and all9account-boundary cases passed. Full UI77PASS/9FAIL exposes old editor expectations and page-route interception under SW; assigned tests-only migrations preserve all original failure assertions and add real unified-editor coverage. Details/evidence/next action are in SK-008 and PROJECT_PROGRESS. Native keyboard200% authenticated workflow observed; actual VoiceOver review/restoration still underway. No task promoted, feature merge or phone delivery claimed.
+
+
+### 2026-09-06 — Native workflow evidence and final offline corrections
+
+Native actual200% keyboard/confirmation/reflection/reload/dashboard checks passed on389e493; nine synthetic JPEGs retained and inspected. VoiceOver was enabled but no observable caption/audio output obtained; B06 staysopen. VoiceOver off, zoom100%, SettingsGeneral, Utility and ownedtesthelper were all restored/stopped. Root stopped3001forrebuild.
+
+PR5 draft opened from pushedb0d74e1. Newmigration tests exposed accumulated60secfallback setup (journal now120sec total, unchanged10sec assertions), missingclientnavigation await (corrected), and a realcanonicalrefresh overwritingSaved status (REDisolatedregression, fixed970dfe9/ea9d6b3). Independentreview found expected-accountsignout race; actualChromium oldbuildPOST200 reproduced it, guard+caller6edfa51/5a90423 awaitactualGREEN. Fresh fullverifyea9d6b3 passed215unit/84DB/build/smoke. Currentfocused15cases thenfullUI/CI remainbeforemerge. SK-009 purecalculations assignedinisolatedmain-based worktreeunderD12; no reminderapplication/job/transportclaim.

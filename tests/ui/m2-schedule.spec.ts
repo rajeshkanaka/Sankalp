@@ -290,6 +290,7 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
     const journeyId = new URL(page.url()).searchParams.get('journey');
     expect(journeyId).toMatch(/^[a-f0-9-]{36}$/);
     await page.getByRole('link', { name: 'Open practice', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/journeys/${journeyId}/sessions/[a-f0-9-]{36}$`));
     const sessionId = new URL(page.url()).pathname.split('/').at(-1);
     expect(sessionId).toMatch(/^[a-f0-9-]{36}$/);
     const checklist = page.getByRole('region', { name: 'Practice checklist', exact: true });

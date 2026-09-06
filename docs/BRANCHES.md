@@ -10,6 +10,7 @@ After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from 
 
 | Purpose | Branch / saved HEAD | Location and next action |
 |---|---|---|
+| Reminder domain preparation | `rajesh_kanaka/reminder-domain` / base544f3ef | `../sankalpa-worktrees/SK-009-domain`; /root/ci_triage owns pure domain/tests/handoff only under D12. No database/runtime/shared tracking or integration into offline PR. |
 | Accepted source of context | `main` / inspect fetched HEAD | Start here; use `git show origin/main:docs/PROJECT_PROGRESS.md` without switching dirty worktrees. |
 | Active coordinator feature | `rajesh_kanaka/offline-recovery` / verified application checkpoint `389e493` | Root `/Users/rajesh/sankalpa`, slot1; /root owns shared contract, app/API/build/SW and integrated regression. Read its SK-008 handoff for newer verified wrapper/test checkpoints. |
 | Accepted checkpoint/hydration PR | `rajesh_kanaka/checkpoint-policy` / `1d15d81` | `../sankalpa-worktrees/project-checkpoint`; historical PR4 head, merged to main as `544f3ef` after CI34017887283 passed. |

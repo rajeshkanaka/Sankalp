@@ -16,7 +16,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
 | SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | C (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-008.md`; M3 evidence |
-| SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review | C | TODO | `docs/handoffs/SK-009.md`; M4 evidence |
+| SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review; isolated preparation per D12 | C (domain scope /root/ci_triage) | IN_PROGRESS | `docs/handoffs/SK-009.md`; M4 evidence |
 | SK-010 | M4 | PWA install, permission and device controls | SK-009 | W-device | TODO | `docs/handoffs/SK-010.md`; M4 evidence |
 | SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009 | W-reminders | TODO | `docs/handoffs/SK-011.md`; M4 evidence |
 | SK-012 | M5 | Real multilingual PDF download | SK-010, SK-011 + M4 review | W-export | TODO | `docs/handoffs/SK-012.md`; M5 evidence |
@@ -38,7 +38,7 @@ Genuine external blockers (dependency waiting alone does not require BLOCKED):
 | B02 | SK-016 | Owned sending domain/DNS, verified Resend SMTP and explicit test-mail recipients; no real mail authorization assumed. |
 | B03 | SK-016 | Verified provider retention/deletion/backup terms compatible with D08 and a disclosed actual policy; regional capacity and selected compute quote. |
 | B04 | SK-017 | Access to a supported real iPhone Home Screen install and Android install, plus explicit consent to send test pushes to those devices. Browser emulation cannot resolve this. |
-| B06 | SK-002 | VoiceOver announcements and authenticated manual checks remain unverified. Public native200% reflow/keyboard passed in SK-002-manual-retry; settings restored. Automated axe and browser checks do not close the remaining gate. |
+| B06 | SK-002 | VoiceOver announcements remain unverified: two documented audio-export attempts created no observable output and captions were not captured. Authenticated native200% keyboard/confirmation/reflection/reload/dashboard passed in SK-002-native-audio; all settings/helper restored. Automated axe and browser checks do not close the speech gate. |
 | B05 | SK-019 | Deployment authorization is recorded in D10; still require verified release revision/domain/budget, production credentials and M6 technical gates. |
 
 ## 2. Execution and checkpoint sequence
@@ -142,6 +142,8 @@ Every task follows this substep cycle: read contracts and baseline → add the s
 **Verification/evidence:** `npm run test:integration -- tests/integration/offline-replay.test.ts`; `npm run verify`; `npm run test:ui -- --grep @M3-offline`. Real browser network-off/reload/reconnect assertions, `offline-pending.png`, `conflict-resolution.png` and `SK-008.md`. C runs M1–M3 regression and presents M3 review.
 
 ### SK-009 — Reminder preferences and durable job foundation
+
+**Current isolated preparation:** pure domain calculations and unit tests only, assigned in [SK-009-domain-contract](handoffs/SK-009-domain-contract.md). This D12 preparation does not waive SK-008/native technical gates. Coordinator owns later schema/API/UI integration and maintains the single task status above.
 
 **Outcome/owner/files:** C owns `src/domain/reminders.ts`, `src/server/reminders/preferences.ts`, reminder setup UI, all new reminder/subscription/job migrations and extensions to SK-006’s basic event schema, worker-role grants/functions and shared contracts. Consume canonical session/revision/clock; produce versioned preferences, job identity, worker claim/revalidate/settle API and notification event/read schemas before parallel dispatch/UI work.
 
