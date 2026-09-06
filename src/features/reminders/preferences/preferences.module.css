@@ -1,0 +1,50 @@
+.layout {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.layout fieldset {
+  min-width: 0;
+}
+
+.offsetRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.offsetRow > div {
+  margin-bottom: 0;
+}
+
+.previewList {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+}
+
+.previewList li + li {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.previewList li,
+.comparison {
+  overflow-wrap: anywhere;
+}
+
+.comparison {
+  margin: 24px 0;
+  border-left: 2px solid var(--brass);
+  padding-left: 16px;
+}
+
+@media (max-width: 480px) {
+  .offsetRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
