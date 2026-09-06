@@ -73,6 +73,8 @@ export interface LocalView {
 }
 export interface DeviceState {
   scope: AccountScope | null;
+  /** Account/generation management only; shared mode still rejects every private read/write. */
+  managementScope: AccountScope | null;
   sharedDevice: boolean;
   quarantined: boolean;
   pendingOperations: number;
