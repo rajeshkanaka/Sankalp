@@ -6,6 +6,7 @@ import type { SessionRecord } from '../../src/domain/contracts';
 import { setUiClock } from './helpers/clock';
 import { setUiNetworkDisconnected } from './helpers/network';
 import { capturedSignIn } from './helpers/sign-in';
+import { observePublicServiceWorker } from './helpers/service-worker-diagnostics';
 
 const M1_NOW = '2026-09-05T00:45:00Z';
 const M2_NOW = '2026-09-12T04:01:00+05:30';
@@ -260,6 +261,7 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
   page,
 }, info) => {
   test.setTimeout(120000);
+  const workerDiagnostic = await observePublicServiceWorker(page);
   const consoleErrors: string[] = [];
   page.on('pageerror', (error) => consoleErrors.push(error.name));
   setUiClock(M2_NOW);
@@ -305,27 +307,39 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
     await expect(numeric).toBeEnabled();
     await expect(numeric).toHaveValue('0');
     await expect(complete).toBeDisabled();
-    await expect
-      .poll(() =>
-        page.evaluate(async () => {
-          const controller = navigator.serviceWorker?.controller;
-          if (!controller) return false;
-          return new Promise<boolean>((done) => {
-            const channel = new MessageChannel();
-            const timeout = setTimeout(() => {
-              channel.port1.close();
-              done(false);
-            }, 2000);
-            channel.port1.onmessage = (event) => {
-              clearTimeout(timeout);
-              channel.port1.close();
-              done(event.data?.type === 'PUBLIC_CACHE_READY' && event.data.ready === true);
-            };
-            controller.postMessage({ type: 'PUBLIC_CACHE_READY' }, [channel.port2]);
-          });
-        }),
-      )
-      .toBe(true);
+    try {
+      await expect
+        .poll(() =>
+          page.evaluate(async () => {
+            const controller = navigator.serviceWorker?.controller;
+            if (!controller) return false;
+            return new Promise<boolean>((done) => {
+              const channel = new MessageChannel();
+              const timeout = setTimeout(() => {
+                channel.port1.close();
+                done(false);
+              }, 2000);
+              channel.port1.onmessage = (event) => {
+                clearTimeout(timeout);
+                channel.port1.close();
+                done(event.data?.type === 'PUBLIC_CACHE_READY' && event.data.ready === true);
+              };
+              controller.postMessage({ type: 'PUBLIC_CACHE_READY' }, [channel.port2]);
+            });
+          }),
+        )
+        .toBe(true);
+    } catch (error) {
+      await workerDiagnostic.save(
+        resolve(
+          'docs/evidence/M2',
+          process.env.UI_RUN_ID!,
+          info.project.name,
+          'service-worker-readiness.json',
+        ),
+      );
+      throw error;
+    }
     await expect(
       page.getByText('Offline saving is unavailable. You can continue using the online controls.', {
         exact: true,
@@ -447,6 +461,7 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(consoleErrors).toEqual([]);
   } finally {
+    workerDiagnostic.stop();
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);
     setUiClock(M1_NOW);
