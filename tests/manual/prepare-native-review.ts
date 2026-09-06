@@ -26,7 +26,9 @@ async function main() {
   let checkpoint: Record<string, unknown> | undefined;
   const close = () => void browser?.close().catch(() => undefined);
   try {
-    browser = await chromium.launch({ headless: false, channel: 'chrome', args: ['--guest'] });
+    // The bundled testing app has its own bundle ID, so native automation cannot
+    // accidentally select the user's separate normal-profile Chrome process.
+    browser = await chromium.launch({ headless: false });
     process.once('SIGINT', close);
     process.once('SIGTERM', close);
     const context = await browser.newContext({
@@ -98,7 +100,7 @@ async function main() {
 void main().catch(() => {
   // Browser errors may include the one-time authentication URL; keep them out of output.
   console.error(
-    'Native review preparation failed; verify the seeded demo, local services and Chrome. Authentication details omitted.',
+    'Native review preparation failed; verify the seeded demo, local services and Playwright Chromium. Authentication details omitted.',
   );
   process.exitCode = 1;
 });

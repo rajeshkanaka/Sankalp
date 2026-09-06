@@ -1,0 +1,3 @@
+# Focused actual offline workflows
+
+2026-09-06, source e713ee7. `UI_RUN_ID=offline-candidate-functional npm run test:ui -- tests/ui/offline.spec.ts` passed12/12 acrossChromium153.0.8010.12,WebKit26.6,Firefox155.0 in55.9seconds. Real local Auth/PostgreSQL/application and physical proxy disconnection; Chromium additionally browser-offline. Quota failure is injected and labeled; it proves input retention, not a naturally exhausted device. Summary and screenshots are synthetic. This precedes server Auth error-classification389e493; the later full candidate run also passed these12cases but failed unrelated legacy expectations, recorded in ../offline-release-candidate/manifest.md.

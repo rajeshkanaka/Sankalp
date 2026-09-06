@@ -1,0 +1,263 @@
+{
+  "sourceCommit": "389e493b9893198899d852e7d06baa8df8b906d2",
+  "sourceDirty": true,
+  "startedAt": "2026-09-06T08:24:50.280Z",
+  "scope": "full",
+  "integration": "Synthetic transport; real browser IndexedDB, Web Locks and document reload.",
+  "browsers": [
+    {
+      "browser": "chromium",
+      "version": "153.0.8010.12",
+      "status": "PASS",
+      "results": {
+        "basic": {
+          "acknowledged": 3,
+          "checks": 11
+        },
+        "uncertain": {
+          "checks": 8
+        },
+        "isolation": {
+          "checks": 13
+        },
+        "bindingGeneration": {
+          "checks": 18
+        },
+        "bindingClearRace": {
+          "checks": 5
+        },
+        "ageAndCapacity": {
+          "checks": 4
+        },
+        "staleResolution": {
+          "checks": 4
+        },
+        "independentResolution": {
+          "checks": 2
+        },
+        "comparisonVersion": {
+          "checks": 2
+        },
+        "orderedReplacement": {
+          "checks": 6
+        },
+        "accountChanged": {
+          "checks": 3
+        },
+        "switchDuringReplay": {
+          "checks": 3
+        },
+        "storageFailures": {
+          "checks": 12
+        },
+        "flushStorageSetupFailure": {
+          "checks": 5
+        },
+        "reviewedNoChange": {
+          "checks": 8
+        },
+        "noChangeReflection": {
+          "checks": 5
+        },
+        "noChangeCompletion": {
+          "checks": 6
+        },
+        "noChangeBoundaries": {
+          "checks": 38
+        },
+        "noChangeRollback": {
+          "checks": 3
+        },
+        "queueCeiling": {
+          "checks": 5
+        },
+        "resolutionBoundaries": {
+          "checks": 14
+        },
+        "transportFailures": {
+          "checks": 8
+        },
+        "comparisonAccountChange": {
+          "checks": 2
+        },
+        "reload": {
+          "checks": 4
+        },
+        "multitab": {
+          "checks": 1
+        }
+      },
+      "pageErrors": 0
+    },
+    {
+      "browser": "webkit",
+      "version": "26.6",
+      "status": "PASS",
+      "results": {
+        "basic": {
+          "acknowledged": 3,
+          "checks": 11
+        },
+        "uncertain": {
+          "checks": 8
+        },
+        "isolation": {
+          "checks": 13
+        },
+        "bindingGeneration": {
+          "checks": 18
+        },
+        "bindingClearRace": {
+          "checks": 5
+        },
+        "ageAndCapacity": {
+          "checks": 4
+        },
+        "staleResolution": {
+          "checks": 4
+        },
+        "independentResolution": {
+          "checks": 2
+        },
+        "comparisonVersion": {
+          "checks": 2
+        },
+        "orderedReplacement": {
+          "checks": 6
+        },
+        "accountChanged": {
+          "checks": 3
+        },
+        "switchDuringReplay": {
+          "checks": 3
+        },
+        "storageFailures": {
+          "checks": 12
+        },
+        "flushStorageSetupFailure": {
+          "checks": 5
+        },
+        "reviewedNoChange": {
+          "checks": 8
+        },
+        "noChangeReflection": {
+          "checks": 5
+        },
+        "noChangeCompletion": {
+          "checks": 6
+        },
+        "noChangeBoundaries": {
+          "checks": 38
+        },
+        "noChangeRollback": {
+          "checks": 3
+        },
+        "queueCeiling": {
+          "checks": 5
+        },
+        "resolutionBoundaries": {
+          "checks": 14
+        },
+        "transportFailures": {
+          "checks": 8
+        },
+        "comparisonAccountChange": {
+          "checks": 2
+        },
+        "reload": {
+          "checks": 4
+        },
+        "multitab": {
+          "checks": 1
+        }
+      },
+      "pageErrors": 0
+    },
+    {
+      "browser": "firefox",
+      "version": "155.0",
+      "status": "PASS",
+      "results": {
+        "basic": {
+          "acknowledged": 3,
+          "checks": 11
+        },
+        "uncertain": {
+          "checks": 8
+        },
+        "isolation": {
+          "checks": 13
+        },
+        "bindingGeneration": {
+          "checks": 18
+        },
+        "bindingClearRace": {
+          "checks": 5
+        },
+        "ageAndCapacity": {
+          "checks": 4
+        },
+        "staleResolution": {
+          "checks": 4
+        },
+        "independentResolution": {
+          "checks": 2
+        },
+        "comparisonVersion": {
+          "checks": 2
+        },
+        "orderedReplacement": {
+          "checks": 6
+        },
+        "accountChanged": {
+          "checks": 3
+        },
+        "switchDuringReplay": {
+          "checks": 3
+        },
+        "storageFailures": {
+          "checks": 12
+        },
+        "flushStorageSetupFailure": {
+          "checks": 5
+        },
+        "reviewedNoChange": {
+          "checks": 8
+        },
+        "noChangeReflection": {
+          "checks": 5
+        },
+        "noChangeCompletion": {
+          "checks": 6
+        },
+        "noChangeBoundaries": {
+          "checks": 38
+        },
+        "noChangeRollback": {
+          "checks": 3
+        },
+        "queueCeiling": {
+          "checks": 5
+        },
+        "resolutionBoundaries": {
+          "checks": 14
+        },
+        "transportFailures": {
+          "checks": 8
+        },
+        "comparisonAccountChange": {
+          "checks": 2
+        },
+        "reload": {
+          "checks": 4
+        },
+        "multitab": {
+          "checks": 1
+        }
+      },
+      "pageErrors": 0
+    }
+  ],
+  "finishedAt": "2026-09-06T08:25:04.645Z",
+  "status": "PASS"
+}

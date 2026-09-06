@@ -1,0 +1,175 @@
+{
+  "sourceSha": "e713ee73373588fd8477406bd407fc3be94f17c5",
+  "generatedAt": "2026-09-06T08:20:59.173Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "chromium",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4029,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "chromium",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2759,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "chromium",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3132,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "chromium",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4709,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "webkit",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4406,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "webkit",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2881,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "webkit",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3309,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "webkit",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4988,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "firefox",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 11802,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "firefox",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2786,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "firefox",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3237,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "firefox",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4981,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}
