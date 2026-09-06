@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "node --env-file-if-exists=.env.local scripts/run-next.mjs dev",
-    "build": "next build",
+    "build": "npm run build:offline && next build",
     "start": "node --env-file-if-exists=.env.local scripts/run-next.mjs start",
     "format:check": "prettier --check src tests scripts *.json *.mjs *.ts",
     "format": "prettier --write src tests scripts *.json *.mjs *.ts",
@@ -29,7 +29,9 @@
     "env:local": "node scripts/local.mjs env",
     "demo:seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
     "dev:demo": "node scripts/local.mjs demo",
-    "demo:clock": "node scripts/local.mjs clock"
+    "demo:clock": "node scripts/local.mjs clock",
+    "build:offline": "node scripts/build-offline.mjs",
+    "test:offline-core": "node tests/offline-core/run-browser.mjs"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",

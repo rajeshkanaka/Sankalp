@@ -1,0 +1,105 @@
+{
+  "sourceSha": "e1749a0af0bdb09aec0e3c322997f397d9f879d6",
+  "generatedAt": "2026-09-06T06:55:10.824Z",
+  "status": "FAILED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3181,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-http.spec.ts",
+      "line": 210,
+      "project": "chromium",
+      "title": "keeps identity, owner reads and replay mutations account scoped",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2133,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 14,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 11682,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3229,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 14,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 11270,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3634,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 14,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 12505,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

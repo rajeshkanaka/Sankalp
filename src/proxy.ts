@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { privateHeaders } from './server/auth/server';
 import { randomBytes } from 'node:crypto';
-import { getOrigin } from './server/config';
+import { getOrigin, requiredEnv } from './server/config';
 
 export async function proxy(request: NextRequest) {
   if (
@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
     `style-src 'self' ${development ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     "img-src 'self' data: blob:",
     "font-src 'self'",
+    "worker-src 'self'",
     `connect-src 'self'${development ? ' ws:' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
@@ -41,8 +42,8 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set('content-security-policy', policy);
   let response = NextResponse.next({ request: { headers: requestHeaders } });
   const auth = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
+    requiredEnv('SUPABASE_URL'),
+    requiredEnv('SUPABASE_PUBLISHABLE_KEY'),
     {
       cookieOptions: {
         httpOnly: true,
@@ -67,4 +68,8 @@ export async function proxy(request: NextRequest) {
   response.headers.set('Content-Security-Policy', policy);
   return response;
 }
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|fonts/|audio/).*)'] };
+export const config = {
+  matcher: [
+    '/((?!_next/static/|_next/image$|favicon\\.ico$|fonts/|audio/|sw\\.js$|offline/index\\.html$|offline/asset-manifest\\.json$|offline/assets/).*)',
+  ],
+};

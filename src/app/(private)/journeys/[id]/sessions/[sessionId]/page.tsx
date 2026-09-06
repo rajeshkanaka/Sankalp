@@ -5,8 +5,7 @@ import { getPageJourneyView as getJourneyView } from '@/server/journeys/pages';
 import { getRuntimeInfo } from '@/server/config';
 import { PageHeader, formatPracticeDate } from '@/components/presentation';
 import { Icon } from '@/components/icons';
-import { PracticePanel } from '@/features/practice/practice-panel';
-import { ReflectionEditor } from '@/features/journal';
+import { SessionExperience } from '@/features/practice/session-experience';
 import { getReflection, getReflectionPreferences } from '@/server/journal';
 import { getSessionHistory } from '@/server/sessions/service';
 import styles from '@/styles/sanctuary.module.css';
@@ -41,19 +40,15 @@ export default async function SessionPage({
         description={`${session.attribution === 'previous_evening' ? 'Night' : 'Session'} ${session.ordinal} of ${view.metrics.total} · ${formatPracticeDate(session.practiceDate)} · ${session.timeZone}`}
       />
       {view.journey.intention && <p className={styles.intention}>{view.journey.intention}</p>}
-      <PracticePanel
-        key={`practice-${session.id}`}
-        initialSession={session}
-        initialNow={view.now}
-        demo={runtime.demo}
-        initialHistory={history}
-      />
-      <ReflectionEditor
-        key={`reflection-${session.id}`}
+      <SessionExperience
+        key={session.id}
         session={session}
-        initialReflection={reflection}
+        journeyTitle={view.journey.title}
+        reflection={reflection}
         preferences={preferences}
+        history={history}
         now={view.now}
+        demo={runtime.demo}
       />
     </div>
   );
