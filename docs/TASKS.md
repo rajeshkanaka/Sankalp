@@ -16,6 +16,7 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
 | SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-008.md`; M3 evidence |
+| SK-008-P1 | M3 correction | Restore validated query-bearing offline navigation | Independent review, urgent before M4 | /root coordinator | TODO | `docs/handoffs/SK-008-independent-review.md`; reproduction/fix NOT RUN |
 | SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review; isolated preparation per D12 | /root coordinator (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-009.md`; M4 evidence |
 | SK-010 | M4 | PWA install, permission and device controls | SK-009 | W-device | TODO | `docs/handoffs/SK-010.md`; M4 evidence |
 | SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009; isolated transport preparation under D12 | /root coordinator (transport /root/ci_triage) | IN_PROGRESS | `docs/handoffs/SK-011.md`; M4 evidence |
@@ -298,3 +299,5 @@ Task status remains in the register above. Coordinator owns shared files/integra
 - SK-009 UI tests: /root/merge_review, reminder-ui-tests from177ab8b; only tests/ui/m4-reminder-preferences.spec.ts and its handoff, actual API-driven fixtures, no mocked persistence/runtime borrowing.
 - SK-011 worker: /root/ci_triage, reminder-worker from32333fe; only src/worker/*.ts, tests/unit/worker*.test.ts and its handoff under SK-011-worker-contract. C supplies SQL/config/tsc/scripts and actual role/runtime tests.
 - Reviewed domain, preference UI, preference DB tests and guarded transport are integrated substeps. BRANCHES preserves their historical source refs. They do not establish reminder delivery or milestone completion.
+
+Emergency pause2026-09-06: all agents stopped. First resume SK-008-P1. Its scope is service-worker navigation policy + actual offline Done/calendar navigation regression, preserving strict asset cache/auth query rejection. Evidence/test commands follow SK-008. M4 remains unfinished; no task promoted by checkpoint commits.

@@ -71,3 +71,10 @@ All worker paths below are relative to `/Users/rajesh/sankalpa-worktrees/`. Ever
 - Before every accepted PR, update this map for actual new assignments/checkpoints. Future sessions reconcile live Git with it; no assumption that a process or agent survived.
 
 Coordinator checkpoint branch `rajesh_kanaka/checkpoint-policy` at `/Users/rajesh/sankalpa-worktrees/project-checkpoint` is historical after PR4 merged. No runtime or future work there. Every main update must use a PR; do not repeat the observed administrator bypass on d7a1096.
+
+
+## Emergency pause pointers — 2026-09-06 15:52 IST
+
+All agents stopped. Main23f15b2 contains accepted PR5, but new independent P1 review is unresolved. Root checkpoint branch will be `rajesh_kanaka/emergency-checkpoint` in `/Users/rajesh/sankalpa`; it preserves the outside review and next corrective task. Resume that P1 before M4.
+
+M4 current source/report is saved on `rajesh_kanaka/reminder-integration`, SK-009-integration, slot2; migration011 applied and65/74 combined tests passed,9 failed. Read its emergency handoff before any migration; corrections must be012. Pending source refs: reminder-schema-testsa57388b (one extra timestamp regression), reminder-workerfd613d4 (worker code), reminder-preferences-checkpointe26bffe (report only; no bridge source yet). The latter worktree is `/Users/rajesh/sankalpa-worktrees/SK-009-preferences-checkpoint`. Previous preferencesUI/UI-test/transport/domain commits remain preserved. No worker has active ownership to continue during this break. Secrets, node_modules symlinks and private runtime data remain untracked/ignored.
