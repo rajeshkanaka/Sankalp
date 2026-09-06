@@ -1,27 +1,32 @@
 # Branches and worktrees
 
-Coordinator-owned map, reconciled 2026-09-06. **Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and `origin/main:docs/SESSION_LOG.md`.** Follow their active feature/report pointers after reading the accepted baseline. TASKS alone records task status; this map records Git disposition, not completion.
+Coordinator-owned map, reconciled2026-09-06. Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and SESSION_LOG. Read active feature reports only after that accepted checkpoint. TASKS owns status; this file records locations and Git disposition.
 
-## Current integration route
+## Active integration and worker map
 
-The first application [PR3](https://github.com/rajeshkanaka/Sankalp/pull/3), merged to main as **eac5cdc** on2026-09-06, used `rajesh_kanaka/consolidate-main`, based on the verified `implementation/sankalpa` checkpoint `ef6e0a9`. It brings tested sign-in, personalized schedules, progress, correction history, journal and HTTP account guards to main. Seven inactive offline source/test files are intentionally excluded and remain recoverable at `ef6e0a9`. No unfinished core/UI work is included. D18 governs later PRs.
+All paths below are absolute. Branches are preserved; no cleanup/history rewrite was performed. Commit values are checkpoints, not a promise that a running worker has stopped making owned changes.
 
-After consolidation, the coordinator uses `rajesh_kanaka/offline-recovery` from merged main at `/Users/rajesh/sankalpa` (slot 1) for integrated SK-008 work. The feature and both main-based worker branches now exist from PR3/eac5cdc. The assignments below are current; only the coordinator changes shared tracking/configuration.
-
-| Purpose | Branch / saved HEAD | Location and next action |
+| Purpose | Branch / checkpoint | Worktree and responsibility |
 |---|---|---|
-| Reminder domain preparation | `rajesh_kanaka/reminder-domain` / base544f3ef | `../sankalpa-worktrees/SK-009-domain`; /root/ci_triage owns pure domain/tests/handoff only under D12. No database/runtime/shared tracking or integration into offline PR. |
-| Accepted source of context | `main` / inspect fetched HEAD | Start here; use `git show origin/main:docs/PROJECT_PROGRESS.md` without switching dirty worktrees. |
-| Active coordinator feature | `rajesh_kanaka/offline-recovery` / verified application checkpoint `389e493` | Root `/Users/rajesh/sankalpa`, slot1; /root owns shared contract, app/API/build/SW and integrated regression. Read its SK-008 handoff for newer verified wrapper/test checkpoints. |
-| Accepted checkpoint/hydration PR | `rajesh_kanaka/checkpoint-policy` / `1d15d81` | `../sankalpa-worktrees/project-checkpoint`; historical PR4 head, merged to main as `544f3ef` after CI34017887283 passed. |
-| Account-boundary review/regressions | `rajesh_kanaka/online-checkpoints` / `07a00dac` | `../sankalpa-worktrees/SK-006-closure-review`; /root/ci_triage owns only assigned tests/review reports. Fallback testb8c8d04 and actual boundary test15acb23 are integrated in root. No database/runtime. Previous closure/hydration refs remain preserved. |
-| Accepted consolidation | `rajesh_kanaka/consolidate-main` / `30f80ca` | Historical PR3 head; merged eac5cdc. No future work here. |
-| Preserved overnight checkpoint | `implementation/sankalpa` / `ef6e0a9` | Historical branch, no future integration here. Retains all prepared SW sources. |
-| Closure-history review fix | `rajesh_kanaka/closure-history-fix` / `71c8bd8` | Historical source ref; its old worktree directory now hosts online checkpoint regressions above. Integrated as ad78c5c after tests1b33394; coordinator full verification and53UI passed. Historical after PR3 merges. |
-| Active offline core | `rajesh_kanaka/offline-core` / auth classification checkpoint `18cb549` | `../sankalpa-worktrees/SK-008-core`; /root/branch_audit owns core implementation/tests/handoff, now integrated for coordinator validation; owns numeric regression migration. No database; own random-loopback browser harness. Saved WIP source remains task/SK-008-core86769b5. |
-| Active offline UI | `rajesh_kanaka/offline-ui` / provider recovery `3b0d495` | `../sankalpa-worktrees/SK-008-ui`; /root/merge_review owns offline UI/CSS/UI regressions/handoff. Migrating journal/correction regression tests and adding actual unified-editor coverage; no database/runtime. Saved WIP source remains task/SK-008-ui3d54c3b. |
+| Accepted application/context | `main` / last verified544f3ef, PR4 | Fetch origin/main first; inspect PR5 before promoting its source. |
+| Offline PR5 integration | `rajesh_kanaka/offline-recovery` / applicationce56222, evidence/reporter5c14a13 | `/Users/rajesh/sankalpa`; coordinator, slot1.98UI passed on5c8962f; ce56222 full verify passed; final checks/PR merge pending. |
+| M4 coordinator | `rajesh_kanaka/reminder-integration` /0a3a04a | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot2. Own SQL/API/config/integration. Unapplied010 migration draft preserved; merge accepted PR5 main before cumulative app checks. |
+| Preferences UI | `rajesh_kanaka/reminder-preferences` /41a0d21 | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. Owned UI/handoff integrated into M4 as3aa243b; no runtime. |
+| Preference database tests | `rajesh_kanaka/reminder-database-tests` /291f2ac | `/Users/rajesh/sankalpa-worktrees/SK-009-database-tests`; /root/branch_audit. Own specified test/handoff only; coordinator runs DB checks. |
+| Guarded push adapter | `rajesh_kanaka/push-transport` /base0d74076 | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Own endpoint/transport tests/source/handoff; no DB or real subscription sends. |
 
-Original worker branches remain preserved without active worktrees; current workers reuse the existing directories on the new names above. New branches use `rajesh_kanaka/`. Keep the original WIP commits reachable. To resume on a fresh main-based worker, carry only its owned source/test/handoff commits; never overwrite coordinator tracking with an old branch's PROJECT_PROGRESS/TASKS/SESSION_LOG. Shared core contract changes must be reconciled by the coordinator first.
+## Preserved recent checkpoints
+
+| Branch / HEAD | Worktree | Disposition |
+|---|---|---|
+| `rajesh_kanaka/reminder-domain` /78da7ec | `/Users/rajesh/sankalpa-worktrees/SK-009-domain` | Pure calculations reviewed and integrated2b66431. Pushed recovery ref; no further work here. |
+| `rajesh_kanaka/offline-core` /dda115a | `/Users/rajesh/sankalpa-worktrees/SK-008-core` | Core/auth fixes integrated into PR5; domain review integrated into M4 as4c121ec. |
+| `rajesh_kanaka/offline-ui` /810fcbc | `/Users/rajesh/sankalpa-worktrees/SK-008-ui` | UI/fallback/diagnostics integrated into PR5. Do not carry its baseline-onlyf4a712f. |
+| `rajesh_kanaka/online-checkpoints` /018d9fb | `/Users/rajesh/sankalpa-worktrees/SK-006-closure-review` | Authenticated native keyboard/zoom evidence integrated; VoiceOver NOT VERIFIED. Helper/settings restored. |
+| `rajesh_kanaka/checkpoint-policy` /1d15d81 | `/Users/rajesh/sankalpa-worktrees/project-checkpoint` | PR4 merged544f3ef; historical. |
+| `rajesh_kanaka/consolidate-main` /30f80ca | No worktree | PR3 merged eac5cdc; historical. |
+| `rajesh_kanaka/closure-history-fix` /71c8bd8 | Directory reused by online checkpoints above | Reviewed history fix integrated before PR3; historical. |
+| `implementation/sankalpa` /ef6e0a9 | No worktree | Preserved overnight source, including original offline WIP; do not resume its task status. |
 
 ## Historical branches: do not resume their task lists
 
@@ -54,7 +59,7 @@ All worker paths below are relative to `/Users/rajesh/sankalpa-worktrees/`. Ever
 ## Resource and preservation facts
 
 - Root alone owns allocated slot 1: app 3001, UI 3101, API 54421, database 54422, captured mail 54424, explicitly loopback. Restart using PROJECT_PLAN §5 and PROJECT_PROGRESS. Workers never borrow its database/environment or ports.
-- The audit found all tracked trees clean. SK-008-core has only the documented untracked `node_modules` dependency symlink; never stage it. Historical dependency directories are not unfinished source.
+- Original reconciliation found tracked trees clean. Current active workers may have owned changes and documented untracked dependency symlinks; inspect live Git and never stage those symlinks. M4 coordinator alone owns slot2 (3002/3102/API54521/DB54522/mail54524). Historical dependency directories are not unfinished source.
 - Slot 0 and `artifacts/private-legacy-slot0-20260906/` remain stopped/preserved under D16. Do not reset or migrate that legacy data as part of resuming slot 1.
 - Validation: `git worktree list --porcelain`, per-tree `git status --short`, `git branch -vv`, `git cherry implementation/sankalpa <branch>`, ancestry checks, and final journal handoff comparison. Fresh `git ls-remote` confirmed main, integration and all three SK-008 pushed checkpoints on 2026-09-06.
 - Before every accepted PR, update this map for actual new assignments/checkpoints. Future sessions reconcile live Git with it; no assumption that a process or agent survived.

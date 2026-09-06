@@ -15,10 +15,10 @@ Owners below are responsible role slots, **not already-running agents**. Before 
 | SK-005 | M2 | Consistent dashboard/calendar/list | SK-003; integrated preparation per D12 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-005.md`; M2 evidence |
 | SK-006 | M3 | Honest correction/undo and amendment history | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-006.md`; M3 evidence |
 | SK-007 | M3 | Private reflections and journal search | SK-004, SK-005 + M2 review | /root coordinator | IN_REVIEW | `docs/handoffs/SK-007.md`; M3 evidence |
-| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | C (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-008.md`; M3 evidence |
-| SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review; isolated preparation per D12 | C (domain scope /root/ci_triage) | IN_PROGRESS | `docs/handoffs/SK-009.md`; M4 evidence |
+| SK-008 | M3 | Offline replay and recoverable conflicts | SK-006, SK-007 | /root coordinator | IN_REVIEW | `docs/handoffs/SK-008.md`; M3 evidence |
+| SK-009 | M4 | Versioned reminder controls and job contracts | SK-008 + M3 review; isolated preparation per D12 | /root coordinator (assigned scopes below) | IN_PROGRESS | `docs/handoffs/SK-009.md`; M4 evidence |
 | SK-010 | M4 | PWA install, permission and device controls | SK-009 | W-device | TODO | `docs/handoffs/SK-010.md`; M4 evidence |
-| SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009 | W-reminders | TODO | `docs/handoffs/SK-011.md`; M4 evidence |
+| SK-011 | M4 | Resilient dispatch, snooze and honest history | SK-009; isolated transport preparation under D12 | /root coordinator (transport /root/ci_triage) | IN_PROGRESS | `docs/handoffs/SK-011.md`; M4 evidence |
 | SK-012 | M5 | Real multilingual PDF download | SK-010, SK-011 + M4 review | W-export | TODO | `docs/handoffs/SK-012.md`; M5 evidence |
 | SK-013 | M5 | User-selected themes and original ambient audio | SK-010, SK-011 + M4 review | W-experience | TODO | `docs/handoffs/SK-013.md`; M5 evidence |
 | SK-014 | M5 | Archive, deletion and private-storage controls | SK-012, SK-013 | W-privacy | TODO | `docs/handoffs/SK-014.md`; M5 evidence |
@@ -288,3 +288,15 @@ Original acceptance wording remains in APP_SPECIFICATION §10. This maps coverag
 | A27 | SK-003, SK-005 |
 
 Additional launch coverage: email-link states/privacy/rate limits (001/002/014/016/018); setup/multiple journeys/targets/limits (003/005); journal/mood/prompts/search (007); font/audio rights/themes (012/013); private cache/storage disabling/account switch (008/014); actual PDF/backup deletion retention/recovery (012/014–018); CI/versioned environment and durable handoffs (001/015/018 plus AGENTS on every task).
+
+## Current bounded assignments — 2026-09-06
+
+All task status remains in the register above. Coordinator owns integration and shared files; worker commits alone do not complete a task. See BRANCHES for exact worktree/resource locations.
+
+- SK-008: root `rajesh_kanaka/offline-recovery`, slot1; only final evidence/reporter/PR integration remains. Full98UI passed on the documented build; current-head CI still required.
+- SK-009 coordinator: `rajesh_kanaka/reminder-integration`, slot2, owns migrations/config/contracts/API/integration. Database001–009 running;010 is unapplied draft. Pure domain and UI preparation are committed, with cumulative API/UI checks pending.
+- SK-009 preferences UI: /root/merge_review, `rajesh_kanaka/reminder-preferences`, owns only `src/features/reminders/preferences/` and its handoff. Worker41a0d21 integrated as3aa243b; worker is available for the next assigned scope. Integrated browser checks remain NOT RUN.
+- SK-009 database tests: /root/branch_audit, `rajesh_kanaka/reminder-database-tests`, owns only `tests/integration/reminder-preferences.test.ts` and its handoff. No runtime borrowing or migration edits; integrated0a3a04a passed188/188 cases against coordinator slot2.
+- SK-011 transport: /root/ci_triage, `rajesh_kanaka/push-transport`, owns only endpoint-policy/transport implementation, two assigned unit files and its handoff under SK-011-transport-contract. No app/database/worker loop or real push sending.
+
+Independent preparation remains D12 work; B06 and all release/device gates are preserved. Subsequent assignments must replace the current owner explicitly and preserve historical branch pointers.
