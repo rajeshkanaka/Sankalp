@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reminderPreferencesSchema } from './reminders';
 
 const uuidSchema = z.uuid();
 const trimmedText = (maximum: number) => z.string().trim().max(maximum);
@@ -46,18 +47,6 @@ export const scheduleInputSchema = z
     timeZone: timeZoneSchema,
     attribution: z.enum(['civil', 'previous_evening']),
     windowMinutes: z.int().min(1).max(1_439),
-  })
-  .strict();
-
-const reminderPreferencesSchema = z
-  .object({
-    enabled: z.boolean(),
-    offsets: z
-      .array(z.int().min(-1_440).max(0))
-      .max(8)
-      .refine(uniqueArray, 'Reminder offsets must be unique'),
-    quietHours: z.object({ start: localTimeSchema, end: localTimeSchema }).strict().nullable(),
-    detailed: z.boolean(),
   })
   .strict();
 
