@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getPageUser } from '@/server/auth/server';
 import { getPageJourneyView } from '@/server/journeys/pages';
 import { getProgressPreferences } from '@/server/progress/service';
@@ -15,6 +16,9 @@ export default async function JourneyPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <JourneyProgress view={view} preferences={preferences} demo={getRuntimeInfo().demo} />
+      <Link className="button secondary" href={`/journeys/${id}/reminders`}>
+        Reminders
+      </Link>
       <MetadataEditor view={view} />
       {view.journey.state === 'active' && <RevisionEditor view={view} />}
     </>

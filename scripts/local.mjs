@@ -200,6 +200,13 @@ async function environment() {
   if (!existsSync(secretFile))
     writeFileSync(secretFile, randomBytes(32).toString('hex'), { mode: 0o600 });
   const password = readFileSync(secretFile, 'utf8');
+  const workerSecretFile = resolve(directory, 'worker-database-password');
+  if (!existsSync(workerSecretFile))
+    writeFileSync(workerSecretFile, randomBytes(32).toString('hex'), { mode: 0o600 });
+  const workerPassword = readFileSync(workerSecretFile, 'utf8');
+  const workerUrl = new URL(state.DB_URL);
+  workerUrl.username = 'app_worker';
+  workerUrl.password = workerPassword;
   dbUrl.username = 'app_api';
   dbUrl.password = password;
   const rateSecretFile = resolve(directory, 'rate-limit-key');
@@ -210,6 +217,8 @@ async function environment() {
     APP_ORIGIN: `http://localhost:${runtime.port}`,
     PORT: String(runtime.port),
     DATABASE_URL: dbUrl.href,
+    WORKER_DATABASE_URL: workerUrl.href,
+    PUSH_TRANSPORT: 'simulated',
     SUPABASE_URL: state.API_URL,
     SUPABASE_PUBLISHABLE_KEY: state.PUBLISHABLE_KEY || state.ANON_KEY,
     LOCAL_ADMIN_DATABASE_URL: state.DB_URL,
@@ -242,7 +251,11 @@ async function environment() {
       throw new Error('Expected PostgreSQL major 17.');
     // Validate environment ownership before changing the runtime role's password.
     if (!/^[a-f0-9]{64}$/.test(password)) throw new Error('Invalid local role secret.');
+    if (!/^[a-f0-9]{64}$/.test(workerPassword)) throw new Error('Invalid local worker secret.');
     await client.query(`ALTER ROLE app_api PASSWORD '${password}'`);
+    const workerRole = await client.query("select 1 from pg_roles where rolname='app_worker'");
+    if (workerRole.rowCount)
+      await client.query(`ALTER ROLE app_worker PASSWORD '${workerPassword}'`);
   } finally {
     await client.end();
   }

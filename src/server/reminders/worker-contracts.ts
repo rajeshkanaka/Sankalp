@@ -1,4 +1,4 @@
-import type { PushResult, PushSubscriptionTarget } from './transport-contracts';
+import type { PushResult, PushSubscriptionTarget } from './transport-contracts.js';
 
 export interface ReminderLease {
   jobId: string;
