@@ -1,0 +1,1381 @@
+{
+  "sourceSha": "ce5622254fee858ea97723964026fea9de94860f",
+  "generatedAt": "2026-09-06T09:27:20.990Z",
+  "status": "PASSED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2320,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32030,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3847,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 26,
+      "project": "chromium",
+      "title": "@SK003 online-only simulated response failure preserves draft and retry identity",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 31705,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 162,
+      "project": "chromium",
+      "title": "redirects the loopback alias to the configured local origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 174,
+      "project": "chromium",
+      "title": "rejects a missing sign-in Origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 174,
+      "project": "chromium",
+      "title": "rejects a wrong sign-in Origin",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 185,
+      "project": "chromium",
+      "title": "requires JSON for sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 193,
+      "project": "chromium",
+      "title": "returns a safe structured error for malformed JSON",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 201,
+      "project": "chromium",
+      "title": "rejects JSON bodies larger than 128 KiB",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 7,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 209,
+      "project": "chromium",
+      "title": "returns field validation for an invalid email",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 219,
+      "project": "chromium",
+      "title": "rejects missing and tampered journey authentication cookies",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 15,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 233,
+      "project": "chromium",
+      "title": "sets private cache, referrer and fresh CSP nonce headers",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 13,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/http-boundaries.spec.ts",
+      "line": 259,
+      "project": "chromium",
+      "title": "keeps application and direct Auth sign-in limits distinct",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 152,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "chromium",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62088,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 256,
+      "project": "chromium",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 10922,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "chromium",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5567,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "chromium",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 339,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "chromium",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4970,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 18,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 20017,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4574,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "chromium",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 24387,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 220,
+      "project": "chromium",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 31866,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 281,
+      "project": "chromium",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16502,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "chromium",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16588,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3983,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 185,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2071,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "chromium",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3231,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-http.spec.ts",
+      "line": 210,
+      "project": "chromium",
+      "title": "keeps identity, owner reads and replay mutations account scoped",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2776,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "chromium",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 379,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "chromium",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3862,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "chromium",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2805,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "chromium",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3186,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "chromium",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4847,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3582,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "chromium",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 25076,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "chromium",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 705,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "chromium",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 532,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "chromium",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 554,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "chromium",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 489,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3269,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32196,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4375,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 26,
+      "project": "webkit",
+      "title": "@SK003 online-only simulated response failure preserves draft and retry identity",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 31582,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "webkit",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62047,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 256,
+      "project": "webkit",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 11176,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "webkit",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6378,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "webkit",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 501,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "webkit",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5282,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 18,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 20055,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5087,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "webkit",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 24814,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 220,
+      "project": "webkit",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32127,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 281,
+      "project": "webkit",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16868,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "webkit",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 17061,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4164,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 185,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2112,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "webkit",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3345,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "webkit",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 415,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "webkit",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4492,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "webkit",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2736,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "webkit",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3387,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "webkit",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5311,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3707,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "webkit",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 25098,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "webkit",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 929,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "webkit",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 569,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "webkit",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 572,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "webkit",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 851,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3187,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32213,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4194,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/draft-recovery.spec.ts",
+      "line": 26,
+      "project": "firefox",
+      "title": "@SK003 online-only simulated response failure preserves draft and retry identity",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 31758,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "firefox",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62763,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 256,
+      "project": "firefox",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 11659,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 7,
+      "project": "firefox",
+      "title": "@smoke @M1 custom journey persists completion through real email sign-in",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6573,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m1.spec.ts",
+      "line": 105,
+      "project": "firefox",
+      "title": "@M1 invalid sign-in link offers a fresh request",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 849,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-progress.spec.ts",
+      "line": 70,
+      "project": "firefox",
+      "title": "@M2 @M2-progress calendar preserves overnight dates and shared totals, filters journeys, and persists streak choice",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5219,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 18,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 19914,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 260,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5103,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "firefox",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 24737,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 220,
+      "project": "firefox",
+      "title": "@M3 @M3-offline stale private hydration cannot rebind an account after real sign-in changes",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32106,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 281,
+      "project": "firefox",
+      "title": "@M3 @M3-offline failed remote sign-out remains explicit and retryable after private cleanup",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16680,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "firefox",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16679,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 103,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only sign-out waits for a real reflection write acknowledgment",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4034,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback-lifecycle.spec.ts",
+      "line": 185,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only account cancellation preserves mood and correction-time drafts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1934,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-fallback.spec.ts",
+      "line": 8,
+      "project": "firefox",
+      "title": "@M3 @M3-offline online-only editors preserve unsaved input during account actions",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3455,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-shell.spec.ts",
+      "line": 4,
+      "project": "firefox",
+      "title": "@M3 @M3-offline public shell caches only public assets and withholds unsaved private data",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 397,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 101,
+      "project": "firefox",
+      "title": "@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3917,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 187,
+      "project": "firefox",
+      "title": "@M3 @M3-offline simulated quota failure preserves actual editor input through focus and retry",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2726,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 235,
+      "project": "firefox",
+      "title": "@M3 @M3-offline switching real authenticated accounts hides the original pending reflection",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3590,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline.spec.ts",
+      "line": 279,
+      "project": "firefox",
+      "title": "@M3 @M3-offline two device contexts review every queued change against real server values",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5154,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revision-conflicts.spec.ts",
+      "line": 10,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions stale schedule previews preserve edits and require fresh review",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3501,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/revisions.spec.ts",
+      "line": 17,
+      "project": "firefox",
+      "title": "@M2 @M2-revisions future changes preserve opened labels and metadata remains separate",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 25106,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 8,
+      "project": "firefox",
+      "title": "@M1 @M1-usability keyboard, invalid link and 320px reflow preserve input after a network error",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 1158,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 42,
+      "project": "firefox",
+      "title": "@M1 @M1-usability server field errors identify the email field and clear when edited",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 482,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 75,
+      "project": "firefox",
+      "title": "@M1 @M1-usability a failed resend does not keep claiming the new request succeeded",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 491,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/usability.spec.ts",
+      "line": 111,
+      "project": "firefox",
+      "title": "@M1 @M1-usability an expired-session error offers another tab without discarding the current input",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 481,
+          "retry": 0
+        }
+      ]
+    }
+  ],
+  "testedBuildSha": "5c8962f3fff68fb570c6ffedd065c4149b5591fe",
+  "sourceShaNote": "Legacy reporter captured HEAD at run end; testedBuildSha identifies the unchanged production build exercised by all 98 cases."
+}

@@ -151,6 +151,7 @@ export function resolveSourceSha(
 export default class SafeUiReporter implements Reporter {
   private rootDir = process.cwd();
   private tests: TestCase[] = [];
+  private sourceSha?: string;
 
   printsToStdio(): boolean {
     return false;
@@ -159,11 +160,12 @@ export default class SafeUiReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite): void {
     this.rootDir = config.configFile ? dirname(resolve(config.configFile)) : process.cwd();
     this.tests = suite.allTests();
+    this.sourceSha = resolveSourceSha(process.env, this.rootDir);
   }
 
   onEnd(result: FullResult): void {
     const summary = summarizeRun({
-      sourceSha: resolveSourceSha(process.env, this.rootDir),
+      sourceSha: this.sourceSha ?? resolveSourceSha(process.env, this.rootDir),
       generatedAt: new Date(),
       runStatus: result.status,
       rootDir: this.rootDir,
