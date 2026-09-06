@@ -52,6 +52,15 @@ worker.addEventListener('activate', (event) => {
 });
 
 worker.addEventListener('message', (event) => {
+  if (event.data?.type === 'CLAIM_PUBLIC_CLIENTS') {
+    const source = event.source;
+    if (event.origin !== origin || !source || !('type' in source) || source.type !== 'window')
+      return;
+    // This is sent only to registration.active. Claiming does not activate a
+    // waiting update or change which resources the public-only cache can store.
+    event.waitUntil(worker.clients.claim());
+    return;
+  }
   if (event.data?.type !== 'PUBLIC_CACHE_READY' || !event.ports[0]) return;
   event.waitUntil(
     (async () => {

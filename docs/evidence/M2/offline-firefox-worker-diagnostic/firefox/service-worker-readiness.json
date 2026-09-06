@@ -1,0 +1,98 @@
+{
+  "label": "READ_ONLY_PUBLIC_SERVICE_WORKER_DIAGNOSTIC",
+  "elapsedMs": 19854,
+  "manifestAssetCount": 3,
+  "events": [
+    {
+      "elapsedMs": 175,
+      "kind": "document",
+      "state": "none"
+    },
+    {
+      "elapsedMs": 830,
+      "kind": "document",
+      "state": "none"
+    },
+    {
+      "elapsedMs": 968,
+      "kind": "register_called"
+    },
+    {
+      "elapsedMs": 977,
+      "kind": "register_resolved"
+    },
+    {
+      "elapsedMs": 977,
+      "kind": "registration_seen"
+    },
+    {
+      "elapsedMs": 978,
+      "kind": "worker_observed",
+      "state": "installing"
+    },
+    {
+      "elapsedMs": 991,
+      "kind": "update_found"
+    },
+    {
+      "elapsedMs": 995,
+      "kind": "worker_state",
+      "state": "installed"
+    },
+    {
+      "elapsedMs": 995,
+      "kind": "worker_state",
+      "state": "activating"
+    },
+    {
+      "elapsedMs": 995,
+      "kind": "controller_changed",
+      "state": "activating"
+    },
+    {
+      "elapsedMs": 996,
+      "kind": "worker_state",
+      "state": "activated"
+    },
+    {
+      "elapsedMs": 1154,
+      "kind": "document",
+      "state": "none"
+    },
+    {
+      "elapsedMs": 1160,
+      "kind": "registration_seen"
+    },
+    {
+      "elapsedMs": 1161,
+      "kind": "worker_observed",
+      "state": "activated"
+    },
+    {
+      "elapsedMs": 1255,
+      "kind": "register_called"
+    },
+    {
+      "elapsedMs": 1255,
+      "kind": "register_resolved"
+    }
+  ],
+  "truncated": false,
+  "snapshot": {
+    "controllerPresent": false,
+    "controllerState": "none",
+    "readyProbe": "no_controller",
+    "registrations": [
+      {
+        "rootScope": true,
+        "installing": "none",
+        "waiting": "none",
+        "active": "activated"
+      }
+    ],
+    "publicCacheCount": 1,
+    "inspectedCacheCount": 1,
+    "publicCacheEntryCount": 3,
+    "unexpectedEntryCount": 0
+  }
+}

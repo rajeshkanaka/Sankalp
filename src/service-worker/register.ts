@@ -22,7 +22,10 @@ export async function ensurePublicShell(): Promise<boolean> {
 
 async function establishPublicShell(): Promise<boolean> {
   try {
-    await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+      updateViaCache: 'none',
+    });
     if (!navigator.serviceWorker.controller) {
       const controlled = await new Promise<boolean>((resolve) => {
         const changed = () => {
@@ -35,6 +38,9 @@ async function establishPublicShell(): Promise<boolean> {
           resolve(ready);
         };
         navigator.serviceWorker.addEventListener('controllerchange', changed);
+        // A network-loaded document can be uncontrolled even though this public
+        // worker is already active. Activation will not run again for that case.
+        registration?.active?.postMessage({ type: 'CLAIM_PUBLIC_CLIENTS' });
         changed();
       });
       if (!controlled) return false;

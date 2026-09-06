@@ -1,0 +1,217 @@
+{
+  "sourceSha": "20486e2225a836344c1ed46c4ef6c183257418ac",
+  "generatedAt": "2026-09-06T08:59:17.953Z",
+  "status": "FAILED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 7554,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "chromium",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62381,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4699,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "chromium",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 24380,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "chromium",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16492,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4895,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "webkit",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62113,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 5055,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "webkit",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 25555,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "webkit",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16749,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 6445,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "firefox",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 62581,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 19608,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 140,
+      "project": "firefox",
+      "title": "@M3 @M3-offline an old tab cannot sign out an account that changed after verification",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 25678,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/offline-account-boundary.spec.ts",
+      "line": 350,
+      "project": "firefox",
+      "title": "@M3 @M3-offline an unreadable real logout response recovers from the server-confirmed signed-out state",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 16864,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}
