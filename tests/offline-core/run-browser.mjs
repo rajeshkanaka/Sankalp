@@ -74,6 +74,8 @@ try {
         'basic',
         'uncertain',
         'isolation',
+        'bindingGeneration',
+        'bindingClearRace',
         'ageAndCapacity',
         'staleResolution',
         'independentResolution',
