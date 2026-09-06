@@ -1,6 +1,6 @@
 # Sankalpa implementation plan
 
-Prepared 2026-09-05–06 (Asia/Kolkata). **This is a plan, not an implemented application.** Approval/checkpoint authority: [PROJECT_PROGRESS](PROJECT_PROGRESS.md). Execution/status authority: [TASKS](TASKS.md). Product acceptance authority: [APP_SPECIFICATION](APP_SPECIFICATION.md). Stack pins, rationale, clarifications and dated official sources: [DECISIONS](DECISIONS.md).
+Prepared 2026-09-05–06 (Asia/Kolkata). This approved plan covers both implemented and remaining scope; it is not a completion claim. Approval/checkpoint authority: [PROJECT_PROGRESS](PROJECT_PROGRESS.md) on main. Execution/status authority: [TASKS](TASKS.md). Product acceptance authority: [APP_SPECIFICATION](APP_SPECIFICATION.md). Stack pins, rationale, clarifications and dated official sources: [DECISIONS](DECISIONS.md). Active and historical worktrees: [BRANCHES](BRANCHES.md).
 
 ## 1. Outcome, scope and constraints
 
@@ -195,7 +195,7 @@ git log -5 --oneline
 
 ### 5.2 First bootstrap, only after plan approval
 
-1. Coordinator creates integration branch `implementation/sankalpa` from the approved planning checkpoint; record actual worktree and clean/dirty state. This branch now exists; check its recorded checkpoint before resuming.
+1. Historical bootstrap used `implementation/sankalpa`. Subsequent sessions start from main's accepted checkpoint and follow D18/[BRANCHES](BRANCHES.md); never rerun bootstrap or treat the archived integration branch as current.
 2. Ensure Node 24.20.0 (official macOS installation; use existing version manager if present), its npm 11.19.0, running Docker and sufficient space. Confirm `node --version`, `npm --version`, `docker info`. Do not print Docker/env credentials. Missing resources block SK-001.
 3. Manually create the minimal package/config/scripts from D02 and the SK-001 scope; keep repository docs/license. Set exact versions, strict TS, flat ESLint and formatting config. Use `npm install` once to create the lockfile; inspect `npm ls` and advisories. No forced peer resolution.
 4. Create canonical Supabase config/migrations and safe script wrappers, then use standard setup below. First installation must prove real Node/Next/React/TS/lint compatibility before broad feature work.
@@ -272,7 +272,7 @@ After approved interfaces and shared prerequisites are integrated, coordinator m
 - M5: SK-012 export and SK-013 appearance/audio after M4; SK-014 privacy waits for all private-storage/export/push lifecycle interfaces.
 - M6: SK-015 local operational proof can begin first; externally blocked SK-016/017 must not be bypassed. Final SK-018 integrates all evidence.
 
-Each concurrent implementation worker uses its **own Git worktree and branch**, e.g. coordinator runs `git worktree add ../sankalpa-worktrees/SK-007 -b task/SK-007-journal implementation/sankalpa` only after assignment. Record actual path/base SHA in TASKS/handoff. No same-directory parallel code editing. Parent and workers preserve one another's changes.
+Each concurrent implementation worker uses its **own Git worktree and branch**, created from the assigned accepted main/feature contract checkpoint with the `rajesh_kanaka/` prefix for new branches. Record exact branch/path/base/resource in BRANCHES and its handoff; TASKS holds the owner and status. Reuse the documented active worktree when resuming. No same-directory parallel code editing. Parent and workers preserve one another's changes.
 
 Resource slot `n` allocates app port `3000+n`, test-server port `3100+n`, Supabase ports `54320+100*n` through `54339+100*n`, unique project/container ID `sankalpa-slot-n`, per-worktree `.local/`, database volume, mail inbox and Playwright browser storage. SK-001's wrapper maps **every enabled** CLI service port from its verified config template into the reserved block; disables unused services; checks conflicts rather than killing existing processes. Never share local `.env`, queues, auth state or synthetic namespaces. If RAM/ports are insufficient, run sequentially. CI uses one stack per job and isolated namespace per serial database fixture suite.
 
@@ -280,7 +280,7 @@ Coordinator alone changes root manifests/lockfiles, tsconfig/Next/ESLint/Playwri
 
 Each worker creates `docs/handoffs/SK-xxx.md` containing: task/outcome, owner/base SHA/branch/worktree/slot, files changed, consumed/produced interfaces, small substeps and exact unfinished substep, commands with actual PASS/FAIL/NOT RUN results, evidence paths, failed attempts/lessons, commits/dirty files, shared-change requests and restart instructions. Reports describe facts, not a second task-status register.
 
-Integration protocol: coordinator reads report/diff, checks scope/secrets and interface/schema compatibility, runs relevant checks, integrates the task commits into `implementation/sankalpa` (ordinary merge only within user-authorized local implementation scope), reruns cumulative smoke and relevant regression on the integrated checkout, then records TASKS status/evidence and progress/session handoff in focused commits. Conflicts are resolved with both owners and tested; no hard resets/rebases/force push. Keep worktrees until handoff and integration are verified; remove only clean unused worktrees with appropriate authorization. Worker-local green does not establish integrated DONE.
+Integration protocol (D18): coordinator reads report/diff, checks scope/secrets and interface/schema compatibility, integrates only assigned commits into a short feature branch based on main, and reruns cumulative smoke and relevant regression there. The PR includes TASKS, progress/session handoff, evidence and branch-map changes. Merge to main only after required CI succeeds and review findings are resolved. Fast-forward local main, verify the actual merge SHA, and use main's documents as the next session's starting point. Keep unfinished modules on named worker/feature branches, never imply their acceptance from a successful unrelated merge. Conflicts are resolved with both owners and tested; no hard resets/rebases/force push. Preserve historical worktrees until deliberately retired; worker-local green does not establish integrated DONE.
 
 ## 8. Validation, risks and completion gate
 

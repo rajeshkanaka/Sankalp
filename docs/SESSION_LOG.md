@@ -91,3 +91,10 @@ SK-008 preparation installs only planned idb8.0.3 (audit0 vulnerabilities), free
 ## 2026-09-06 — User-requested break and durable resume checkpoint
 
 User requested pause, commit/push all current work, then manual morning resumption. Final integrated fullUI94699 passed50/50 in2.2minutes;115unit/format/lint/type PASS18833;83DB/build/smoke previously passed and finalrebuild passed. Root application checkpointd2b1d85 and final evidence/handoff are saved. Unfinished offline work is committed separately: core86769b5, UI3d54c3b, HTTP037ab05. Known WIP failures and exact nextsubstep are in SK-008-break and branch reports; nothing was promoted toDONE. App3001 and owned Supabase slot1 stopped, private volumes/env preserved. No overnight agent work or automation. Final remote CI is pending until freshly inspected.
+
+
+## 2026-09-06 — Resume reconciliation and main-first integration
+
+User resumed and requested tested work merged through PRs, authoritative coordinator context on main and an exact worktree map before continuing. Read the overnight checkpoint and audited25local branches/23worktrees: all tracked trees clean; only the documented core dependency symlink untracked. All old source is integrated except core86769b5/UI3d54c3b; journal's final handoff is byte-identical despite adjusted cherry-picks. Fresh remote refs matched all saved checkpoints. BRANCHES records the inventory; no historical worktree or legacy database was deleted.
+
+Hosted CI33995477654 on ef6e0a9 is now verified SUCCESS (verify, fullUI and audits). Restarted preserved slot1; fresh local npm verify PASS115unit/83DB/build/real smoke, raw safe-wrapper output in ignored artifacts/resume-verify.log. Review found a cross-tab closure-event omission in the client mutation response; narrowly assigned regression/fix before PR. Seven inactive unfinished offline source/test files are removed only from the consolidation branch and remain recoverable at ef6e0a9. The selected architecture and complete launch scope are unchanged. D18 establishes main-first context and regular reviewed integration; no implementation task was promoted merely because work resumed.
