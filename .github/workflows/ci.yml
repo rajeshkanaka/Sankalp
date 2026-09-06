@@ -27,6 +27,8 @@ jobs:
       - run: npm exec -- playwright install --with-deps chromium webkit firefox
       - run: npm run verify
       - run: npm run test:ui
+      - run: npm run test:offline-core
+      - run: npm run test:offline-ui
       - run: npm audit --omit=dev && npm audit
       - name: Retain synthetic UI evidence
         if: always()
@@ -35,6 +37,8 @@ jobs:
           name: verification-evidence
           path: |
             artifacts/ui/summary.json
+            artifacts/offline-core/summary.json
+            artifacts/offline-ui/summary.json
             docs/evidence/M*/**/*.png
             docs/evidence/M*/**/manifest.md
           retention-days: 14

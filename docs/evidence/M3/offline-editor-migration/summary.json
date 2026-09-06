@@ -1,0 +1,217 @@
+{
+  "sourceSha": "e1226e064be2dea1daebcb886fda40017675da13",
+  "generatedAt": "2026-09-06T08:44:54.261Z",
+  "status": "FAILED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2400,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32261,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "chromium",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 3820,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "chromium",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "TIMED_OUT",
+      "attempts": [
+        {
+          "actualStatus": "TIMED_OUT",
+          "durationMs": 60033,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 255,
+      "project": "chromium",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 10624,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2678,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 31943,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "webkit",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 4120,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "webkit",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "TIMED_OUT",
+      "attempts": [
+        {
+          "actualStatus": "TIMED_OUT",
+          "durationMs": 60035,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 255,
+      "project": "webkit",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 11264,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 78,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections shows a closure created by another tab without reloading",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 2742,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 134,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections preserves factual chronology through correction and undo",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 32172,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/corrections.spec.ts",
+      "line": 347,
+      "project": "firefox",
+      "title": "@M3 @M3-corrections unified editor preserves historical chronology through outage, correction and undo",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 11436,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 93,
+      "project": "firefox",
+      "title": "@M3 @M3-journal private Unicode reflections autosave, search and resolve conflicts",
+      "actualStatus": "TIMED_OUT",
+      "attempts": [
+        {
+          "actualStatus": "TIMED_OUT",
+          "durationMs": 60033,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/journal.spec.ts",
+      "line": 255,
+      "project": "firefox",
+      "title": "@M3 @M3-journal unified editor autosaves Unicode and resolves an actual two-device reflection conflict",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 12097,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

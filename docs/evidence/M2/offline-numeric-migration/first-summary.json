@@ -1,0 +1,91 @@
+{
+  "sourceSha": "5a90423844b353b003c5a49c91f4607c35b56b75",
+  "generatedAt": "2026-09-06T08:48:23.489Z",
+  "status": "FAILED",
+  "tests": [
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 17,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 19926,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "chromium",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 1754,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 17,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 20305,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "webkit",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 1968,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 17,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule personalized schedules preview accurately and numeric targets require saved completion",
+      "actualStatus": "PASSED",
+      "attempts": [
+        {
+          "actualStatus": "PASSED",
+          "durationMs": 21473,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "sourceFile": "tests/ui/m2-schedule.spec.ts",
+      "line": 259,
+      "project": "firefox",
+      "title": "@M2 @M2-schedule unified numeric practice survives real disconnection and completes once after replay",
+      "actualStatus": "FAILED",
+      "attempts": [
+        {
+          "actualStatus": "FAILED",
+          "durationMs": 9270,
+          "retry": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Offline functional integration — partial checkpoint
+
+2026-09-06, production build at5cee27e plus test proxy/package/CI working changes. Actual app, local SupabaseAuth/PostgreSQL17.6 slot1/migrations001–008, synthetic accounts/fixtures and explicit demo clock. All tested core/UI source is integrated; no private credentials/data included.
+
+Static format/lint/typecheck/build passed. Actual unit run121PASS and database84PASS. Real browser IndexedDB/Web Locks core harness18scenarios perengine and UI harness9 named scenarios perengine passed Chromium153.0.8010.12, WebKit26.6, Firefox155 with zero pageerrors (harness HTTP transport/shell readiness explicitly synthetic).
+
+`UI_RUN_ID=offline-functional-pass1 npm run test:ui -- --grep '@M3-offline|@smoke|metadata remains separate'`: **FAILED overall:22PASSED,6FAILED**. Safe summary.json records exact cases. Actual public shell network cutoff/privacy assertions passed all3 engines. Actual disconnected edit/reload/replay passed Chromium/WebKit; Firefox reconnect is still under investigation. Actual quota preservation passed all3; account-switch case failedWebKit. Smoke passed Chromium/Firefox and failedWebKit. Metadata revision/hydration workflow passed all3. Existing fallback draft/mood/time preservation passed all3. The new pending-write/logout case failed all3 after logout correctly began; an invalid assertion expected the now-withheld editor to remain visible. Test correction preserves real response/canonical note/final logout verification.
+
+Screenshots are actual intermediate outcomes, including partial failed cases, and do not establish a completed milestone. The physical network cutoff is a test-only TCP proxy; it keeps app/worker responses real and does not change navigator.onLine. The Chrome browser-offline supplemental path is separately exercised; WebKit/Firefox simulator limitations are documented in SK-008-network-testing. No phone/deployment/native-accessibility pass is implied.

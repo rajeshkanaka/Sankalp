@@ -6,6 +6,11 @@ import type {
 } from '../../src/domain/contracts';
 import { capturedSignIn } from './helpers/sign-in';
 
+// This regression deliberately simulates a lost HTTP response. Blocking the
+// worker keeps page routing observable in every engine; offline flows use the
+// separate real-network-cutoff suite.
+test.use({ serviceWorkers: 'block' });
+
 async function completeSetup(page: import('@playwright/test').Page) {
   await page.getByLabel('Journey title', { exact: true }).fill('Saved draft');
   await page.getByLabel('Personal intention (optional)', { exact: true }).fill('Resume this later');
@@ -18,7 +23,7 @@ async function completeSetup(page: import('@playwright/test').Page) {
   await page.getByLabel('I confirm this practice timezone.').check();
 }
 
-test('@SK003 a saved draft resumes and every later preview updates the same journey', async ({
+test('@SK003 online-only simulated response failure preserves draft and retry identity', async ({
   page,
 }, info) => {
   await capturedSignIn(

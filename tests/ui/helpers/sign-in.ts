@@ -40,4 +40,10 @@ export async function capturedSignIn(page: Page, email: string) {
   }
   await expect.poll(() => new URL(page.url()).pathname).toBe('/today');
   expect(new URL(page.url()).origin).toBe(process.env.UI_ORIGIN);
+  // A user cannot use the private navigation until this startup boundary clears.
+  // Do not interrupt its first worker registration with an immediate test-only goto.
+  await expect(page.getByText('Opening your private practice space…', { exact: true })).toHaveCount(
+    0,
+    { timeout: 15000 },
+  );
 }

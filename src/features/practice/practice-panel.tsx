@@ -16,6 +16,7 @@ import { formatInstant, StatusBadge } from '@/components/presentation';
 import { PracticeValueInput } from './practice-value-input';
 import { CompletionControls, HistoryTimeline } from './corrections';
 import { countdownLabel, usePracticeClock } from './use-practice-clock';
+import { useOnlineEditorCheckpoint } from './use-online-editor-checkpoint';
 import styles from '@/styles/sanctuary.module.css';
 
 type PracticeValue = boolean | number;
@@ -120,7 +121,13 @@ export function PracticePanel({
   const beforeOpening = Date.parse(now) < Date.parse(session.opensAt);
   const closed = Date.parse(now) >= Date.parse(session.closesAt);
   const unsaved = dirtyIds.size > 0;
-  const canEdit = !beforeOpening && !session.confirmed && !pending && !failedPracticeId;
+  const { frozen, isFrozen, trackRequest } = useOnlineEditorCheckpoint(
+    unsaved ||
+      Boolean(pending) ||
+      Boolean(pendingCompletion.current) ||
+      Boolean(pendingRemoval.current),
+  );
+  const canEdit = !frozen && !beforeOpening && !session.confirmed && !pending && !failedPracticeId;
   const canConfirm = canEdit && !closed && !unsaved && targetsMet(session);
   const conflict =
     error instanceof RequestError &&
@@ -147,6 +154,7 @@ export function PracticePanel({
   }
 
   function editNumeric(practiceId: string, value: string) {
+    if (isFrozen()) return;
     setDrafts((current) => ({ ...current, [practiceId]: value }));
     markDirty(practiceId);
     if (pendingSave.current?.practiceId === practiceId) pendingSave.current = null;
@@ -155,6 +163,7 @@ export function PracticePanel({
   }
 
   async function savePractice(practiceId: string, value: PracticeValue, retry = false) {
+    if (isFrozen()) return;
     if (!retry && failedPracticeId && pendingSave.current) {
       setMessage('Retry the failed save before changing another practice.');
       return;
@@ -176,10 +185,12 @@ export function PracticePanel({
     }
     const attempt = pendingSave.current;
     try {
-      const result = await requestJson<SessionMutationResult>(
-        `/api/sessions/${session.id}/practices`,
-        'PUT',
-        attempt.mutation,
+      const result = await trackRequest(() =>
+        requestJson<SessionMutationResult>(
+          `/api/sessions/${session.id}/practices`,
+          'PUT',
+          attempt.mutation,
+        ),
       );
       setSession(result.session);
       addHistory(result);
@@ -247,6 +258,7 @@ export function PracticePanel({
   }
 
   function saveNumeric(practiceId: string) {
+    if (isFrozen()) return;
     const raw = drafts[practiceId] ?? '';
     const value = Number(raw);
     if (raw.trim() === '' || !Number.isInteger(value) || value < 0 || value > 1_000_000) {
@@ -269,6 +281,7 @@ export function PracticePanel({
   }
 
   async function recordCompletion(performedAt: string) {
+    if (isFrozen()) return;
     setPending('complete');
     setError(null);
     setMessage('Recording your session…');
@@ -282,11 +295,14 @@ export function PracticePanel({
         },
       };
     }
+    const completionAttempt = pendingCompletion.current;
     try {
-      const result = await requestJson<SessionMutationResult>(
-        `/api/sessions/${session.id}/completion`,
-        'POST',
-        pendingCompletion.current.mutation,
+      const result = await trackRequest(() =>
+        requestJson<SessionMutationResult>(
+          `/api/sessions/${session.id}/completion`,
+          'POST',
+          completionAttempt.mutation,
+        ),
       );
       setSession(result.session);
       addHistory(result);
@@ -322,6 +338,7 @@ export function PracticePanel({
   }
 
   async function removeRecordedCompletion() {
+    if (isFrozen()) return;
     setPending('undo');
     setError(null);
     setMessage('Removing the completion record…');
@@ -331,10 +348,12 @@ export function PracticePanel({
       payload: {},
     };
     try {
-      const result = await requestJson<SessionMutationResult>(
-        `/api/sessions/${session.id}/completion`,
-        'DELETE',
-        pendingRemoval.current,
+      const result = await trackRequest(() =>
+        requestJson<SessionMutationResult>(
+          `/api/sessions/${session.id}/completion`,
+          'DELETE',
+          pendingRemoval.current,
+        ),
       );
       setSession(result.session);
       addHistory(result);
@@ -400,6 +419,7 @@ export function PracticePanel({
               disabled={!canEdit}
               dirty={dirtyIds.has(practice.id)}
               onCheckboxChange={(checked) => {
+                if (isFrozen()) return;
                 setValues((current) => ({ ...current, [practice.id]: checked }));
                 markDirty(practice.id);
                 void savePractice(practice.id, checked);
@@ -418,7 +438,7 @@ export function PracticePanel({
         <button
           type="button"
           className={`${styles.button} ${styles.secondary}`}
-          disabled={Boolean(pending) || beforeOpening}
+          disabled={frozen || Boolean(pending) || beforeOpening}
           onClick={() => {
             const attempt = pendingSave.current;
             if (attempt) void savePractice(attempt.practiceId, attempt.value, true);
@@ -435,6 +455,7 @@ export function PracticePanel({
           <button
             type="button"
             className={`${styles.button} ${styles.secondary}`}
+            disabled={frozen}
             onClick={() => window.location.reload()}
           >
             Discard local entries and load saved practice
@@ -456,7 +477,7 @@ export function PracticePanel({
             key={`${session.id}-${session.revision}`}
             session={session}
             now={now}
-            pending={Boolean(pending) || conflict}
+            pending={frozen || Boolean(pending) || conflict}
             onRecord={(performedAt) => void recordCompletion(performedAt)}
             onRemove={() => void removeRecordedCompletion()}
           />
@@ -475,7 +496,7 @@ export function PracticePanel({
               key={`${session.id}-${session.revision}`}
               session={session}
               now={now}
-              pending={Boolean(pending) || conflict}
+              pending={frozen || Boolean(pending) || conflict}
               onRecord={(performedAt) => void recordCompletion(performedAt)}
               onRemove={() => void removeRecordedCompletion()}
             />

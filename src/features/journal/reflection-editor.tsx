@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RequestError, requestJson } from '@/components/api';
+import { useOnlineEditorCheckpoint } from '@/features/practice/use-online-editor-checkpoint';
 import { RequestErrorMessage } from '@/components/request-error';
 import type {
   MutationEnvelope,
@@ -141,13 +142,16 @@ export function ReflectionEditor({
   latestPayload.current = payload;
   revisionRef.current = revision;
   const currentSignature = signature(payload);
+  const { frozen, isFrozen, trackRequest } = useOnlineEditorCheckpoint(
+    currentSignature !== savedSignature || moodInput.length > 0 || pending || Boolean(conflict),
+  );
   const validationMessage = payloadError(payload);
   const unavailable =
     Boolean(session.supersededAt) || Date.parse(now) < Date.parse(session.opensAt);
 
   const persist = useCallback(
     async (options?: { retry?: boolean; payload?: ReflectionPayload; baseRevision?: number }) => {
-      if (pendingRef.current) return;
+      if (pendingRef.current || isFrozen()) return;
       const nextPayload = options?.payload ?? latestPayload.current;
       const nextError = payloadError(nextPayload);
       if (nextError) {
@@ -172,10 +176,12 @@ export function ReflectionEditor({
       setState('Saving…');
       setError(null);
       try {
-        const saved = await requestJson<ReflectionMutationResult>(
-          `/api/sessions/${session.id}/reflection`,
-          'PUT',
-          currentAttempt.mutation,
+        const saved = await trackRequest(() =>
+          requestJson<ReflectionMutationResult>(
+            `/api/sessions/${session.id}/reflection`,
+            'PUT',
+            currentAttempt.mutation,
+          ),
         );
         revisionRef.current = saved.revision;
         setRevision(saved.revision);
@@ -233,11 +239,12 @@ export function ReflectionEditor({
         setPending(false);
       }
     },
-    [session.id],
+    [session.id, isFrozen, trackRequest],
   );
 
   useEffect(() => {
     if (
+      frozen ||
       currentSignature === savedSignature ||
       validationMessage ||
       pending ||
@@ -252,6 +259,7 @@ export function ReflectionEditor({
     return () => window.clearTimeout(timer);
   }, [
     autosaveBlocked,
+    frozen,
     conflict,
     currentSignature,
     pending,
@@ -263,6 +271,7 @@ export function ReflectionEditor({
   ]);
 
   function addMood() {
+    if (isFrozen()) return;
     const mood = moodInput.trim();
     if (!mood || Array.from(mood).length > MAX_MOOD) {
       setError(new Error('Enter a mood using 1 to 40 characters.'));
@@ -284,6 +293,7 @@ export function ReflectionEditor({
   }
 
   function useSavedVersion() {
+    if (isFrozen()) return;
     if (!conflict) return;
     const next = conflict.server
       ? { text: conflict.server.text, moods: [...conflict.server.moods] }
@@ -302,6 +312,7 @@ export function ReflectionEditor({
   }
 
   function keepLocalVersion() {
+    if (isFrozen()) return;
     if (!conflict) return;
     const local = conflict.local;
     const baseRevision = conflict.server?.revision ?? 0;
@@ -347,7 +358,7 @@ export function ReflectionEditor({
           id={`reflection-${session.id}`}
           className={styles.editor}
           value={text}
-          disabled={pending || Boolean(conflict) || retryRequired}
+          disabled={frozen || pending || Boolean(conflict) || retryRequired}
           aria-describedby={`reflection-count-${session.id}`}
           onChange={(event) => {
             setText(event.target.value);
@@ -366,7 +377,7 @@ export function ReflectionEditor({
           <input
             id={`mood-${session.id}`}
             value={moodInput}
-            disabled={pending || Boolean(conflict) || retryRequired || moods.length >= 5}
+            disabled={frozen || pending || Boolean(conflict) || retryRequired || moods.length >= 5}
             onChange={(event) => setMoodInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
@@ -378,7 +389,7 @@ export function ReflectionEditor({
           <button
             type="button"
             className={`${shared.button} ${shared.secondary}`}
-            disabled={pending || Boolean(conflict) || retryRequired || moods.length >= 5}
+            disabled={frozen || pending || Boolean(conflict) || retryRequired || moods.length >= 5}
             onClick={addMood}
           >
             Add mood
@@ -392,7 +403,7 @@ export function ReflectionEditor({
                 <button
                   type="button"
                   aria-label={`Remove mood ${mood}`}
-                  disabled={pending || Boolean(conflict) || retryRequired}
+                  disabled={frozen || pending || Boolean(conflict) || retryRequired}
                   onClick={() => {
                     setMoods((current) => current.filter((item) => item !== mood));
                     setError(null);
@@ -426,12 +437,18 @@ export function ReflectionEditor({
             />
           </div>
           <div className={shared.actions}>
-            <button type="button" className={shared.button} onClick={keepLocalVersion}>
+            <button
+              type="button"
+              className={shared.button}
+              disabled={frozen}
+              onClick={keepLocalVersion}
+            >
               Keep my version
             </button>
             <button
               type="button"
               className={`${shared.button} ${shared.secondary}`}
+              disabled={frozen}
               onClick={useSavedVersion}
             >
               Use saved version
@@ -444,6 +461,7 @@ export function ReflectionEditor({
           type="button"
           className={shared.button}
           disabled={
+            frozen ||
             pending ||
             Boolean(conflict) ||
             retryRequired ||
@@ -458,7 +476,7 @@ export function ReflectionEditor({
           <button
             type="button"
             className={`${shared.button} ${shared.secondary}`}
-            disabled={pending}
+            disabled={frozen || pending}
             onClick={() => void persist({ retry: true })}
           >
             Try saving again

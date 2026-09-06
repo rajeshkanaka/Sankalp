@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 .next/
 dist/
 .env*
@@ -11,3 +11,6 @@ test-results/
 next-env.d.ts
 .DS_Store
 .superpowers/
+public/offline/
+public/sw.js
+!src/service-worker/shell/index.html

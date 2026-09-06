@@ -1,0 +1,332 @@
+{
+  "sourceCommit": "ea9d6b3a3e077583c82bae5a98f681d9fe6a8133",
+  "sourceDirty": true,
+  "integration": "SIMULATED_BACKEND_AND_PUBLIC_SHELL_READINESS",
+  "renderMode": "PRODUCTION",
+  "browsers": [
+    {
+      "browser": "chromium",
+      "version": "153.0.8010.12",
+      "status": "PASS",
+      "pageErrors": 0,
+      "scenarios": [
+        {
+          "name": "failed-draft-preservation",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-read-withholding",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-change-notification",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-save-feedback-after-prop-refresh",
+          "status": "PASS"
+        },
+        {
+          "name": "immediate-checkbox",
+          "status": "PASS"
+        },
+        {
+          "name": "shared-device-roundtrip",
+          "status": "PASS"
+        },
+        {
+          "name": "dirty-online-input-guards-private-mode",
+          "status": "PASS"
+        },
+        {
+          "name": "post-privacy-read-failure-recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid-numeric-reload",
+          "status": "PASS"
+        },
+        {
+          "name": "account-quarantine",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrent-draft-cleanup-CAS",
+          "status": "PASS"
+        },
+        {
+          "name": "full-ordered-conflict-and-explicit-discard",
+          "status": "PASS"
+        },
+        {
+          "name": "compact-privacy-320px",
+          "status": "PASS"
+        },
+        {
+          "name": "unverified-storage-blocks-signout",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-response-binding-CAS-race",
+          "status": "PASS"
+        },
+        {
+          "name": "stale-account-verification-denial",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-account-change-race",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-clear-does-not-resurrect",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-failure-still-requires-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "scope-less-online-mode-rechecks-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-failure-retains-retry-after-local-purge",
+          "status": "PASS"
+        },
+        {
+          "name": "initial-private-bind-requires-live-verification",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-local-offline-focus-preserves-input",
+          "status": "PASS"
+        },
+        {
+          "name": "unavailable-identity-preserves-only-in-memory-input",
+          "status": "PASS"
+        },
+        {
+          "name": "authoritative-signed-out-retry-needs-no-post",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "browser": "webkit",
+      "version": "26.6",
+      "status": "PASS",
+      "pageErrors": 0,
+      "scenarios": [
+        {
+          "name": "failed-draft-preservation",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-read-withholding",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-change-notification",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-save-feedback-after-prop-refresh",
+          "status": "PASS"
+        },
+        {
+          "name": "immediate-checkbox",
+          "status": "PASS"
+        },
+        {
+          "name": "shared-device-roundtrip",
+          "status": "PASS"
+        },
+        {
+          "name": "dirty-online-input-guards-private-mode",
+          "status": "PASS"
+        },
+        {
+          "name": "post-privacy-read-failure-recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid-numeric-reload",
+          "status": "PASS"
+        },
+        {
+          "name": "account-quarantine",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrent-draft-cleanup-CAS",
+          "status": "PASS"
+        },
+        {
+          "name": "full-ordered-conflict-and-explicit-discard",
+          "status": "PASS"
+        },
+        {
+          "name": "compact-privacy-320px",
+          "status": "PASS"
+        },
+        {
+          "name": "unverified-storage-blocks-signout",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-response-binding-CAS-race",
+          "status": "PASS"
+        },
+        {
+          "name": "stale-account-verification-denial",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-account-change-race",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-clear-does-not-resurrect",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-failure-still-requires-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "scope-less-online-mode-rechecks-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-failure-retains-retry-after-local-purge",
+          "status": "PASS"
+        },
+        {
+          "name": "initial-private-bind-requires-live-verification",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-local-offline-focus-preserves-input",
+          "status": "PASS"
+        },
+        {
+          "name": "unavailable-identity-preserves-only-in-memory-input",
+          "status": "PASS"
+        },
+        {
+          "name": "authoritative-signed-out-retry-needs-no-post",
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "browser": "firefox",
+      "version": "155.0",
+      "status": "PASS",
+      "pageErrors": 0,
+      "scenarios": [
+        {
+          "name": "failed-draft-preservation",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-read-withholding",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-change-notification",
+          "status": "PASS"
+        },
+        {
+          "name": "canonical-save-feedback-after-prop-refresh",
+          "status": "PASS"
+        },
+        {
+          "name": "immediate-checkbox",
+          "status": "PASS"
+        },
+        {
+          "name": "shared-device-roundtrip",
+          "status": "PASS"
+        },
+        {
+          "name": "dirty-online-input-guards-private-mode",
+          "status": "PASS"
+        },
+        {
+          "name": "post-privacy-read-failure-recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid-numeric-reload",
+          "status": "PASS"
+        },
+        {
+          "name": "account-quarantine",
+          "status": "PASS"
+        },
+        {
+          "name": "concurrent-draft-cleanup-CAS",
+          "status": "PASS"
+        },
+        {
+          "name": "full-ordered-conflict-and-explicit-discard",
+          "status": "PASS"
+        },
+        {
+          "name": "compact-privacy-320px",
+          "status": "PASS"
+        },
+        {
+          "name": "unverified-storage-blocks-signout",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-response-binding-CAS-race",
+          "status": "PASS"
+        },
+        {
+          "name": "stale-account-verification-denial",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-account-change-race",
+          "status": "PASS"
+        },
+        {
+          "name": "readiness-clear-does-not-resurrect",
+          "status": "PASS"
+        },
+        {
+          "name": "storage-failure-still-requires-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "scope-less-online-mode-rechecks-identity",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-failure-retains-retry-after-local-purge",
+          "status": "PASS"
+        },
+        {
+          "name": "initial-private-bind-requires-live-verification",
+          "status": "PASS"
+        },
+        {
+          "name": "verified-local-offline-focus-preserves-input",
+          "status": "PASS"
+        },
+        {
+          "name": "unavailable-identity-preserves-only-in-memory-input",
+          "status": "PASS"
+        },
+        {
+          "name": "authoritative-signed-out-retry-needs-no-post",
+          "status": "PASS"
+        }
+      ]
+    }
+  ]
+}

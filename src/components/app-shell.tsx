@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { Icon } from './icons';
 import { requestJson } from './api';
-import { RequestErrorMessage } from './request-error';
+import { OfflineAccountControls } from '@/offline/ui';
 import styles from '@/styles/sanctuary.module.css';
 
 function Navigation({ mobile = false }: { mobile?: boolean }) {
@@ -57,27 +57,18 @@ function Navigation({ mobile = false }: { mobile?: boolean }) {
 
 export function AppShell({
   children,
+  accountId,
   email,
   demo,
 }: {
   children: ReactNode;
+  accountId: string;
   email?: string;
   demo: boolean;
 }) {
-  const router = useRouter();
-  const [signingOut, setSigningOut] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
   async function signOut() {
-    setSigningOut(true);
-    setError(null);
-    try {
-      await requestJson('/api/auth/sign-out', 'POST', {});
-      router.replace('/welcome');
-      router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause : new Error('Could not sign out. Try again.'));
-      setSigningOut(false);
-    }
+    await requestJson('/api/auth/sign-out', 'POST', { accountId });
+    window.location.replace('/welcome');
   }
   const brand = (
     <Link prefetch={false} className={styles.brand} href="/today">
@@ -106,19 +97,11 @@ export function AppShell({
           <span className={styles.topbarTitle}>Your personal practice space</span>
           <div className={styles.topbarTools}>
             {email && <span className={styles.userEmail}>{email}</span>}
-            <button
-              type="button"
-              className={styles.accountButton}
-              onClick={signOut}
-              disabled={signingOut}
-            >
-              {signingOut ? 'Signing out…' : 'Sign out'}
-            </button>
+            <OfflineAccountControls compact onSignOut={signOut} />
           </div>
           {demo && <span className={styles.demo}>Demo data · simulated clock</span>}
         </header>
         <main id="main-content" className={styles.content} tabIndex={-1}>
-          <RequestErrorMessage error={error} />
           {children}
         </main>
       </div>

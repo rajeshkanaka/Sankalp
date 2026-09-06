@@ -219,6 +219,13 @@ test.describe('@M3 @M3-offline offline replay HTTP boundaries', () => {
 
     await capturedSignIn(page, OWNER_EMAIL);
     const ownerId = await identity(page.request);
+    for (const operationId of [undefined, 'not-an-operation-id']) {
+      const rejectedCreate = await page.request.post('/api/journeys', {
+        headers: { ...headers(), ...(operationId ? { 'Idempotency-Key': operationId } : {}) },
+        data: draft(),
+      });
+      await expectError(rejectedCreate, 422, 'INVALID_OPERATION_ID');
+    }
     const other = await signInOther(browser);
     try {
       expect(other.accountId).not.toBe(ownerId);

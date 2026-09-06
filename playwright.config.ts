@@ -39,7 +39,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'node scripts/run-next.mjs start',
+    command: 'node scripts/run-ui-server.mjs',
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 7000 },
     url: `${origin}/welcome`,
     reuseExistingServer: false,
     timeout: 30000,

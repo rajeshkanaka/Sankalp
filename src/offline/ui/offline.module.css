@@ -1,0 +1,179 @@
+.boundary,
+.savedPage {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+.sessionLayout,
+.savedList {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.notice,
+.pending,
+.conflict,
+.accountChoice {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.notice {
+  margin-bottom: 24px;
+  color: var(--muted);
+}
+.pending {
+  margin: 20px 0;
+  border-color: var(--brass);
+}
+.versions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+.version {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.version li {
+  margin-bottom: 12px;
+}
+.reflectionText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sessionMeta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+.checklist > li {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.numericPractice {
+  display: grid;
+  gap: 12px;
+}
+.numericPractice small,
+.numericEntry small {
+  display: block;
+  color: var(--muted);
+}
+.numericEntry {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.numericEntry input {
+  width: 140px;
+  min-height: 48px;
+  padding: 10px 12px;
+  color: var(--parchment);
+  background: var(--night);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.saveState,
+.accountMessage {
+  margin: 16px 0;
+  color: var(--muted);
+}
+.completion {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.reflectionEditor {
+  min-height: 170px;
+  resize: vertical;
+}
+.moodEntry {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.moodEntry > div {
+  flex: 1;
+  min-width: 160px;
+}
+.moods {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+}
+.moods li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.moods button {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--parchment);
+  background: transparent;
+  border: 0;
+}
+.prompts {
+  color: var(--muted);
+  padding-left: 24px;
+}
+.accountControls {
+  margin-top: 24px;
+}
+.accountChoice {
+  margin-top: 20px;
+}
+@media (max-width: 640px) {
+  .versions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .boundary,
+  .savedPage {
+    padding: 24px 16px;
+  }
+  .sessionMeta {
+    display: grid;
+    gap: 4px;
+  }
+}
+
+.compactControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.accountToolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.accountDetails {
+  max-width: 560px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}

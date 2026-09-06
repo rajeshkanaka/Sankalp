@@ -1,0 +1,3 @@
+# Editor migration first run
+
+2026-09-06,15actual browser cases against production389e493 with testsaf16adf integrated as eeeec52.11PASS/4FAIL. Unified journal all3passed; unified historical correction Chromium/WebKitpassed, Firefoxfailed because canonical refresh overwrote Saved status. UI-owner source fix and regression assigned. All3legacy journal cases reached their final navigation but exceeded cumulative60sec across repeated7sec online-only worker-readiness fallbacks; nexttestcheckpoint120sec retains every10sec assertion and all original behavior checks. Corrections legacy all3passed. Summary/screenshots are synthetic partial evidence, not milestone completion.
