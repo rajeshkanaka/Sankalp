@@ -141,6 +141,10 @@ export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise
     setMessage(null);
     try {
       await freeze();
+      if (hasUnstoredInput())
+        throw new Error(
+          'Save or cancel your current input before enabling private local storage. Your input remains here.',
+        );
       const nextScope = await setSharedDevice(scope, false);
       await adoptScope(nextScope);
       setMessage('Private offline storage is enabled for this account on this device.');

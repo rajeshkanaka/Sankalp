@@ -387,9 +387,9 @@ function AccountProvider({
   return (
     <OfflineAccountContext.Provider value={value}>
       {message && (
-        <aside className={styles.notice} role="status">
+        <div className={styles.notice} role="status">
           {message}
-        </aside>
+        </div>
       )}
       {unverified && (
         <section className={styles.notice} role="alert">
