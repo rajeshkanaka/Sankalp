@@ -1,5 +1,7 @@
 # M4 coordinator integration checkpoint
 
+**Current paused checkpoint: `4d9fd1d`; use the Emergency pause section below.** The initial foundation paragraphs retain earlier evidence, not current instructions. Migration011 is applied; corrections require012. PR6 later published the presentation tooling and saved context on main without accepting unfinished M4 source. Feature resume order is owned by PROJECT_PROGRESS.
+
 2026-09-06. Worktree SK-009-integration, branch rajesh_kanaka/reminder-integration, isolated slot2. Accepted base544f3ef; merge PR5's accepted main before cumulative application checks. TASKS alone owns status.
 
 Reviewed source integrated: pure domain2b66431/4c121ec; preference contract67c4704 and version/validationb817885; form3aa243b; database tests0a3a04a; guarded transport e296259. Transport includes212 focused tests and actual local TLS exercises, no real push.

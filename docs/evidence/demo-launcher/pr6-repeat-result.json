@@ -1,0 +1,13 @@
+{
+  "launcher_sha256": "ba943f73d0092293284d6017d874f7fe0e2d5d6229311d4444d33aba33b9f29a",
+  "exported_supabase_hostname": "remote.invalid",
+  "fixture_runtime_clock_unchanged": true,
+  "generated_connections_loopback_only": true,
+  "http_status": {
+    "http://localhost:3003/welcome": 200,
+    "http://127.0.0.1:54624": 200,
+    "http://localhost:3001/welcome": 200
+  },
+  "owned_app_and_backend_stopped": true,
+  "setup_lock_released": true
+}
