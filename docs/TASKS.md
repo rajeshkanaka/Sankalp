@@ -297,9 +297,9 @@ Additional launch coverage: email-link states/privacy/rate limits (001/002/014/0
 Task status remains in the register above. No feature worker is running; these are preserved scope boundaries for explicit reassignment after the user resumes. Coordinator owns shared files/integration. M4 checkpoint `4d9fd1d` includes accepted PR5 main `23f15b2` via `3be8815`; upstream B06 remains explicit. Current accepted main also contains PR6 presentation tooling, without accepting unfinished M4 code.
 
 - SK-009 C: reminder-integration `4d9fd1d`, slot 2, owns SQL/API/config/contracts. Migration 011 is applied; latest combined SQL run: 65 passed / 9 failed. Preserve existing migrations and implement corrections as migration 012 after reviewing the emergency handoff. Actual reminder UI/worker verification remains pending.
-- SK-009 schema tests: /root/branch_audit, reminder-schema-tests from177ab8b; only tests/integration/reminder-schema.test.ts and its handoff, no runtime or migration writes.
-- SK-009 UI tests: /root/merge_review, reminder-ui-tests from177ab8b; only tests/ui/m4-reminder-preferences.spec.ts and its handoff, actual API-driven fixtures, no mocked persistence/runtime borrowing.
-- SK-011 worker: /root/ci_triage, reminder-worker from32333fe; only src/worker/*.ts, tests/unit/worker*.test.ts and its handoff under SK-011-worker-contract. C supplies SQL/config/tsc/scripts and actual role/runtime tests.
+- SK-009 schema tests: /root/branch_audit, reminder-schema-tests from `177ab8b`; only tests/integration/reminder-schema.test.ts and its handoff, no runtime or migration writes.
+- SK-009 UI tests: /root/merge_review, reminder-ui-tests from `177ab8b`; only tests/ui/m4-reminder-preferences.spec.ts and its handoff, actual API-driven fixtures, no mocked persistence/runtime borrowing.
+- SK-011 worker: /root/ci_triage, reminder-worker from `32333fe`; only src/worker/*.ts, tests/unit/worker*.test.ts and its handoff under SK-011-worker-contract. C supplies SQL/config/tsc/scripts and actual role/runtime tests.
 - Reviewed domain, preference UI, preference DB tests and guarded transport are integrated substeps. BRANCHES preserves their historical source refs. They do not establish reminder delivery or milestone completion.
 
 Emergency pause2026-09-06: all agents stopped. First resume SK-008-P1. Its scope is service-worker navigation policy + actual offline Done/calendar navigation regression, preserving strict asset cache/auth query rejection. Evidence/test commands follow SK-008. M4 remains unfinished; no task promoted by checkpoint commits.

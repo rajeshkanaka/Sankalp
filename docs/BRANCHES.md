@@ -1,6 +1,6 @@
 # Branches and worktrees
 
-Coordinator-owned map, reconciled2026-09-06. Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and SESSION_LOG. Read active feature reports only after that accepted checkpoint. TASKS owns status; this file records locations and Git disposition.
+Coordinator-owned map, reconciled 2026-09-06. Begin every resume with `origin/main:docs/PROJECT_PROGRESS.md` and SESSION_LOG. Read active feature reports only after that accepted checkpoint. TASKS owns status; this file records locations and Git disposition.
 
 ## Accepted integration and paused feature map
 
@@ -13,16 +13,16 @@ All paths below are absolute. Branches are preserved; no cleanup/history rewrite
 | Documentation publication | `rajesh_kanaka/main-resume-checkpoint`, based on `ff6a479` | Coordinator-only documentation publication ref; no separate worktree or runtime. Main owns the accepted checkpoint. Use Git/PR history for the publication receipt and do not resume feature work on this branch. |
 | Offline PR5 integration | `rajesh_kanaka/offline-recovery` /526e947, merged by PR5 | Historical source ref, no separate worktree. Accepted into main `23f15b2` and retained by PR6; root is no longer checked out on this branch. |
 | Paused M4 coordinator | `rajesh_kanaka/reminder-integration` /`4d9fd1d` | `/Users/rajesh/sankalpa-worktrees/SK-009-integration`; coordinator, slot 2. Main `23f15b2` merged; migration 011 applied, latest combined SQL: 65 passed / 9 failed. New migration 012 required. Own SQL/API/config/integration; preserve unfinished source and the emergency handoff. |
-| Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated3aa243b/177ab8b; historical no runtime. |
+| Preferences UI | `rajesh_kanaka/reminder-preferences` /305a6bb | `/Users/rajesh/sankalpa-worktrees/SK-009-preferences`; /root/merge_review. UI integrated as `3aa243b`/177ab8b; historical no runtime. |
 | Preference database tests | `rajesh_kanaka/reminder-database-tests` /291f2ac | `/Users/rajesh/sankalpa-worktrees/SK-009-database-tests`; /root/branch_audit. Own specified test/handoff only; coordinator runs DB checks. |
-| Guarded push adapter | `rajesh_kanaka/push-transport` /8158aaa | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Reviewed transport integratede296259; historical, no DB/real sends. |
+| Guarded push adapter | `rajesh_kanaka/push-transport` /8158aaa | `/Users/rajesh/sankalpa-worktrees/SK-011-transport`; /root/ci_triage. Reviewed transport integrated as `e296259`; historical, no DB/real sends. |
 
 ## Paused feature recovery scopes
 
 All feature workers stopped for the emergency break. These are preserved responsibilities and recovery refs, not instructions to restart a worker. Resume order: user resumes → SK-008-P1 → SK-005-P2 → M4. Coordinator explicitly reassigns owners after reconciling current main and these handoffs.
 
 - /root/branch_audit: `rajesh_kanaka/reminder-schema-tests` /`a57388b`, `/Users/rajesh/sankalpa-worktrees/SK-009-schema-tests`, base `177ab8b`; owns only schema integration test and task report. Pending integration; coordinator executes slot 2 database tests.
-- /root/merge_review: `rajesh_kanaka/reminder-ui-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-ui-tests`, base177ab8b; owns only M4 preference UI tests/report. Actual server/DB use remains coordinator-owned.
+- /root/merge_review: `rajesh_kanaka/reminder-ui-tests`, `/Users/rajesh/sankalpa-worktrees/SK-009-ui-tests`, base `177ab8b`; owns only M4 preference UI tests/report. Actual server/DB use remains coordinator-owned.
 - /root/ci_triage: `rajesh_kanaka/reminder-worker` /`fd613d4`, `/Users/rajesh/sankalpa-worktrees/SK-011-worker`, base `32333fe`; owns src/worker, specified unit tests/report under frozen SK-011-worker-contract. Pending integration; no borrowed runtime, env, dependency or SQL edits.
 - Preferences report: `rajesh_kanaka/reminder-preferences-checkpoint` /`e26bffe`, `/Users/rajesh/sankalpa-worktrees/SK-009-preferences-checkpoint`. Report only; lifecycle bridge source not started.
 
