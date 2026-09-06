@@ -13,10 +13,12 @@ import {
 import {
   OfflineError,
   bindAccount,
+  clearAccount,
   flush,
   getDeviceState,
   subscribe,
   type AccountScope,
+  type ClearAction,
   type DeviceState,
   type FlushResult,
 } from '../core';
@@ -37,6 +39,8 @@ interface OfflineAccountContextValue {
   message: string | null;
   refresh(): Promise<void>;
   adoptScope(scope: AccountScope): Promise<void>;
+  verifyAndBindAccount(discardPrevious?: boolean): Promise<AccountScope>;
+  signOut(action: ClearAction, onSignOut: () => Promise<void>): Promise<void>;
   flushNow(): Promise<FlushResult>;
   freeze(): Promise<void>;
   unfreeze(): void;
@@ -61,6 +65,7 @@ export function useOfflineAccount(): OfflineAccountContextValue {
 export function OfflineAccountBoundary(props: {
   accountId: string;
   children: ReactNode;
+  verifyAccount: (accountId: string) => Promise<boolean>;
   ensureOfflineReady?: () => Promise<boolean>;
 }) {
   return <AccountProvider key={props.accountId} {...props} />;
@@ -69,10 +74,12 @@ export function OfflineAccountBoundary(props: {
 function AccountProvider({
   accountId,
   children,
+  verifyAccount,
   ensureOfflineReady,
 }: {
   accountId: string;
   children: ReactNode;
+  verifyAccount: (accountId: string) => Promise<boolean>;
   ensureOfflineReady?: () => Promise<boolean>;
 }) {
   const [scope, setScope] = useState<AccountScope | null>(null);
@@ -84,12 +91,18 @@ function AccountProvider({
   const [frozen, setFrozen] = useState(false);
   const [unverified, setUnverified] = useState(false);
   const unverifiedRef = useRef(false);
+  const identityPending = useRef(false);
   const frozenRef = useRef(false);
   const alive = useRef(true);
   const epoch = useRef(0);
   const readyRef = useRef(false);
   const readiness = useRef(ensureOfflineReady);
   readiness.current = ensureOfflineReady;
+  const verification = useRef(verifyAccount);
+  verification.current = verifyAccount;
+  const [logout, setLogout] = useState<'idle' | 'clearing' | 'pending' | 'failed' | 'done'>('idle');
+  const logoutCallback = useRef<(() => Promise<void>) | null>(null);
+  const logoutInFlight = useRef(false);
   const editors = useRef(new Set<EditorCheckpoint>());
   const flushController = useRef<AbortController | null>(null);
   const activeFlush = useRef<Promise<FlushResult> | null>(null);
@@ -121,8 +134,10 @@ function AccountProvider({
     setMessage(reason);
   }, []);
   const applyDevice = useCallback((next: DeviceState, activeScope: AccountScope) => {
-    unverifiedRef.current = false;
-    setUnverified(false);
+    if (!identityPending.current) {
+      unverifiedRef.current = false;
+      setUnverified(false);
+    }
     scopeRef.current = activeScope;
     deviceRef.current = next;
     setScope(activeScope);
@@ -197,6 +212,32 @@ function AccountProvider({
     },
     [accountId, applyDevice, invalidate],
   );
+  const verifyAndBindAccount = useCallback(
+    async (discardPrevious = false): Promise<AccountScope> => {
+      // Capture the binding token before the network wait; never reclaim another tab's scope.
+      const before = await getDeviceState().catch(() => null);
+      const verified = await verification.current(accountId).catch(() => false);
+      if (!alive.current || !verified) {
+        invalidate();
+        throw new OfflineError('ACCOUNT_VERIFICATION_FAILED', 'Verify your account to continue.');
+      }
+      if (!before)
+        throw new OfflineError(
+          'STORAGE_UNAVAILABLE',
+          'Local account storage could not be verified.',
+        );
+      try {
+        return await bindAccount(accountId, {
+          discardPrevious,
+          expectedGeneration: before.bindingGeneration,
+        });
+      } catch (error) {
+        if (error instanceof OfflineError && error.code === 'ACCOUNT_CHANGED') invalidate();
+        throw error;
+      }
+    },
+    [accountId, invalidate],
+  );
   const establish = useCallback(
     async (discardPrevious = false) => {
       const ticket = ++epoch.current;
@@ -206,11 +247,14 @@ function AccountProvider({
       }
       setStatus('loading');
       setMessage(null);
+      let bound = false;
       try {
-        const nextScope = await bindAccount(accountId, { discardPrevious });
+        const nextScope = await verifyAndBindAccount(discardPrevious);
+        bound = true;
+        if (!alive.current || ticket !== epoch.current) return;
+        const publicReady = (await readiness.current?.().catch(() => false)) ?? false;
         if (!alive.current || ticket !== epoch.current) return;
         const next = await getDeviceState();
-        const publicReady = (await readiness.current?.().catch(() => false)) ?? false;
         if (!alive.current || ticket !== epoch.current) return;
         if (next.quarantined || !sameScope(next.managementScope, nextScope)) {
           invalidate();
@@ -231,13 +275,18 @@ function AccountProvider({
           deviceRef.current = next;
           setDeviceState(next);
           setStatus(next?.quarantined ? 'quarantined' : 'invalidated');
-        } else
+        } else if (
+          bound ||
+          (error instanceof OfflineError && error.code === 'ACCOUNT_VERIFICATION_FAILED')
+        )
+          invalidate();
+        else
           onlineOnly(
             'Private local storage is unavailable. You can continue using the online controls.',
           );
       }
     },
-    [accountId, applyDevice, invalidate, onlineOnly],
+    [accountId, applyDevice, invalidate, onlineOnly, verifyAndBindAccount],
   );
   useEffect(() => {
     void establish();
@@ -247,17 +296,45 @@ function AccountProvider({
     const stop = subscribe(scope, () => {
       void refresh();
     });
-    const check = () => {
-      if (document.visibilityState === 'visible') void refresh();
-    };
-    window.addEventListener('pageshow', check);
-    document.addEventListener('visibilitychange', check);
-    return () => {
-      stop();
-      window.removeEventListener('pageshow', check);
-      document.removeEventListener('visibilitychange', check);
-    };
+    // Reconcile a change that occurred between the last startup read and subscribing.
+    void refresh();
+    return stop;
   }, [refresh, scope]);
+  useEffect(() => {
+    let active = true;
+    let checkSequence = 0;
+    const check = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const sequence = ++checkSequence;
+      identityPending.current = true;
+      unverifiedRef.current = true;
+      setUnverified(true);
+      flushController.current?.abort();
+      const verified = await verification.current(accountId).catch(() => false);
+      if (!active || !alive.current || sequence !== checkSequence) return;
+      identityPending.current = false;
+      if (!verified) {
+        invalidate();
+        return;
+      }
+      if (scopeRef.current) await refresh();
+      else {
+        // Online-only mode can have no readable local scope, but still requires fresh identity.
+        unverifiedRef.current = false;
+        setUnverified(false);
+      }
+    };
+    const checkVisible = () => void check();
+    window.addEventListener('pageshow', checkVisible);
+    window.addEventListener('focus', checkVisible);
+    document.addEventListener('visibilitychange', checkVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('pageshow', checkVisible);
+      window.removeEventListener('focus', checkVisible);
+      document.removeEventListener('visibilitychange', checkVisible);
+    };
+  }, [accountId, invalidate, refresh]);
   const flushNow = useCallback(async (): Promise<FlushResult> => {
     const current = scopeRef.current;
     if (!current || frozenRef.current || unverifiedRef.current)
@@ -305,6 +382,45 @@ function AccountProvider({
     setFrozen(false);
   }, []);
   const isFrozen = useCallback(() => frozenRef.current || unverifiedRef.current, []);
+  const finishRemoteSignOut = useCallback(async () => {
+    if (!logoutCallback.current || logoutInFlight.current) return;
+    logoutInFlight.current = true;
+    setLogout('pending');
+    try {
+      const verified = await verification.current(accountId).catch(() => false);
+      if (!verified) throw new OfflineError('ACCOUNT_VERIFICATION_FAILED');
+      await logoutCallback.current();
+      if (alive.current) setLogout('done');
+    } catch {
+      if (alive.current) setLogout('failed');
+    } finally {
+      logoutInFlight.current = false;
+    }
+  }, [accountId]);
+  const signOut = useCallback(
+    async (action: ClearAction, onSignOut: () => Promise<void>) => {
+      if (logoutInFlight.current) return;
+      await freeze();
+      if (action === 'synced' && hasUnstoredInput())
+        throw new OfflineError('UNSTORED_INPUT', 'Save your current input before signing out.');
+      logoutCallback.current = onSignOut;
+      setLogout('clearing');
+      try {
+        const verifiedScope = await verifyAndBindAccount();
+        await clearAccount(verifiedScope, action);
+      } catch (error) {
+        if (alive.current) setLogout('idle');
+        throw error;
+      }
+      // Local purge may invalidate/unmount the caller. Its remote action stays owned here.
+      epoch.current++;
+      scopeRef.current = null;
+      setScope(null);
+      setStatus('invalidated');
+      await finishRemoteSignOut();
+    },
+    [finishRemoteSignOut, freeze, hasUnstoredInput, verifyAndBindAccount],
+  );
   const value = useMemo(
     () => ({
       accountId,
@@ -315,6 +431,8 @@ function AccountProvider({
       message,
       refresh,
       adoptScope,
+      verifyAndBindAccount,
+      signOut,
       flushNow,
       freeze,
       unfreeze,
@@ -334,6 +452,8 @@ function AccountProvider({
       message,
       refresh,
       adoptScope,
+      verifyAndBindAccount,
+      signOut,
       flushNow,
       freeze,
       unfreeze,
@@ -345,6 +465,44 @@ function AccountProvider({
     ],
   );
 
+  if (logout === 'pending' || logout === 'failed' || logout === 'done')
+    return (
+      <main className={styles.boundary}>
+        <section className={shared.panel} role={logout === 'failed' ? 'alert' : 'status'}>
+          <h1>
+            {logout === 'failed'
+              ? 'Sign-out did not finish'
+              : logout === 'done'
+                ? 'Signed out'
+                : 'Finishing sign out…'}
+          </h1>
+          {logout === 'failed' ? (
+            <>
+              <p>
+                Local private data has been cleared. The server has not confirmed sign-out. Retry to
+                finish signing out.
+              </p>
+              <button
+                type="button"
+                className={shared.button}
+                onClick={() => void finishRemoteSignOut()}
+              >
+                Retry sign out
+              </button>
+            </>
+          ) : (
+            <p>
+              {logout === 'done'
+                ? 'The server confirmed sign-out.'
+                : 'Local private data is cleared. Waiting for the server to confirm sign-out.'}
+            </p>
+          )}
+          <a className={`${shared.button} ${shared.secondary}`} href="/welcome">
+            Return to sign in
+          </a>
+        </section>
+      </main>
+    );
   if (status === 'loading')
     return (
       <main className={styles.boundary} aria-busy="true">
@@ -411,7 +569,10 @@ function AccountProvider({
           </button>
         </section>
       )}
-      <div hidden={unverified}>{children}</div>
+      {logout === 'clearing' && (
+        <p role="status">Verifying and clearing local data before sign out…</p>
+      )}
+      <div hidden={unverified || logout === 'clearing'}>{children}</div>
     </OfflineAccountContext.Provider>
   );
 }

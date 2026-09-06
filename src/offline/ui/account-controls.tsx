@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 
-import { bindAccount, clearAccount, getDeviceState, setSharedDevice } from '../core';
+import { getDeviceState, setSharedDevice } from '../core';
 import shared from '@/styles/sanctuary.module.css';
 import styles from './offline.module.css';
 import { useOfflineAccount } from './account-context';
@@ -19,12 +19,12 @@ export function OfflineAccountControls({
   const detailsId = useId();
   const [expanded, setExpanded] = useState(false);
   const {
-    accountId,
     scope,
     status,
     deviceState,
     frozen,
     adoptScope,
+    signOut: finishSignOut,
     flushNow,
     freeze,
     unfreeze,
@@ -44,10 +44,7 @@ export function OfflineAccountControls({
         'Some input is not saved. Keep this page open and save or explicitly discard it.',
       );
     if (target === 'sign_out') {
-      // Unreadable storage is not evidence that the device has no private data.
-      const clearScope = scope ?? (await bindAccount(accountId));
-      await clearAccount(clearScope, action);
-      await onSignOut();
+      await finishSignOut(action, onSignOut);
     } else {
       if (!scope)
         throw new Error('Reconnect to verify this account before changing device privacy.');

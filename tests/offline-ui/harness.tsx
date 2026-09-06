@@ -85,7 +85,11 @@ function App() {
     <div style={{ maxWidth: 900, margin: '24px auto' }}>
       <h1>Synthetic offline UI harness</h1>
       <p>Actual React and browser storage; simulated backend and public-shell readiness.</p>
-      <OfflineAccountBoundary accountId={accountId} ensureOfflineReady={async () => true}>
+      <OfflineAccountBoundary
+        accountId={accountId}
+        verifyAccount={async () => true}
+        ensureOfflineReady={async () => true}
+      >
         <Content />
       </OfflineAccountBoundary>
     </div>
