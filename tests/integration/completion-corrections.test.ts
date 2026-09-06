@@ -158,6 +158,48 @@ afterAll(async () => {
 });
 
 describe('completion corrections and immutable history', () => {
+  it('returns a closure created by another read to an already-open practice page', async () => {
+    const activated = await activate(`Existing closure ${randomUUID()}`);
+    const original = activated.sessions[0];
+    setClock(DURING_WINDOW);
+    expect(await getSessionHistory(userId, original.id)).toEqual({ amendments: [], events: [] });
+
+    setClock(AT_CLOSE);
+    const otherRead = await getSessionHistory(userId, original.id);
+    const closure = otherRead.events[0];
+    expect(closure).toMatchObject({
+      kind: 'session_closed',
+      sessionRevision: 0,
+      occurredAt: new Date(AT_CLOSE).toISOString(),
+      detail: { status: 'missed' },
+    });
+
+    const ready = await saveAll(original, AFTER_CLOSE);
+    expect(ready.historyEvents.filter(({ kind }) => kind === 'session_closed')).toEqual([closure]);
+    const confirmInput = {
+      operationId: randomUUID(),
+      baseRevision: ready.session.revision,
+      payload: { performedAt: '2026-09-05T00:40:00Z' },
+    };
+    const confirmed = await confirmSession(userId, original.id, confirmInput);
+    expect(confirmed.historyEvents.filter(({ kind }) => kind === 'session_closed')).toEqual([
+      closure,
+    ]);
+    await expect(confirmSession(userId, original.id, confirmInput)).resolves.toEqual(confirmed);
+
+    const removed = await removeCompletion(userId, original.id, {
+      operationId: randomUUID(),
+      baseRevision: confirmed.session.revision,
+      payload: {},
+    });
+    expect(removed.historyEvents.filter(({ kind }) => kind === 'session_closed')).toEqual([
+      closure,
+    ]);
+    const stored = await getSessionHistory(userId, original.id);
+    expect(stored.events.filter(({ kind }) => kind === 'session_closed')).toEqual([closure]);
+    expect(stored.events.filter(({ kind }) => kind === 'session_corrected')).toHaveLength(3);
+  });
+
   it('captures partial closure once and distinguishes recorded-later from practiced-late', async () => {
     const activated = await activate(`Timing ${randomUUID()}`);
     const original = activated.sessions[0];

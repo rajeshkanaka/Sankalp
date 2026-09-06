@@ -69,6 +69,59 @@ function noChange(route: Route, message: string, current: unknown) {
   });
 }
 
+test('@M3 @M3-corrections shows a closure created by another tab without reloading', async ({
+  page,
+}, info) => {
+  setUiClock(BEFORE_OPEN);
+  let secondPage: Page | undefined;
+  try {
+    await capturedSignIn(
+      page,
+      info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
+    );
+    const activated = await createJourney(page, `Other-tab closure ${info.project.name}`);
+    const original = activated.sessions[0];
+    const sessionPath = `/journeys/${activated.journey.id}/sessions/${original.id}`;
+    const closureLabel = 'The practice window closed with no saved progress.';
+    setUiClock(M1_NOW);
+    await page.goto(sessionPath);
+    const checklist = page.getByRole('region', { name: 'Practice checklist', exact: true });
+    const checkbox = checklist.getByRole('checkbox', { name: 'Opening prayer', exact: true });
+    await expect(checkbox).toBeEnabled();
+    await expect(page.getByRole('list', { name: 'Session history', exact: true })).toHaveCount(0);
+
+    setUiClock(AFTER_CLOSE);
+    secondPage = await page.context().newPage();
+    await secondPage.goto(sessionPath);
+    await expect(secondPage.getByText(closureLabel, { exact: true })).toBeVisible();
+    await expect(page.getByText(closureLabel, { exact: true })).toHaveCount(0);
+
+    await checkbox.check();
+    await expect(checklist.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
+    const history = page.getByRole('list', { name: 'Session history', exact: true });
+    await expect(history.getByText(closureLabel, { exact: true })).toHaveCount(1);
+    await expect(
+      history.getByText('Practice values were corrected after closing.', { exact: true }),
+    ).toHaveCount(1);
+
+    await checklist.getByLabel('Mantra count', { exact: true }).fill('3');
+    await checklist
+      .getByRole('button', { name: 'Save value for Mantra count', exact: true })
+      .click();
+    await expect(checklist.getByRole('status').filter({ hasText: /^Saved\.$/ })).toBeVisible();
+    await expect(history.getByText(closureLabel, { exact: true })).toHaveCount(1);
+    await expect(
+      history.getByText('Practice values were corrected after closing.', { exact: true }),
+    ).toHaveCount(2);
+    const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
+    mkdirSync(evidence, { recursive: true });
+    await page.screenshot({ path: resolve(evidence, 'closure-other-tab.png'), fullPage: true });
+  } finally {
+    await secondPage?.close();
+    setUiClock(M1_NOW);
+  }
+});
+
 test('@M3 @M3-corrections preserves factual chronology through correction and undo', async ({
   page,
 }, info) => {
