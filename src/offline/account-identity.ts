@@ -28,7 +28,16 @@ export async function readBrowserIdentity(): Promise<BrowserIdentity> {
           : 'rejected',
     };
   }
-  if (response.status === 401) return { kind: 'unauthenticated' };
+  if (response.status === 401) {
+    try {
+      const failure = (await response.json()) as { error?: { code?: unknown } } | null;
+      return {
+        kind: failure?.error?.code === 'SIGN_IN_REQUIRED' ? 'unauthenticated' : 'rejected',
+      };
+    } catch {
+      return { kind: 'rejected' };
+    }
+  }
   if (!response.ok || response.redirected) return { kind: 'rejected' };
   try {
     const identity: unknown = await response.json();

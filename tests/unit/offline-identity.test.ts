@@ -28,6 +28,8 @@ describe('browser account freshness', () => {
   it('fails closed for rejected, malformed and missing account identities', async () => {
     for (const response of [
       Response.json({ accountId }, { status: 503 }),
+      Response.json({ error: { code: 'ACCOUNT_UNAVAILABLE' } }, { status: 401 }),
+      Response.json({}, { status: 401 }),
       new Response('invalid json'),
       Response.json(null),
       Response.json({}),
@@ -38,7 +40,11 @@ describe('browser account freshness', () => {
     }
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockImplementation(async () => Response.json({}, { status: 401 })),
+      vi
+        .fn()
+        .mockImplementation(async () =>
+          Response.json({ error: { code: 'SIGN_IN_REQUIRED' } }, { status: 401 }),
+        ),
     );
     expect(await readBrowserIdentity()).toEqual({ kind: 'unauthenticated' });
     expect(await verifyBrowserAccount(accountId)).toBe('signed_out');
@@ -82,7 +88,9 @@ describe('browser account freshness', () => {
     vi.mocked(getDeviceState).mockResolvedValue(device);
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(Response.json({ accountId }, { status: 401 })),
+      vi
+        .fn()
+        .mockResolvedValue(Response.json({ error: { code: 'SIGN_IN_REQUIRED' } }, { status: 401 })),
     );
     expect(await verifyBrowserAccount(accountId, true)).toBe('signed_out');
   });
