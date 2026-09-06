@@ -58,7 +58,9 @@ const server = createServer(async (request, response) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const url = `http://127.0.0.1:${server.address().port}`;
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit, firefox })) {
+  for (const [name, engine] of Object.entries(
+    process.env.SANKALPA_FULL_BROWSER_SUITE === '1' ? { chromium, webkit, firefox } : { chromium },
+  )) {
     const browser = await engine.launch(
       name === 'firefox' ? { env: { ...process.env, MOZ_APP_DATA: firefoxAppData } } : {},
     );

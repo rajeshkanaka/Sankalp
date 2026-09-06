@@ -9,10 +9,10 @@ The repository is the durable context for Codex, Claude Code, and other coding a
 - [PROJECT_PLAN](docs/PROJECT_PLAN.md): architecture, contracts, commands, demos, verification and integration procedure.
 - [DECISIONS](docs/DECISIONS.md): selected stack, product clarifications, sources and approval/change history.
 - [APP_SPECIFICATION](docs/APP_SPECIFICATION.md): product behavior and A01–A27 acceptance requirements.
-- [SESSION_LOG](docs/SESSION_LOG.md): dated session evidence and handoffs. Task reports live at `docs/handoffs/<task-id>.md` once implementation starts.
-- [BRANCHES](docs/BRANCHES.md): current integration route, worker worktrees and preserved historical checkpoints. **Start from `origin/main`'s progress/log**, then follow its explicit active-branch handoff; a worker's older tracking files never override main.
+- [SESSION_LOG](docs/SESSION_LOG.md): dated session evidence and handoffs. Task reports use exactly one `docs/handoffs/SK-NNN.md` per task, edited in place; no topic/substep reports.
+- [BRANCHES](docs/BRANCHES.md): current integration route, worker worktrees and preserved historical checkpoints. **Start from `origin/main`'s progress and TASKS status table**, then follow its explicit active-branch handoff; a worker's older tracking files never override main.
 
-Current user instructions take precedence. Preserve approved behavior when code disagrees with it. Do not silently redesign the stack or reduce launch scope. Stack changes require user approval recorded in DECISIONS. Until PROJECT_PROGRESS records plan approval, do planning work only. The user approved the full plan on 2026-09-06 and explicitly requested continuous implementation through completion, commits and pushes. Milestone review pauses are waived by D10; continue after technical gates pass, retaining demo evidence. Deployment remains bounded by supplied accounts, budget/domain details and real-device access; never invent those prerequisites.
+Current user instructions take precedence. Preserve approved behavior when code disagrees with it. D21 records the user-approved launch reduction and overrides older scope. Do not restore deferred work or expand the stack without approval. Stack changes require user approval recorded in DECISIONS. D10 retains original plan approval. D21 limits launch scope and requires stopping after the trimming PR for user review; respect the current checkpoint and latest user instruction before further implementation. Deployment remains bounded by supplied accounts, budget/domain details and real-device access; never invent those prerequisites.
 
 ## Engineering rules
 
@@ -27,27 +27,29 @@ Current user instructions take precedence. Preserve approved behavior when code 
 
 ## Start/resume protocol
 
-1. Fetch `origin` and read this file, PROJECT_PROGRESS, BRANCHES, relevant TASKS/PROJECT_PLAN sections, applicable DECISIONS and the latest SESSION_LOG/task handoff from `origin/main`. If offline, use the last fetched main and record that limitation. Then read the assigned branch's task report and reconcile its newer work. Do not switch a dirty checkout or overwrite worker tracking files blindly.
+1. Read ONLY PROJECT_PROGRESS.md, the TASKS.md status table, and the current task's single handoff. PROJECT_PLAN.md, APP_SPECIFICATION.md and DECISIONS.md are lookup-on-demand for a concrete current question, never read-on-boot. Do not bulk-read docs/, archives, SESSION_LOG or legacy topic reports.
 2. Confirm `pwd`, OS/tool versions, branch, `git worktree list`, `git status --short`, staged/unstaged diffs and recent commits. Compare actual worktree paths with ownership assignments.
 3. Reconcile the checkpoint with code and evidence. Do not assume the previous session ended cleanly or that its process still runs. Preserve all uncommitted work; investigate discrepancies before claiming completion.
-4. Run available baseline smoke checks from PROJECT_PLAN §5. Before application scripts exist, use the documented documentation-only baseline and record app checks as **NOT RUN**. After implementation exists, start its local services and run `npm run test:smoke` before extending it. Missing tools or failed required checks are blockers, not passes.
+4. Do not read PROJECT_PLAN to start; commands are already in package.json and the current task. Use the smallest relevant installed check before extending code; run `npm run test:smoke` when changing the first workflow. Documentation-only edits need link/size/diff checks, not app startup or browser runs. Missing tools or failed required checks are blockers, not passes.
 5. Respect pending approvals and other owners. Resume the recorded unfinished substep; otherwise claim the next dependency-ready task within the approved milestone. Do not restart completed work unnecessarily.
 
 ## Work and checkpoint protocol
 
 - One coordinator assigns one owner per active task, records branch/worktree/resource slots in TASKS, and establishes shared contracts before parallel work. Follow PROJECT_PLAN §7; sequential execution uses the same tasks.
-- Checkpoint after a meaningful verified substep: update the task-specific report with changes, exact commands and actual results, evidence, failures, commit/base SHA, dirty files and the next substep. Workers do not change TASKS, PROJECT_PROGRESS, DECISIONS or SESSION_LOG.
+- Use one `docs/handoffs/SK-NNN.md` per task, edited in place; never create SK-NNN-topic side files. Checkpoint entries are at most five factual lines, no prose. Do not create a handoff per substep: update the task-specific report with changes, exact commands and actual results, evidence, failures, commit/base SHA, dirty files and the next substep. Workers do not change TASKS, PROJECT_PROGRESS, DECISIONS or SESSION_LOG.
 - After each task, coordinator reviews and integrates its owned changes, reruns relevant integration/regression checks, then updates TASKS and the compact progress/session records. A successful worker check alone cannot make a task DONE.
 - D18: use short feature branches from current main and reviewed PRs back to main. Commit/push/PR/merge are authorized by the user's resume request. Main owns the accepted code and coordinator records; worker branches retain unfinished source and task reports. Merge runnable, tested increments with explicit limitations; merge is not launch approval or a reason to mark blocked tasks DONE. Keep branch pointers and exact next action in the same PR as accepted changes. All main updates, including tracking-only checkpoints, use PRs under D18 and the repository rules; never use administrator bypass.
 - Keep integrated code and tracking aligned in focused commits containing the task ID. If interrupted between integration and tracking, record the mismatch and reconcile on resume. Update architecture/decisions only when their content changes.
 
 ## Verification and definition of done
 
-Command definitions and availability are centralized in PROJECT_PLAN §5. Required implementation gates are formatting, lint, typecheck, unit, database/API integration, production build, Playwright UI checks and dependency security review. `next build` does not replace lint or typecheck. Each task lists its additional checks in TASKS.
+Use package.json and the current task for commands; consult PROJECT_PLAN only when a specific unresolved contract requires it. Required implementation gates are formatting, lint, typecheck, unit, database/API integration, production build, Playwright UI checks and dependency security review. `next build` does not replace lint or typecheck. Each task lists its additional checks in TASKS.
 
-DONE means acceptance passed, required tests actually ran successfully, changes were reviewed and integrated, regression evidence is retained, and the coordinator recorded the result. A blocked/unavailable test stays NOT RUN and prevents DONE for the affected task. Keep technical task completion separate from the user's milestone review in PROJECT_PROGRESS.
+DONE means acceptance passed, required tests actually ran successfully, changes were reviewed and integrated, regression evidence is retained, and the coordinator recorded the result. A blocked/unavailable test stays NOT RUN and prevents DONE for the affected task. Keep technical task completion separate from the user's milestone review in PROJECT_PROGRESS. Development uses Chromium only. Full three-browser checks run only as the final PR merge gate. Screenshots only at milestone end with `SANKALPA_MILESTONE_EVIDENCE=1`; no intermediate evidence manifests or unnecessary downloads. Retain compact test results/CI logs.
 
 For every milestone, launch the actual integrated app, exercise the specified workflow with functional assertions, and capture real screenshots. Label simulated transport and unavailable features visibly. Present startup commands, reachable entry point, actual test outcomes and evidence; then continue under D10 after technical gates pass, retaining evidence for the user. Screenshots and user review do not replace tests. Never call a sandbox-only address accessible to the user.
+
+Size limits: SESSION_LOG <8 KB (newest three entries), TASKS <15 KB, PROJECT_PROGRESS <4 KB. Archive older detail with a one-line pointer; never read archives on startup. Do not repeat broad tests for unchanged code or download unused browsers/artifacts.
 
 ## Before stopping or after interruption
 

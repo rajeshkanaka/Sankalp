@@ -1,8 +1,7 @@
 name: Verify Sankalpa
 on:
-  push:
-    branches: [main, implementation/sankalpa]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 permissions:
   contents: read
 concurrency:
@@ -12,6 +11,9 @@ jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    env:
+      # Draft development uses Chromium; ready PRs run the final merge gate.
+      SANKALPA_FULL_BROWSER_SUITE: ${{ github.event.pull_request.draft == false && '1' || '0' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -24,13 +26,19 @@ jobs:
       - run: npm run workspace:prepare -- --slot 0
       - run: npm run db:start
       - run: npm run db:migrate
-      - run: npm exec -- playwright install --with-deps chromium webkit firefox
+      - name: Install browsers for this gate
+        run: |
+          if [ "$SANKALPA_FULL_BROWSER_SUITE" = "1" ]; then
+            npm exec -- playwright install --with-deps chromium webkit firefox
+          else
+            npm exec -- playwright install --with-deps chromium
+          fi
       - run: npm run verify
       - run: npm run test:ui
       - run: npm run test:offline-core
       - run: npm run test:offline-ui
       - run: npm audit --omit=dev && npm audit
-      - name: Retain synthetic UI evidence
+      - name: Retain compact test results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -39,8 +47,6 @@ jobs:
             artifacts/ui/summary.json
             artifacts/offline-core/summary.json
             artifacts/offline-ui/summary.json
-            docs/evidence/M*/**/*.png
-            docs/evidence/M*/**/manifest.md
           retention-days: 14
       - if: always()
         run: npm run db:stop

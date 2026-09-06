@@ -134,7 +134,8 @@ async function deviceBinding(page: Page) {
 async function screenshot(page: Page, info: TestInfo, name: string) {
   const directory = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
   mkdirSync(directory, { recursive: true });
-  await page.screenshot({ path: resolve(directory, name), fullPage: true });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({ path: resolve(directory, name), fullPage: true });
 }
 
 test('@M3 @M3-offline an old tab cannot sign out an account that changed after verification', async ({

@@ -123,7 +123,8 @@ test.describe('Online-only fallback: personalized schedules and synthetic save r
       await expect(page.getByText('October 15, 2026 at 6:30 PM', { exact: true })).toBeVisible();
       const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
       mkdirSync(evidence, { recursive: true });
-      await page.screenshot({ path: resolve(evidence, 'weekday-preview.png'), fullPage: true });
+      if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+        await page.screenshot({ path: resolve(evidence, 'weekday-preview.png'), fullPage: true });
 
       phase = 'calendar-span preview';
       await page.getByRole('button', { name: 'Edit details', exact: true }).click();
@@ -231,7 +232,8 @@ test.describe('Online-only fallback: personalized schedules and synthetic save r
       await expect(
         page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
       ).toBeVisible();
-      await page.screenshot({ path: resolve(evidence, 'numeric-complete.png'), fullPage: true });
+      if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+        await page.screenshot({ path: resolve(evidence, 'numeric-complete.png'), fullPage: true });
 
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
       await page.setViewportSize({ width: 320, height: 800 });
@@ -408,10 +410,11 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
     ).toBeVisible();
     const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({
-      path: resolve(evidence, 'numeric-offline-pending.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'numeric-offline-pending.png'),
+        fullPage: true,
+      });
 
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);
@@ -454,10 +457,11 @@ test('@M2 @M2-schedule unified numeric practice survives real disconnection and 
     await expect(progress.getByText('1 upcoming', { exact: true })).toBeVisible();
     await page.goBack();
     await expect(canonicalCompletion).toBeVisible();
-    await page.screenshot({
-      path: resolve(evidence, 'numeric-offline-complete.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'numeric-offline-complete.png'),
+        fullPage: true,
+      });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(consoleErrors).toEqual([]);
   } finally {

@@ -98,6 +98,41 @@ async function openPractice(page: Page, email: string, includeNumeric = false) {
   return { session, path };
 }
 
+test('@M3 @M3-offline @P1 Done keeps a disconnected user in the saved app shell', async ({
+  page,
+}, info) => {
+  const { session, path } = await openPractice(page, 'ui-maya@example.test');
+  const checklist = page.getByRole('region', { name: 'Practice checklist', exact: true });
+  await checklist.getByRole('checkbox', { name: 'Quiet attention', exact: true }).check();
+  await checklist.getByRole('button', { name: 'Complete this session', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
+  ).toBeVisible();
+  // Let the completion refresh finish before cutting the connection.
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.getByRole('link', { name: 'Done', exact: true })).toBeVisible();
+  try {
+    await setUiNetworkDisconnected(true);
+    if (info.project.name === 'chromium') await page.context().setOffline(true);
+    await page.getByRole('link', { name: 'Done', exact: true }).click();
+    await expect(page).toHaveURL(`/today?journey=${session.journeyId}`);
+    await expect(
+      page.getByRole('heading', { name: 'Practices saved on this device', exact: true }),
+    ).toBeVisible();
+    await page.locator(`a[href="${path}"]`).click();
+    await expect(
+      page.getByRole('heading', { name: 'Your practice is recorded.', exact: true }),
+    ).toBeVisible();
+    await page.goto(`/calendar?month=2026-09&journey=${session.journeyId}`);
+    await expect(
+      page.getByRole('heading', { name: 'Practices saved on this device', exact: true }),
+    ).toBeVisible();
+  } finally {
+    await page.context().setOffline(false);
+    await setUiNetworkDisconnected(false);
+  }
+});
+
 test('@M3 @M3-offline disconnected edits survive reload and sync once with real auth and persistence', async ({
   page,
 }, info) => {
@@ -132,7 +167,8 @@ test('@M3 @M3-offline disconnected edits survive reload and sync once with real 
     ).toHaveCount(0);
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({ path: resolve(evidence, 'offline-pending.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'offline-pending.png'), fullPage: true });
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);
     await page.reload();
@@ -176,7 +212,8 @@ test('@M3 @M3-offline disconnected edits survive reload and sync once with real 
     const history = page.getByRole('list', { name: 'Session history', exact: true });
     await expect(history.getByText('Practice values saved.', { exact: true })).toHaveCount(1);
     await expect(history.getByText('Completion confirmed.', { exact: true })).toHaveCount(1);
-    await page.screenshot({ path: resolve(evidence, 'offline-replayed.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'offline-replayed.png'), fullPage: true });
   } finally {
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);
@@ -340,10 +377,11 @@ test('@M3 @M3-offline two device contexts review every queued change against rea
     ).toContainText('Quiet minutes: later');
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({
-      path: resolve(evidence, 'offline-two-device-conflict.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'offline-two-device-conflict.png'),
+        fullPage: true,
+      });
     await page.getByRole('button', { name: 'Keep my reviewed version', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: 'This saved practice changed elsewhere', exact: true }),
@@ -364,10 +402,11 @@ test('@M3 @M3-offline two device contexts review every queued change against rea
     await page.reload();
     await expect(numeric).toHaveValue('later');
     await expect(reflection.getByLabel('Your reflection', { exact: true })).toHaveValue(NOTE);
-    await page.screenshot({
-      path: resolve(evidence, 'offline-two-device-resolved.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'offline-two-device-resolved.png'),
+        fullPage: true,
+      });
   } finally {
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);

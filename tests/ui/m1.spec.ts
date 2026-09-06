@@ -38,7 +38,8 @@ test('@smoke @M1 custom journey persists completion through real email sign-in',
   await expect(activate).toBeVisible();
   const evidence = resolve('docs/evidence/M1', process.env.UI_RUN_ID!, info.project.name);
   mkdirSync(evidence, { recursive: true });
-  await page.screenshot({ path: resolve(evidence, 'create-preview.png'), fullPage: true });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({ path: resolve(evidence, 'create-preview.png'), fullPage: true });
   const activation = page.waitForResponse(
     (response) =>
       /\/api\/journeys\/[^/]+\/activate$/.test(response.url()) &&
@@ -90,14 +91,16 @@ test('@smoke @M1 custom journey persists completion through real email sign-in',
   await expect(
     page.getByRole('img', { name: '1 of 21 sessions completed, 5% complete', exact: true }).first(),
   ).toBeVisible();
-  await page.screenshot({ path: resolve(evidence, 'completed-today.png'), fullPage: true });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({ path: resolve(evidence, 'completed-today.png'), fullPage: true });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.setViewportSize({ width: 320, height: 800 });
   await expect(page.locator('body')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await page.screenshot({ path: resolve(evidence, 'completed-mobile.png'), fullPage: true });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({ path: resolve(evidence, 'completed-mobile.png'), fullPage: true });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(consoleErrors).toEqual([]);
 });

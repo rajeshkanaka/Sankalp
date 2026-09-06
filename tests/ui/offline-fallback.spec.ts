@@ -91,10 +91,11 @@ test('@M3 @M3-offline online-only editors preserve unsaved input during account 
   expect((await page.request.get('/api/auth/session')).status()).toBe(200);
   const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
   mkdirSync(evidence, { recursive: true });
-  await page.screenshot({
-    path: resolve(evidence, 'online-only-unsaved-signout.png'),
-    fullPage: true,
-  });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({
+      path: resolve(evidence, 'online-only-unsaved-signout.png'),
+      fullPage: true,
+    });
   await page.getByRole('button', { name: 'Keep signed in', exact: true }).click();
   await expect(note).toHaveValue(raw);
   await page.unroute(`**/api/sessions/${session.id}/reflection`);

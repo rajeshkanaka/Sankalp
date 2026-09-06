@@ -195,7 +195,9 @@ const url = `http://127.0.0.1:${server.address().port}`;
 const firefoxData = path.join(root, '.local/offline-ui-firefox');
 await mkdir(firefoxData, { recursive: true, mode: 0o700 });
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit, firefox })) {
+  for (const [name, engine] of Object.entries(
+    process.env.SANKALPA_FULL_BROWSER_SUITE === '1' ? { chromium, webkit, firefox } : { chromium },
+  )) {
     const browser = await engine.launch(
       name === 'firefox' ? { env: { ...process.env, MOZ_APP_DATA: firefoxData } } : {},
     );
@@ -341,10 +343,11 @@ try {
       ).toHaveCount(0);
       assert.deepEqual(errors, []);
       await mkdir(path.join(root, '.local/offline-ui-evidence'), { recursive: true });
-      await page.screenshot({
-        path: path.join(root, '.local/offline-ui-evidence', `${name}-quarantine.png`),
-        fullPage: true,
-      });
+      if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+        await page.screenshot({
+          path: path.join(root, '.local/offline-ui-evidence', `${name}-quarantine.png`),
+          fullPage: true,
+        });
       log(
         JSON.stringify({
           browser: name,
@@ -530,10 +533,11 @@ try {
         await compact.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         true,
       );
-      await compact.screenshot({
-        path: path.join(root, '.local/offline-ui-evidence', `${name}-compact-320.png`),
-        fullPage: true,
-      });
+      if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+        await compact.screenshot({
+          path: path.join(root, '.local/offline-ui-evidence', `${name}-compact-320.png`),
+          fullPage: true,
+        });
       await compact.getByRole('button', { name: 'Keep signed in', exact: true }).click();
       await expect(
         compact.getByRole('heading', { name: 'Local changes need attention', exact: true }),
