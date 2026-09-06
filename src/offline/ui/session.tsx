@@ -97,13 +97,6 @@ function reviewedOperationIds(view: LocalView, operation: QueueOperation): strin
     .map(({ operationId }) => operationId);
 }
 
-function canonicalChanged(before: LocalView, after: LocalView): boolean {
-  return (
-    before.snapshot.session.revision !== after.snapshot.session.revision ||
-    (before.snapshot.reflection?.revision ?? 0) !== (after.snapshot.reflection?.revision ?? 0)
-  );
-}
-
 function NumericPractice({
   practice,
   value,
@@ -129,7 +122,7 @@ function NumericPractice({
       </div>
       <div className={styles.numericEntry}>
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
           min={0}
           max={1_000_000}
@@ -186,6 +179,11 @@ function SessionEditor({
     useOfflineAccount();
   const [view, setView] = useState<LocalView | null>(null);
   const viewRef = useRef<LocalView | null>(null);
+  const notifyCanonical = useRef(onCanonicalChange);
+  notifyCanonical.current = onCanonicalChange;
+  const notifiedRevision = useRef(
+    `${snapshot.session.revision}:${snapshot.reflection?.revision ?? 0}:${snapshot.session.supersededAt ?? ''}`,
+  );
   const [numeric, setNumeric] = useState<Record<string, string>>({});
   const numericRef = useRef<Record<string, string>>({});
   const [reflection, setReflection] = useState<ReflectionPayload>({ text: '', moods: [] });
@@ -206,6 +204,7 @@ function SessionEditor({
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [performedInput, setPerformedInput] = useState('');
   const [performedError, setPerformedError] = useState<string | null>(null);
+  const performedDirty = useRef(false);
   const [deviceNow, setDeviceNow] = useState(() => new Date().toISOString());
   useEffect(() => {
     if (demo) return;
@@ -220,7 +219,11 @@ function SessionEditor({
   const [draftFailure, setDraftFailure] = useState(false);
   const [draftComparison, setDraftComparison] = useState<LocalView | null>(null);
   const [enqueueComparison, setEnqueueComparison] = useState<LocalView | null>(null);
-  const pendingRetry = useRef<{ input: EnqueueInput; draftAfter: RawDraft | null } | null>(null);
+  const pendingRetry = useRef<{
+    input: EnqueueInput;
+    draftAfter?: RawDraft | null;
+    cleanupRevision?: number;
+  } | null>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -234,13 +237,19 @@ function SessionEditor({
           await draftQueue.current;
           await commitRef.current;
         },
-        hasUnstoredInput: () => inputDirty.current || Boolean(pendingRetry.current),
+        hasUnstoredInput: () =>
+          inputDirty.current || Boolean(pendingRetry.current) || performedDirty.current,
       }),
     [registerEditor],
   );
 
   const applyView = useCallback((next: LocalView) => {
     if (!alive.current) return;
+    const revisionKey = `${next.snapshot.session.revision}:${next.snapshot.reflection?.revision ?? 0}:${next.snapshot.session.supersededAt ?? ''}`;
+    if (revisionKey !== notifiedRevision.current) {
+      notifiedRevision.current = revisionKey;
+      notifyCanonical.current?.();
+    }
     viewRef.current = next;
     setView(next);
     if (!inputDirty.current) {
@@ -256,17 +265,15 @@ function SessionEditor({
   }, []);
 
   const load = useCallback(
-    async (activeScope: AccountScope, notifyCanonical = false) => {
+    async (activeScope: AccountScope) => {
       const ticket = ++readSequence.current;
-      const before = viewRef.current;
       const next = await read(activeScope, snapshot.session.id);
       if (!next) throw new OfflineError('SNAPSHOT_MISSING', 'Open this practice online once more.');
       if (!alive.current || ticket !== readSequence.current) return next;
       applyView(next);
-      if (notifyCanonical && before && canonicalChanged(before, next)) onCanonicalChange?.();
       return next;
     },
-    [applyView, onCanonicalChange, snapshot.session.id],
+    [applyView, snapshot.session.id],
   );
 
   const flushAndRefresh = useCallback(async () => {
@@ -275,7 +282,7 @@ function SessionEditor({
     try {
       const result = await flushNow();
       setRetryAt(result.retryAt);
-      const next = await load(scope, true);
+      const next = await load(scope);
       const waiting = pendingCount(next);
       const nextMessage =
         result.blocked ||
@@ -287,11 +294,15 @@ function SessionEditor({
               ? 'Saved.'
               : retryMessage(result);
       setMessage(nextMessage);
-      setReflectionMessage(nextMessage);
+      setReflectionMessage(
+        next.snapshot.reflection || next.operations.some(({ stream }) => stream === 'reflection')
+          ? nextMessage
+          : 'No reflection saved yet.',
+      );
       setError(null);
     } catch (cause) {
       if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
-        invalidate();
+        invalidate(scope);
         return;
       }
       setError(safeLocalError(cause));
@@ -324,12 +335,13 @@ function SessionEditor({
         if (!active || !next) return;
         applyView(next);
         const deviceNow = effectiveNow(next.snapshot.clock);
-        setPerformedInput(
-          localInputValue(
-            next.projectedSession.performedAt ?? deviceNow,
-            next.projectedSession.timeZone,
-          ),
-        );
+        if (!performedDirty.current)
+          setPerformedInput(
+            localInputValue(
+              next.projectedSession.performedAt ?? deviceNow,
+              next.projectedSession.timeZone,
+            ),
+          );
         const waiting = pendingCount(next);
         setMessage(
           waiting
@@ -348,7 +360,7 @@ function SessionEditor({
       } catch (cause) {
         if (!active) return;
         if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
-          invalidate();
+          invalidate(scope);
           return;
         }
         if (!viewRef.current && !inputDirty.current)
@@ -362,7 +374,7 @@ function SessionEditor({
     const stop = subscribe(scope, () => {
       if (initialized.current && !inputDirty.current)
         void load(scope).catch((cause) => {
-          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate();
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
           else setError(safeLocalError(cause));
         });
     });
@@ -410,7 +422,7 @@ function SessionEditor({
   }, [flushAndRefresh, frozen, retryAt]);
 
   const persistDraft = useCallback(
-    (next: RawDraft | null, target: 'practice' | 'reflection') => {
+    (next: RawDraft | null, target: 'practice' | 'reflection', expectedRevision?: number) => {
       if (!scope || !alive.current) return Promise.reject(new OfflineError('ACCOUNT_CHANGED'));
       rawDraftRef.current = next;
       inputDirty.current = true;
@@ -431,7 +443,7 @@ function SessionEditor({
             scope,
             snapshot.session.id,
             next,
-            draftRevisionRef.current,
+            expectedRevision ?? draftRevisionRef.current,
           );
           draftRevisionRef.current = revision;
           if (alive.current && sequence === draftSequence.current) {
@@ -446,7 +458,7 @@ function SessionEditor({
         .catch((cause) => {
           draftBlocked.current = true;
           if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
-            invalidate();
+            invalidate(scope);
             throw cause;
           }
           if (alive.current && sequence === draftSequence.current) {
@@ -466,12 +478,18 @@ function SessionEditor({
   );
 
   const commit = useCallback(
-    async (input: EnqueueInput, draftAfter: RawDraft | null = rawDraftRef.current) => {
+    async (
+      input: EnqueueInput,
+      draftAfter?: RawDraft | null,
+      cleanupRevision = draftRevisionRef.current,
+    ) => {
       if (!scope || isFrozen() || commitRef.current) return;
-      pendingRetry.current = { input, draftAfter };
+      pendingRetry.current = { input, draftAfter, cleanupRevision };
       setPendingLocal(input);
       setWorking(true);
       setError(null);
+      if (input.intent.kind === 'reflection') setReflectionMessage('Saving change on this device…');
+      else setMessage('Saving change on this device…');
       const job = (async () => {
         let queued = false;
         try {
@@ -479,21 +497,22 @@ function SessionEditor({
           await enqueue(scope, input);
           queued = true;
           pendingRetry.current = null;
-          setPendingLocal(null);
           setEnqueueComparison(null);
-          if (draftAfter !== rawDraftRef.current)
+          if (draftAfter !== undefined)
             await persistDraft(
               draftAfter,
               input.intent.kind === 'reflection' ? 'reflection' : 'practice',
+              cleanupRevision,
             );
           const next = await load(scope);
+          setPendingLocal(null);
           const text = `Saved on this device. ${pendingCount(next)} change(s) waiting to sync.`;
           if (input.intent.kind === 'reflection') setReflectionMessage(text);
           else setMessage(text);
         } catch (cause) {
           if (!alive.current) return;
           if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
-            invalidate();
+            invalidate(scope);
             return;
           }
           setError(safeLocalError(cause));
@@ -569,7 +588,11 @@ function SessionEditor({
         : null;
     if (practice.value === value) {
       await persistDraft(draftAfter, 'practice').catch(() => undefined);
-      if (!inputDirty.current && scope) await load(scope);
+      if (!inputDirty.current && scope)
+        await load(scope).catch((cause) => {
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
+          else setError(safeLocalError(cause));
+        });
       return;
     }
     queueIntent({ kind: 'practices', payload: { values: { [practice.id]: value } } }, draftAfter);
@@ -599,7 +622,11 @@ function SessionEditor({
       : null;
     if (JSON.stringify(payload) === JSON.stringify(viewRef.current?.projectedReflection)) {
       await persistDraft(draftAfter, 'reflection').catch(() => undefined);
-      if (!inputDirty.current && scope) await load(scope);
+      if (!inputDirty.current && scope)
+        await load(scope).catch((cause) => {
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
+          else setError(safeLocalError(cause));
+        });
       return;
     }
     queueIntent({ kind: 'reflection', payload }, draftAfter);
@@ -629,7 +656,11 @@ function SessionEditor({
 
   async function retryLocalSave() {
     if (pendingRetry.current)
-      await commit(pendingRetry.current.input, pendingRetry.current.draftAfter);
+      await commit(
+        pendingRetry.current.input,
+        pendingRetry.current.draftAfter,
+        pendingRetry.current.cleanupRevision,
+      );
   }
 
   async function resolveConflict(
@@ -707,7 +738,7 @@ function SessionEditor({
       const latest = await read(scope, snapshot.session.id);
       if (alive.current) setDraftComparison(latest);
     } catch (cause) {
-      if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate();
+      if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
       else setError(safeLocalError(cause));
     }
   }
@@ -717,11 +748,20 @@ function SessionEditor({
     if (keepLocal && draftComparison) draftRevisionRef.current = draftComparison.draftRevision;
     draftBlocked.current = false;
     await persistDraft(rawDraftRef.current, 'reflection').catch(() => undefined);
-    if (!inputDirty.current) await load(scope);
+    if (!inputDirty.current)
+      await load(scope).catch((cause) => {
+        if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
+        else setError(safeLocalError(cause));
+      });
   }
   async function chooseStoredDraft() {
     if (!scope || !draftComparison) return;
-    const latest = await read(scope, snapshot.session.id);
+    const latest = await read(scope, snapshot.session.id).catch((cause) => {
+      if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate(scope);
+      else setError(safeLocalError(cause));
+      return undefined;
+    });
+    if (latest === undefined) return;
     if (!latest || latest.draftRevision !== draftComparison.draftRevision) {
       setDraftComparison(latest);
       setError('The saved draft changed again. Review it before choosing.');
@@ -744,7 +784,7 @@ function SessionEditor({
       baseRevision: streamRevision(enqueueComparison, stream),
       expectedLocalHead: enqueueComparison.heads[stream],
     };
-    await commit(input, previous.draftAfter);
+    await commit(input, previous.draftAfter, previous.cleanupRevision);
   }
 
   if (status !== 'ready' || !scope) return null;
@@ -803,6 +843,7 @@ function SessionEditor({
       }
     }
     setPerformedError(null);
+    performedDirty.current = false;
     setEditingCompletion(false);
     queueIntent({ kind: 'completion', payload: { performedAt } });
   }
@@ -836,7 +877,12 @@ function SessionEditor({
                   <input
                     type="checkbox"
                     aria-label={practice.label}
-                    checked={practice.value === true}
+                    checked={
+                      pendingLocal?.intent.kind === 'practices' &&
+                      typeof pendingLocal.intent.payload.values[practice.id] === 'boolean'
+                        ? pendingLocal.intent.payload.values[practice.id] === true
+                        : practice.value === true
+                    }
                     disabled={!canEditValues}
                     onChange={(event) =>
                       queueIntent({
@@ -848,7 +894,14 @@ function SessionEditor({
                   <span>
                     {practice.label}
                     <small>
-                      {practice.value === true ? 'Saved on this device' : 'Mark when complete'}
+                      {pendingLocal?.intent.kind === 'practices' &&
+                      practice.id in pendingLocal.intent.payload.values
+                        ? working
+                          ? 'Saving on this device…'
+                          : 'Not saved yet; keep this page open'
+                        : practice.value === true
+                          ? 'Saved on this device'
+                          : 'Mark when complete'}
                     </small>
                   </span>
                 </label>
@@ -956,6 +1009,7 @@ function SessionEditor({
                 value={performedInput}
                 disabled={controlsDisabled}
                 onChange={(event) => {
+                  performedDirty.current = true;
                   setPerformedInput(event.target.value);
                   setPerformedError(null);
                 }}
@@ -982,7 +1036,10 @@ function SessionEditor({
                   type="button"
                   className={`${shared.button} ${shared.secondary}`}
                   disabled={controlsDisabled}
-                  onClick={() => setEditingCompletion(false)}
+                  onClick={() => {
+                    performedDirty.current = false;
+                    setEditingCompletion(false);
+                  }}
                 >
                   Cancel time correction
                 </button>

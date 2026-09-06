@@ -43,7 +43,7 @@ interface OfflineAccountContextValue {
   isFrozen(): boolean;
   hasUnstoredInput(): boolean;
   registerEditor(editor: EditorCheckpoint): () => void;
-  invalidate(): void;
+  invalidate(expected?: AccountScope | null): void;
   onlineOnly(message: string): void;
 }
 const OfflineAccountContext = createContext<OfflineAccountContextValue | null>(null);
@@ -82,6 +82,8 @@ function AccountProvider({
   const [status, setStatus] = useState<AccountStatus>('loading');
   const [message, setMessage] = useState<string | null>(null);
   const [frozen, setFrozen] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+  const unverifiedRef = useRef(false);
   const frozenRef = useRef(false);
   const alive = useRef(true);
   const epoch = useRef(0);
@@ -101,7 +103,8 @@ function AccountProvider({
     alive.current = true;
     return dispose;
   }, [dispose]);
-  const invalidate = useCallback(() => {
+  const invalidate = useCallback((expected?: AccountScope | null) => {
+    if (expected && !sameScope(scopeRef.current, expected)) return;
     epoch.current++;
     flushController.current?.abort();
     scopeRef.current = null;
@@ -118,6 +121,8 @@ function AccountProvider({
     setMessage(reason);
   }, []);
   const applyDevice = useCallback((next: DeviceState, activeScope: AccountScope) => {
+    unverifiedRef.current = false;
+    setUnverified(false);
     scopeRef.current = activeScope;
     deviceRef.current = next;
     setScope(activeScope);
@@ -152,16 +157,23 @@ function AccountProvider({
         current.accountId !== accountId ||
         !sameScope(next.managementScope, current)
       ) {
-        invalidate();
+        invalidate(current);
         return;
       }
       applyDevice(next, current);
     } catch {
-      if (alive.current && ticket === epoch.current) invalidate();
+      if (alive.current && ticket === epoch.current) {
+        unverifiedRef.current = true;
+        setUnverified(true);
+        flushController.current?.abort();
+      }
     }
   }, [accountId, applyDevice, invalidate]);
   const adoptScope = useCallback(
     async (nextScope: AccountScope) => {
+      scopeRef.current = nextScope;
+      setScope(nextScope);
+      setStatus('loading');
       const ticket = ++epoch.current;
       const next = await getDeviceState();
       if (!alive.current || ticket !== epoch.current) return;
@@ -240,7 +252,7 @@ function AccountProvider({
   }, [refresh, scope]);
   const flushNow = useCallback(async (): Promise<FlushResult> => {
     const current = scopeRef.current;
-    if (!current || frozenRef.current)
+    if (!current || frozenRef.current || unverifiedRef.current)
       return {
         acknowledged: 0,
         pending: deviceRef.current?.pendingOperations ?? 0,
@@ -253,7 +265,7 @@ function AccountProvider({
     flushController.current = controller;
     const work = flush(current, controller.signal)
       .then((result) => {
-        if (result.reason === 'account_changed') invalidate();
+        if (result.reason === 'account_changed') invalidate(current);
         return result;
       })
       .finally(() => {
@@ -284,14 +296,14 @@ function AccountProvider({
     frozenRef.current = false;
     setFrozen(false);
   }, []);
-  const isFrozen = useCallback(() => frozenRef.current, []);
+  const isFrozen = useCallback(() => frozenRef.current || unverifiedRef.current, []);
   const value = useMemo(
     () => ({
       accountId,
       status,
       scope,
       deviceState,
-      frozen,
+      frozen: frozen || unverified,
       message,
       refresh,
       adoptScope,
@@ -310,6 +322,7 @@ function AccountProvider({
       scope,
       deviceState,
       frozen,
+      unverified,
       message,
       refresh,
       adoptScope,
@@ -378,7 +391,19 @@ function AccountProvider({
           {message}
         </aside>
       )}
-      {children}
+      {unverified && (
+        <section className={styles.notice} role="alert">
+          <h1>Verify local storage to continue</h1>
+          <p>
+            Private content is temporarily hidden while this device cannot verify its saved account.
+            Unsaved input remains in this page.
+          </p>
+          <button type="button" className={shared.button} onClick={() => void refresh()}>
+            Retry verification
+          </button>
+        </section>
+      )}
+      <div hidden={unverified}>{children}</div>
     </OfflineAccountContext.Provider>
   );
 }
