@@ -113,6 +113,7 @@ export function localChildEnvironment(environment) {
     'LOCAL_ADMIN_DATABASE_URL',
     'LOCAL_SUPABASE_SECRET_KEY',
     'LOCAL_MAIL_URL',
+    'SUPABASE_SERVICES_HOSTNAME',
     'DEMO_CLOCK_FILE',
     'NODE_ENV',
   ])
@@ -185,9 +186,11 @@ export async function main(argv = process.argv.slice(2)) {
   const lock = resolve(directory, 'setup.lock');
   try {
     mkdirSync(lock);
-  } catch {
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
     throw new Error(
       'Another setup owns .local/setup.lock. See docs/DEMO.md for interrupted-setup recovery.',
+      { cause: error },
     );
   }
   const logPath = resolve(directory, 'setup.log');
@@ -251,12 +254,14 @@ export async function main(argv = process.argv.slice(2)) {
       '--format',
       '{{.Endpoints.docker.Host}}',
     ]);
-    const endpoint = process.env.DOCKER_CONTEXT
-      ? contextEndpoint
-      : process.env.DOCKER_HOST || contextEndpoint;
-    if (!endpoint.startsWith('unix:///'))
+    // Both inputs must be local even when Docker's CLI would ignore one.
+    // Do not pass a remote override through to another Docker client.
+    if (
+      !contextEndpoint.startsWith('unix:///') ||
+      (process.env.DOCKER_HOST && !process.env.DOCKER_HOST.startsWith('unix:///'))
+    )
       throw new Error(
-        'Select the local Docker Desktop context. Demo setup refuses a remote Docker engine.',
+        'Select a local Docker Desktop context and unset any remote DOCKER_HOST. Demo setup refuses a remote Docker engine.',
       );
     if (spawnSync('docker', ['info'], { stdio: 'ignore', timeout: 10000 }).status !== 0) {
       if (process.platform !== 'darwin') throw new Error('Start Docker, then rerun ./setup.sh.');

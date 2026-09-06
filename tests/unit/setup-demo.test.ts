@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
+  chmodSync,
   readFileSync,
   realpathSync,
   writeFileSync,
@@ -72,7 +73,7 @@ function mockedCheckout(root: string) {
   writeFileSync(
     resolve(root, 'bin/docker'),
     executable +
-      "if (process.argv[2] === 'context') console.log('unix:///synthetic-local-docker.sock'); process.exit(0);\n",
+      "if (process.argv[2] === 'context') console.log(process.env.SETUP_TEST_CONTEXT_ENDPOINT ?? 'unix:///synthetic-local-docker.sock'); process.exit(0);\n",
     { mode: 0o700 },
   );
   writeFileSync(
@@ -85,6 +86,7 @@ if (args[0] === '--version') { console.log('11.19.0'); process.exit(0); }
 const action = args[0] === 'run' ? args[1] : args[0];
 fs.appendFileSync('calls', action + '\\n');
 if (process.env.SETUP_TEST_FAIL === action) process.exit(7);
+if (action === 'db:start') fs.writeFileSync('inherited-supabase-host', process.env.SUPABASE_SERVICES_HOSTNAME || 'not-inherited');
 if (action === 'workspace:prepare' && !fs.existsSync('.local/runtime.json')) {
   const slot = Number(args.at(-1));
   fs.writeFileSync('.local/runtime.json', JSON.stringify({ root: process.cwd(), slot, port: 3000 + slot, testPort: 3100 + slot, apiPort: 54321 + slot * 100, dbPort: 54322 + slot * 100, mailPort: 54324 + slot * 100, projectId: 'sankalpa-slot-' + slot }));
@@ -128,13 +130,25 @@ function launch(root: string, args: string[] = [], environment: Record<string, s
   child.stderr?.on('data', (chunk) => {
     output += String(chunk);
   });
+  child.once('error', (error: NodeJS.ErrnoException) => {
+    output += `Launcher spawn failed: ${error.code ?? 'unknown'}`;
+    exitCode = 127;
+  });
   child.on('exit', (code) => {
     exitCode = code;
   });
   return { child, output: () => output, exitCode: () => exitCode };
 }
 afterEach(async () => {
-  for (const child of children.splice(0)) if (child.exitCode === null) child.kill('SIGTERM');
+  for (const child of children.splice(0)) {
+    if (child.exitCode === null) {
+      try {
+        child.kill('SIGTERM');
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error;
+      }
+    }
+  }
   await delay(75);
   for (const root of temporary.splice(0)) rmSync(root, { recursive: true, force: true });
 });
@@ -185,6 +199,7 @@ describe('demo setup preservation and allocation', () => {
     expect(
       localChildEnvironment({
         DATABASE_URL: 'wrong-checkout',
+        SUPABASE_SERVICES_HOSTNAME: 'remote.invalid',
         PORT: '9999',
         DEMO_CLOCK_FILE: '/wrong',
         NODE_ENV: 'production',
@@ -276,12 +291,17 @@ describe('actual launcher process with simulated external setup commands', () =>
     mockedCheckout(root);
     fixture(root, 'M2');
     json(root, '.local/runtime.json', runtime(root));
-    const running = launch(root, [], { DATABASE_URL: 'wrong-checkout-sentinel' });
+    const running = launch(root, [], {
+      DATABASE_URL: 'wrong-checkout-sentinel',
+      SUPABASE_SERVICES_HOSTNAME: 'remote.invalid',
+      DOCKER_HOST: 'unix:///synthetic-local-docker.sock',
+    });
     await until(
       () => running.output().includes('Ready to present.') || running.exitCode() !== undefined,
     );
     expect(running.output()).toContain('Ready to present.');
     expect(readFileSync(resolve(root, 'inherited-database'), 'utf8')).toBe('not-inherited');
+    expect(readFileSync(resolve(root, 'inherited-supabase-host'), 'utf8')).toBe('not-inherited');
     expect(readFileSync(resolve(root, 'calls'), 'utf8')).not.toContain('demo:seed');
     expect(
       JSON.parse(readFileSync(resolve(root, '.local/fixtures/M1-demo.json'), 'utf8')).profile,
@@ -340,6 +360,38 @@ describe('actual launcher process with simulated external setup commands', () =>
     expect(existsSync(resolve(root, 'calls'))).toBe(false);
     expect(existsSync(resolve(root, '.local/setup.lock'))).toBe(true);
   });
+  it.skipIf(process.getuid?.() === 0)(
+    'reports filesystem permission errors without blaming another setup',
+    async () => {
+      const root = directory();
+      mockedCheckout(root);
+      const local = resolve(root, '.local');
+      chmodSync(local, 0o500);
+      try {
+        const running = launch(root);
+        await until(() => running.exitCode() !== undefined);
+        expect(running.exitCode()).toBe(1);
+        expect(running.output()).toContain('EACCES');
+        expect(running.output()).not.toContain('Another setup owns');
+        expect(existsSync(resolve(root, 'calls'))).toBe(false);
+      } finally {
+        chmodSync(local, 0o700);
+      }
+    },
+  );
+  it('rejects a remote host even when a local Docker context masks it', async () => {
+    const root = directory();
+    mockedCheckout(root);
+    const running = launch(root, [], {
+      DOCKER_HOST: 'tcp://remote.invalid:2375',
+      DOCKER_CONTEXT: 'desktop-local',
+    });
+    await until(
+      () => running.exitCode() !== undefined || running.output().includes('Ready to present.'),
+    );
+    expect(running.output()).toContain('refuses a remote Docker engine');
+    expect(existsSync(resolve(root, 'calls'))).toBe(false);
+  });
   it('refuses a remote Docker engine without starting services', async () => {
     const root = directory();
     mockedCheckout(root);
@@ -351,6 +403,31 @@ describe('actual launcher process with simulated external setup commands', () =>
     expect(running.output()).toContain('refuses a remote Docker engine');
     expect(existsSync(resolve(root, 'calls'))).toBe(false);
   });
+  it.each(['tcp://remote.invalid:2375', ''])(
+    'rejects a remote or unknown context endpoint (%s) despite a local host',
+    async (endpoint) => {
+      const root = directory();
+      mockedCheckout(root);
+      fixture(root, 'M2');
+      json(root, '.local/runtime.json', runtime(root));
+      const paths = [
+        '.local/runtime.json',
+        '.local/fixtures/M1-demo.json',
+        '.local/demo-clock.json',
+      ];
+      const before = paths.map((path) => readFileSync(resolve(root, path), 'utf8'));
+      const running = launch(root, [], {
+        SETUP_TEST_CONTEXT_ENDPOINT: endpoint,
+        DOCKER_HOST: 'unix:///synthetic-local-docker.sock',
+      });
+      await until(() => running.exitCode() !== undefined);
+      expect(running.exitCode()).toBe(1);
+      expect(running.output()).toContain('refuses a remote Docker engine');
+      expect(existsSync(resolve(root, 'calls'))).toBe(false);
+      expect(paths.map((path) => readFileSync(resolve(root, path), 'utf8'))).toEqual(before);
+      expect(existsSync(resolve(root, '.local/setup.lock'))).toBe(false);
+    },
+  );
   it('stops after migration failure and releases its setup lock', async () => {
     const root = directory();
     mockedCheckout(root);

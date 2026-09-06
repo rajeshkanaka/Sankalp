@@ -1,6 +1,6 @@
 # Local demo launcher verification — 2026-09-06
 
-Application feature baseline: accepted main `23f15b2`; fresh verification clone started at documentation checkpoint `638be75`. The launcher and its tests were copied into that isolated clone from the reviewed working tree. Final `scripts/setup-demo.mjs` SHA-256: `f5f0cb029b159a2db8d36c13c3e185b11edf982a42731b6f91f6d377c4cca0e7`. No application feature, schema or dependency pin changed.
+Application feature baseline: accepted main `23f15b2`; fresh verification clone started at documentation checkpoint `638be75`. The launcher and its tests were copied into that isolated clone from the reviewed working tree. Initial showcase `scripts/setup-demo.mjs` SHA-256: `f5f0cb029b159a2db8d36c13c3e185b11edf982a42731b6f91f6d377c4cca0e7`. No application feature, schema or dependency pin changed. Later PR review verification is recorded separately below.
 
 ## Actual checks
 
@@ -26,3 +26,13 @@ The first presenter probe used the wrong checklist landmark and then expected Op
 An actual application defect was found: submitting the calendar form with an empty optional date sends `date=` and renders Choose calendar dates. An empty All journeys selection similarly conflicts with optional UUID validation. This is recorded as SK-005-P2; the tested presentation supplies both a journey and `2026-09-06`. No fix or generic blank-filter pass is claimed. SK-008-P1 offline query navigation is still unresolved; all presentation navigation here was online.
 
 Already-installed prerequisite bootstrap downloads and Docker Desktop's first-run GUI were NOT RUN; actual setup used installed fnm/Node/npm and a running Docker engine. Browser auto-open was NOT RUN in the fresh test (`--no-open`); the command was source-reviewed and URLs exercised directly. Full three-engine UI regression was not rerun locally for this tooling change; required hosted CI remains a separate PR gate. No real external email, phone push, deployment or release completion is implied.
+
+## PR6 review corrections — 2026-09-06 17:16 IST
+
+Reviewed launcher SHA-256: `ba943f73d0092293284d6017d874f7fe0e2d5d6229311d4444d33aba33b9f29a`. Fresh macOS checks on this source: focused launcher **20/20 PASS**, full unit **236/236 PASS**, formatting, lint, typecheck and `git diff --check` PASS. The actual filesystem permission case ran successfully; it is explicitly skipped under root because root bypasses that permission boundary. Setup commands remain simulated inside the launcher harness; the actual initial service/browser checks above are preserved under their original source hash.
+
+The mixed local-context/remote-host regression first failed against the prior launcher, then passed with the guard. The guard now validates both inputs and rejects an empty context endpoint. Tests also prove an exported Supabase service hostname is absent during backend startup, a local Unix host still works, and a refusal preserves fixture/runtime/clock files. Permission errors retain their real cause instead of claiming another setup owns the lock. Test child cleanup handles only the expected ESRCH race and captures spawn errors. Temporary paths containing spaces remain intentional compatibility coverage.
+
+Independent read-only review found no blocking issue in this two-file correction. Docker CLI actually gives `DOCKER_CONTEXT` precedence; however, pinned Supabase's legacy service-host calculation reads `SUPABASE_SERVICES_HOSTNAME`, then `DOCKER_HOST`, before the context. Conservatively validating both Docker inputs and removing the separate service-host override avoids that cross-tool mismatch. Sources verified 2026-09-06: [Docker CLI environment variables](https://docs.docker.com/reference/cli/docker/), [Supabase CLI 2.116.0 hostname source](https://github.com/supabase/cli/blob/v2.116.0/apps/cli/src/legacy/shared/legacy-hostname.ts).
+
+Hosted checks for the final pushed PR head remain required before merge. No old-head CI result is substituted for that gate.
