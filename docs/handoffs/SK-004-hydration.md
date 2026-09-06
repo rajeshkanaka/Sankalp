@@ -13,7 +13,7 @@ Private CI log: `/Users/rajesh/sankalpa/artifacts/private-ci-34016234742.log`, i
 ## Changes
 
 - Metadata title/intention fieldset and save button stay disabled until the component's mount effect runs. Existing pending-write disabling, input state, conflict recovery and API semantics are retained.
-- The existing real-app revision workflow now pauses Next.js script requests during a reload, asserts both server-rendered fields cannot be edited and save is disabled, then releases hydration before entering data. It also checks the submitted metadata payload contains both entered values. Existing conflict preservation, successful retry, historical schedule, screenshot and accessibility assertions remain unchanged.
+- The existing real-app revision workflow now pauses Next.js script requests during a reload. If metadata is server-rendered, it asserts both fields cannot be edited and save is disabled. The coordinator's upcoming offline account boundary can instead withhold all private controls until identity is ready; in that case the test requires its explicit `Opening your private practice space…` message and the absence of both metadata fields and save. It then releases hydration, waits for all three controls to become enabled, and enters data. It also checks the submitted metadata payload contains both entered values. Existing conflict preservation, successful retry, historical schedule, screenshot and accessibility assertions remain unchanged. The original enabled server-rendered form still fails this regression; arbitrary missing content is not accepted.
 - The script gate is released in `finally`; no arbitrary sleep, test retry, weaker expectation or alternate application implementation was added.
 
 ## Verification actually performed

@@ -43,22 +43,40 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
       await route.continue();
     };
     const nextScripts = /\/_next\/static\/.*\.js(?:\?.*)?$/;
+    const metadataTitle = page.getByLabel('Journey title', { exact: true });
+    const metadataIntention = page.getByLabel('Personal intention', { exact: true });
+    const metadataSave = page.getByRole('button', {
+      name: 'Save journey details',
+      exact: true,
+    });
+    const privateSpaceLoading = page.getByText('Opening your private practice space…', {
+      exact: true,
+    });
     await page.route(nextScripts, holdScripts);
     try {
       await page.reload({ waitUntil: 'commit' });
       await expect.poll(() => heldScripts).toBeGreaterThan(0);
-      await expect(page.getByLabel('Journey title', { exact: true })).toBeVisible();
-      await expect(page.getByLabel('Journey title', { exact: true })).toBeDisabled();
-      await expect(page.getByLabel('Journey title', { exact: true })).not.toBeEditable();
-      await expect(page.getByLabel('Personal intention', { exact: true })).toBeDisabled();
-      await expect(page.getByLabel('Personal intention', { exact: true })).not.toBeEditable();
-      await expect(
-        page.getByRole('button', { name: 'Save journey details', exact: true }),
-      ).toBeDisabled();
+      await expect(metadataTitle.or(privateSpaceLoading)).toBeVisible();
+      if (await metadataTitle.count()) {
+        await expect(metadataTitle).toBeDisabled();
+        await expect(metadataTitle).not.toBeEditable();
+        await expect(metadataIntention).toBeDisabled();
+        await expect(metadataIntention).not.toBeEditable();
+        await expect(metadataSave).toBeDisabled();
+      } else {
+        // The account boundary may withhold private controls until identity is ready.
+        await expect(privateSpaceLoading).toBeVisible();
+        await expect(metadataTitle).toHaveCount(0);
+        await expect(metadataIntention).toHaveCount(0);
+        await expect(metadataSave).toHaveCount(0);
+      }
     } finally {
       releaseScripts();
       await page.unroute(nextScripts, holdScripts);
     }
+    await expect(metadataTitle).toBeEnabled();
+    await expect(metadataIntention).toBeEnabled();
+    await expect(metadataSave).toBeEnabled();
 
     await page.getByLabel('Journey title', { exact: true }).fill('Revised night practice');
     await page.getByLabel('Personal intention', { exact: true }).fill('A clearer intention.');
