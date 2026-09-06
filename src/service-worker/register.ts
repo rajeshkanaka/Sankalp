@@ -61,6 +61,7 @@ export async function hasReadyPublicShell(): Promise<boolean> {
     const finish = (ready: boolean) => {
       clearTimeout(timer);
       channel.port1.close();
+      channel.port2.close();
       resolve(ready);
     };
     const timer = setTimeout(() => finish(false), 3000);
