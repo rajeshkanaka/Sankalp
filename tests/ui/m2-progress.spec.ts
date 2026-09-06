@@ -148,7 +148,8 @@ test('@M2 @M2-progress calendar preserves overnight dates and shared totals, fil
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({ path: resolve(evidence, 'calendar-33-percent.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'calendar-33-percent.png'), fullPage: true });
 
     const civil = await createJourney(page, `Calendar civil ${info.project.name}`, 'civil');
     await page.goto('/calendar?month=2026-09&mode=grid&date=2026-09-05');
@@ -174,10 +175,11 @@ test('@M2 @M2-progress calendar preserves overnight dates and shared totals, fil
       true,
     );
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.screenshot({
-      path: resolve(evidence, 'calendar-session-list-mobile.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'calendar-session-list-mobile.png'),
+        fullPage: true,
+      });
     await page.getByRole('link', { name: 'Next month', exact: true }).click();
     await expect(page).toHaveURL(/month=2026-10/);
     await expect(

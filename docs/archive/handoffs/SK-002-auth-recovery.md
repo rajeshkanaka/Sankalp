@@ -1,6 +1,6 @@
 # SK-002 auth verification failure classification
 
-2026-09-06, Asia/Kolkata. Worker `rajesh_kanaka/offline-core`, base `f7a38ca`. Coordinator assigned only `src/server/auth/server.ts`, `tests/unit/auth-session-error.test.ts` and this handoff. This supporting regression does not change the authoritative status in [TASKS](../TASKS.md).
+2026-09-06, Asia/Kolkata. Worker `rajesh_kanaka/offline-core`, base `f7a38ca`. Coordinator assigned only `src/server/auth/server.ts`, `tests/unit/auth-session-error.test.ts` and this handoff. This supporting regression does not change the authoritative status in [TASKS](../../TASKS.md).
 
 ## Finding and change
 

@@ -2,7 +2,7 @@
 
 ## Checkpoint: keyboard and 200% workflow passed; VoiceOver output remains unverified
 
-Performed **2026-09-06, Asia/Kolkata**, by `/root/ci_triage` using the supported CUA native app API. Worker branch `rajesh_kanaka/online-checkpoints`, authoring base `07a00da`, worktree `/Users/rajesh/sankalpa-worktrees/SK-006-closure-review`. This handoff and [the synthetic screenshots](../evidence/M1/native-audio-20260906/) are the only owned changes. [TASKS](../TASKS.md) remains the status authority; this partial verification does not close B06 or SK-002.
+Performed **2026-09-06, Asia/Kolkata**, by `/root/ci_triage` using the supported CUA native app API. Worker branch `rajesh_kanaka/online-checkpoints`, authoring base `07a00da`, worktree `/Users/rajesh/sankalpa-worktrees/SK-006-closure-review`. This handoff and [the synthetic screenshots](../../evidence/M1/native-audio-20260906) are the only owned changes. [TASKS](../../TASKS.md) remains the status authority; this partial verification does not close B06 or SK-002.
 
 The coordinator supplied the running production app at `http://localhost:3001`, source checkpoint **`389e493`**, seeded synthetic **M3 demo** and authenticated synthetic `maya@example.test`. Native UI visibly showed `Demo data · simulated clock`, the `Morning grounding` journey, and its September 6 session opening at 05:00 in Asia/Kolkata. The actual session URL was `/journeys/91796af5-e673-40a3-9842-a054a0b2fe06/sessions/02b9d049-fb1d-4326-9570-29332824fdae`. This worker did not launch, stop, or reconfigure root services, and did not directly access the database, environment files, mail, or authentication links. App interaction occurred through the native UI. Automated UI servers on 3101/3201 were not touched.
 
@@ -35,7 +35,7 @@ One early batched keyboard sequence assumed the starting tab position and opened
 
 ## VoiceOver attempt and remaining capability limit
 
-Followed [the saved procedure and official sources](SK-002-native-audio-plan.md). With VoiceOver on, native Shift-Tab reached the checked Set an intention checkbox. Control-Option-Shift-Z was sent through `testChrome.pressKey`. No new Desktop entry appeared. After verifying the actual modifier, a bounded retry activated a blank area of the isolated window, sent Control-Option-Right, then sent Control-Option-Shift-Z again. No new entry appeared then or at the end of the run. Fresh Chrome captures still contained no caption overlay.
+Followed [the saved procedure and official sources](../../handoffs/SK-002-native-audio-plan.md). With VoiceOver on, native Shift-Tab reached the checked Set an intention checkbox. Control-Option-Shift-Z was sent through `testChrome.pressKey`. No new Desktop entry appeared. After verifying the actual modifier, a bounded retry activated a blank area of the isolated window, sent Control-Option-Right, then sent Control-Option-Shift-Z again. No new entry appeared then or at the end of the run. Fresh Chrome captures still contained no caption overlay.
 
 Desktop entry names were held only in an in-memory before/after set to identify a newly created export without navigating unrelated Finder contents aloud. Only the empty new-entry result was reported. No archive, diagnostic log, older audio, or unrelated Desktop file was opened, copied, uploaded, or committed. No generated or reconstructed speech was substituted. No audio file exists in this evidence directory.
 

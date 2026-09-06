@@ -21,7 +21,7 @@ export default defineConfig({
   expect: { timeout: 10000 },
   outputDir: 'artifacts/ui/results',
   reporter: [['list'], ['./scripts/safe-ui-reporter.ts']],
-  use: { baseURL: origin, trace: 'off', screenshot: 'only-on-failure', video: 'off' },
+  use: { baseURL: origin, trace: 'off', screenshot: 'off', video: 'off' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     {
@@ -37,7 +37,9 @@ export default defineConfig({
         launchOptions: { env: { ...process.env, MOZ_APP_DATA: firefoxAppData } },
       },
     },
-  ],
+  ].filter(
+    (project) => process.env.SANKALPA_FULL_BROWSER_SUITE === '1' || project.name === 'chromium',
+  ),
   webServer: {
     command: 'node scripts/run-ui-server.mjs',
     gracefulShutdown: { signal: 'SIGTERM', timeout: 7000 },

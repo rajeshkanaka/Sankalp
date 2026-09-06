@@ -1,6 +1,6 @@
 # SK-004 transaction verification handoff
 
-Date: 2026-09-06. Worker branch: `task/SK-004-transactions`; worktree: `/Users/rajesh/sankalpa-worktrees/SK-004-transactions`; base: `a28810b`. Task status remains exclusively in [TASKS](../TASKS.md).
+Date: 2026-09-06. Worker branch: `task/SK-004-transactions`; worktree: `/Users/rajesh/sankalpa-worktrees/SK-004-transactions`; base: `a28810b`. Task status remains exclusively in [TASKS](../../TASKS.md).
 
 ## Changes
 

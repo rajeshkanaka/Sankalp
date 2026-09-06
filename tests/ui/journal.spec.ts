@@ -239,10 +239,11 @@ test.describe('online-only fallback: simulated lost response and conflict recove
     await expect(
       page.getByRole('heading', { level: 2, name: 'Journal practice', exact: true }),
     ).toBeVisible();
-    await page.screenshot({
-      path: resolve(evidence, 'journal-online-only-saved.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'journal-online-only-saved.png'),
+        fullPage: true,
+      });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });
@@ -345,10 +346,11 @@ test('@M3 @M3-journal unified editor autosaves Unicode and resolves an actual tw
     await expect(secondEditor.getByLabel('Your reflection', { exact: true })).toHaveValue(
       serverText,
     );
-    await page.screenshot({
-      path: resolve(evidence, 'journal-unified-conflict.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'journal-unified-conflict.png'),
+        fullPage: true,
+      });
 
     // The other device independently saves the same text while the comparison is open.
     // Refresh and keep must handle the real API's NO_CHANGE without creating another revision.
@@ -392,5 +394,6 @@ test('@M3 @M3-journal unified editor autosaves Unicode and resolves an actual tw
   ).toBeVisible();
   await expect(page.getByText(/Synthetic first-device reflection kept after review/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.screenshot({ path: resolve(evidence, 'journal-saved.png'), fullPage: true });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({ path: resolve(evidence, 'journal-saved.png'), fullPage: true });
 });

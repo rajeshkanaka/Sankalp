@@ -1,6 +1,6 @@
 # SK-007 shared validation and database boundaries
 
-Date: **2026-09-06**. Worker branch `task/SK-007-boundaries`, worktree `/Users/rajesh/sankalpa-worktrees/SK-007-boundaries`, base `a65b68f`. Task status belongs only to [TASKS](../TASKS.md). This report and the two assigned test files are the only changes.
+Date: **2026-09-06**. Worker branch `task/SK-007-boundaries`, worktree `/Users/rajesh/sankalpa-worktrees/SK-007-boundaries`, base `a65b68f`. Task status belongs only to [TASKS](../../TASKS.md). This report and the two assigned test files are the only changes.
 
 ## Coverage
 

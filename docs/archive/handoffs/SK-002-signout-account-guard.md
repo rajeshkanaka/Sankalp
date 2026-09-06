@@ -1,6 +1,6 @@
 # SK-002 expected-account sign-out guard
 
-2026-09-06, Asia/Kolkata. Worker `rajesh_kanaka/offline-core`, base `1c5d754`. Assigned source: `src/app/api/auth/sign-out/route.ts`, `src/server/auth/server.ts`, new `tests/unit/sign-out.test.ts` and this report. Coordinator owns the rendered-account caller, browser race regression and integration. [TASKS](../TASKS.md) remains the sole task-status authority.
+2026-09-06, Asia/Kolkata. Worker `rajesh_kanaka/offline-core`, base `1c5d754`. Assigned source: `src/app/api/auth/sign-out/route.ts`, `src/server/auth/server.ts`, new `tests/unit/sign-out.test.ts` and this report. Coordinator owns the rendered-account caller, browser race regression and integration. [TASKS](../../TASKS.md) remains the sole task-status authority.
 
 ## Contract and change
 
@@ -27,7 +27,7 @@ Verified2026-09-06 against installed `@supabase/auth-js`2.115.0 (exported by pin
 
 - `node_modules/@supabase/auth-js/src/GoTrueClient.ts:4021–4109` documents the default global scope and implements explicit local scope. `GoTrueAdminApi.ts:142–159` passes the selected scope to `/logout?scope=...`; `src/lib/types.ts:1877–1887` defines `global | local | others`. Local means the current session, which fits a device sign-out action while preserving independent phone/desktop sessions. [Official sign-out API](https://supabase.com/docs/reference/javascript/auth-signout), [pinned client source](https://github.com/supabase/supabase-js/blob/v2.115.0/packages/core/auth-js/src/GoTrueClient.ts).
 - The same `_signOut` implementation can remove its current local session even when returning a provider error. The route's existing success-only cookie return is therefore retained and tested explicitly. Installed `@supabase/ssr/src/createServerClient.ts:195–212` applies staged storage on `SIGNED_OUT`; no new cookie names or manual token clearing were added to production code.
-- Error classification is the verified narrow policy in [SK-002-auth-recovery](SK-002-auth-recovery.md). Only the same-client input was added; no provider failure became an authoritative signed-out result.
+- Error classification is the verified narrow policy in [SK-002-auth-recovery](../../handoffs/SK-002-auth-recovery.md). Only the same-client input was added; no provider failure became an authoritative signed-out result.
 
 **Limit:** the guard protects the account represented by this request's cookie snapshot. It does not make separate browser requests atomic, stop a newer sign-in from completing after this request began, or guarantee an older response cannot race newer cookies. Local scope is a session revocation request, not a promise that issued access tokens become instantly unusable; the SDK documents their remaining validity until expiry. Coordinator-owned browser/account-generation handling and actual race tests remain necessary. No broader cookie-race solution is claimed.
 

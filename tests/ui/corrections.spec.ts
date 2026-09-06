@@ -121,7 +121,8 @@ test('@M3 @M3-corrections shows a closure created by another tab without reloadi
     ).toHaveCount(2);
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({ path: resolve(evidence, 'closure-other-tab.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'closure-other-tab.png'), fullPage: true });
   } finally {
     await secondPage?.close();
     setUiClock(M1_NOW);
@@ -327,10 +328,11 @@ test.describe('online-only fallback: simulated retries and NO_CHANGE acknowledgm
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
       const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
       mkdirSync(evidence, { recursive: true });
-      await page.screenshot({
-        path: resolve(evidence, 'completion-online-only-corrections.png'),
-        fullPage: true,
-      });
+      if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+        await page.screenshot({
+          path: resolve(evidence, 'completion-online-only-corrections.png'),
+          fullPage: true,
+        });
       expect(pageErrors).toEqual([]);
     } finally {
       setUiClock(M1_NOW);
@@ -410,7 +412,8 @@ test('@M3 @M3-corrections unified editor preserves historical chronology through
     ]);
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({ path: resolve(evidence, 'recorded-later.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'recorded-later.png'), fullPage: true });
 
     await checklist.getByRole('button', { name: 'Correct practice time', exact: true }).click();
     await actualTime.fill('2026-09-05T07:15');
@@ -433,10 +436,11 @@ test('@M3 @M3-corrections unified editor preserves historical chronology through
       checklist.getByText('1 change(s) saved on this device.', { exact: true }),
     ).toBeVisible();
     await expect(checklist.getByText('Recorded later.', { exact: true })).toBeVisible();
-    await page.screenshot({
-      path: resolve(evidence, 'completion-correction-pending.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'completion-correction-pending.png'),
+        fullPage: true,
+      });
     await page.context().setOffline(false);
     await setUiNetworkDisconnected(false);
     await page.reload();
@@ -512,10 +516,11 @@ test('@M3 @M3-corrections unified editor preserves historical chronology through
     ]);
     expect(await canonicalSession(page, original.id)).toEqual(undone);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.screenshot({
-      path: resolve(evidence, 'completion-corrections.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'completion-corrections.png'),
+        fullPage: true,
+      });
     await page.getByRole('link', { name: 'Your journey', exact: true }).click();
     const progress = page.getByRole('region', { name: 'Journey progress', exact: true });
     await expect(progress.getByText('0 of 2 sessions completed', { exact: true })).toBeVisible();

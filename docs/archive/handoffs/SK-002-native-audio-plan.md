@@ -2,9 +2,9 @@
 
 ## Scope and current checkpoint
 
-Prepared on **2026-09-06** in worker worktree `/Users/rajesh/sankalpa-worktrees/SK-006-closure-review`, branch `rajesh_kanaka/online-checkpoints`, based on worker checkpoint `15acb23`. This report is a procedure for closing the native accessibility evidence gap B06; task status remains authoritative in [TASKS](../TASKS.md).
+Prepared on **2026-09-06** in worker worktree `/Users/rajesh/sankalpa-worktrees/SK-006-closure-review`, branch `rajesh_kanaka/online-checkpoints`, based on worker checkpoint `15acb23`. This report is a procedure for closing the native accessibility evidence gap B06; task status remains authoritative in [TASKS](../../TASKS.md).
 
-Read [the previous manual retry](SK-002-manual-retry.md) first. That retry verified public-page native 200% zoom and invalid-email keyboard behavior, restored its temporary settings, and did **not** verify VoiceOver announcements. Its app screenshots exposed personal browser chrome and were not retained. It did not verify an authenticated practice workflow.
+Read [the previous manual retry](../../handoffs/SK-002-manual-retry.md) first. That retry verified public-page native 200% zoom and invalid-email keyboard behavior, restored its temporary settings, and did **not** verify VoiceOver announcements. Its app screenshots exposed personal browser chrome and were not retained. It did not verify an authenticated practice workflow.
 
 This feasibility pass read official documentation and the supported CUA API documentation. `sw_vers -productVersion` reported **27.0**. Apple's currently published guide selected **macOS Tahoe 26**. Actual shortcut behavior, Guest availability, authenticated 200% checks, captions, and audio export on this Mac remain **NOT RUN** in this pass. No VoiceOver toggle, browser navigation, authentication, setting change, service launch, screenshot capture, or audio export was performed for this procedure. The prior restoration result is historical; reobserve the current state before a new run.
 

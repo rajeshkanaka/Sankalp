@@ -141,7 +141,8 @@ test('@M2 @M2-revisions future changes preserve opened labels and metadata remai
 
     const evidence = resolve('docs/evidence/M2', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({ path: resolve(evidence, 'revision-history.png'), fullPage: true });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({ path: resolve(evidence, 'revision-history.png'), fullPage: true });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   } finally {
     setUiClock(M1_NOW);

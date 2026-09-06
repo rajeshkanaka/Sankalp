@@ -43,6 +43,34 @@ describe('public-only cache boundary', () => {
       expect(allowsOfflineNavigation(origin + path, origin)).toBe(false);
     expect(allowsOfflineNavigation('https://other.example/today', origin)).toBe(false);
   });
+  it('accepts validated navigation filters without widening the asset cache', () => {
+    const journey = 'a0000000-0000-4000-8000-000000000001';
+    for (const route of [
+      `/today?journey=${journey}`,
+      '/calendar',
+      `/calendar?month=2026-09&journey=${journey}`,
+      '/calendar?month=2026-09&mode=list&date=2026-09-05',
+    ]) {
+      expect(allowsOfflineNavigation(origin + route, origin), route).toBe(true);
+      expect(publicAssetFor(origin + route, origin, assets)).toBeUndefined();
+    }
+    for (const route of [
+      '/today?journey=',
+      '/today?journey=invalid',
+      `/today?journey=${journey}&journey=${journey}`,
+      `/today?journey=${journey}&token_hash=private`,
+      '/today?month=2026-09',
+      '/calendar?month=2026-13',
+      '/calendar?date=2026-02-30',
+      '/calendar?mode=unknown',
+      '/calendar?code=private',
+      '/offline/saved?journey=' + journey,
+      `/journeys/${journey}/sessions/${journey}?journey=${journey}`,
+      '/journeys/a0000000-0000-0000-8000-000000000001/sessions/' + journey,
+      `/today?journey=${journey}#private`,
+    ])
+      expect(allowsOfflineNavigation(origin + route, origin), route).toBe(false);
+  });
   it('rejects redirects, failed responses, wrong MIME and foreign origins before caching', () => {
     const response = (overrides: Partial<Response>) =>
       ({

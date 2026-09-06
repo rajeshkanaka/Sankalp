@@ -148,10 +148,11 @@ test('@M3 @M3-offline online-only sign-out waits for a real reflection write ack
 
     const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
     mkdirSync(evidence, { recursive: true });
-    await page.screenshot({
-      path: resolve(evidence, 'online-only-pending-signout.png'),
-      fullPage: true,
-    });
+    if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+      await page.screenshot({
+        path: resolve(evidence, 'online-only-pending-signout.png'),
+        fullPage: true,
+      });
     const savedResponse = page.waitForResponse(
       (response) =>
         new URL(response.url()).pathname === reflectionPath &&
@@ -232,10 +233,11 @@ test('@M3 @M3-offline online-only account cancellation preserves mood and correc
   expect((await page.request.get('/api/auth/session')).status()).toBe(200);
   const evidence = resolve('docs/evidence/M3', process.env.UI_RUN_ID!, info.project.name);
   mkdirSync(evidence, { recursive: true });
-  await page.screenshot({
-    path: resolve(evidence, 'online-only-correction-draft-signout.png'),
-    fullPage: true,
-  });
+  if (process.env.SANKALPA_MILESTONE_EVIDENCE === '1')
+    await page.screenshot({
+      path: resolve(evidence, 'online-only-correction-draft-signout.png'),
+      fullPage: true,
+    });
   await keepSignedIn.click();
   await expect(practiceTime).toBeEnabled();
   await expect(practiceTime).toHaveValue(rawTime);
