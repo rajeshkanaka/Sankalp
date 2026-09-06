@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   OfflineError,
@@ -14,15 +14,28 @@ import shared from '@/styles/sanctuary.module.css';
 import styles from './offline.module.css';
 import { formatPracticeDate } from './format';
 
-export function OfflineSavedPage() {
+export function OfflineSavedPage({ asStandalone = true }: { asStandalone?: boolean } = {}) {
+  const Container = asStandalone ? 'main' : 'div';
+  const sequence = useRef(0);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const [scope, setScope] = useState<AccountScope | null>(null);
   const [items, setItems] = useState<LocalView[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'locked' | 'unavailable'>('loading');
   const [message, setMessage] = useState('Checking this device…');
 
   const load = useCallback(async () => {
+    const ticket = ++sequence.current;
+    setItems([]);
+    setState('loading');
     try {
       const device = await getDeviceState();
+      if (!alive.current || ticket !== sequence.current) return;
       if (device.quarantined) {
         setScope(null);
         setItems([]);
@@ -47,11 +60,19 @@ export function OfflineSavedPage() {
         return;
       }
       const saved = await listSavedSessions(device.scope);
+      const current = await getDeviceState();
+      if (!alive.current || ticket !== sequence.current) return;
+      if (
+        current.scope?.accountId !== device.scope.accountId ||
+        current.scope?.generation !== device.scope.generation
+      )
+        throw new OfflineError('ACCOUNT_CHANGED');
       setScope(device.scope);
       setItems(saved);
       setState('ready');
       setMessage('These practices were explicitly saved on this device.');
     } catch (error) {
+      if (!alive.current || ticket !== sequence.current) return;
       setScope(null);
       setItems([]);
       setState('unavailable');
@@ -73,7 +94,7 @@ export function OfflineSavedPage() {
   }, [load, scope]);
 
   return (
-    <main className={styles.savedPage}>
+    <Container className={styles.savedPage}>
       <header className={shared.header}>
         <h1>Practices saved on this device</h1>
         <p>{message}</p>
@@ -124,6 +145,6 @@ export function OfflineSavedPage() {
           })}
         </section>
       )}
-    </main>
+    </Container>
   );
 }

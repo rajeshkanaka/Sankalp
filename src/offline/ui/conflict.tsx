@@ -1,52 +1,84 @@
 import type { SessionRecord } from '@/domain/contracts';
-import type { LocalView, QueueOperation } from '../core';
+import type { Intent, LocalView, QueueOperation, RawDraft } from '../core';
 import shared from '@/styles/sanctuary.module.css';
 import styles from './offline.module.css';
 import { formatInstant } from './format';
 
-function practiceSummary(session: SessionRecord | null, operation: QueueOperation): string {
-  if (operation.intent.kind !== 'practices') return '';
-  return Object.entries(operation.intent.payload.values)
-    .map(([id, value]) => {
-      const label = session?.practices.find((practice) => practice.id === id)?.label ?? 'Practice';
-      return `${label}: ${typeof value === 'boolean' ? (value ? 'complete' : 'not complete') : value}`;
-    })
-    .join('; ');
+const valueLabel = (value: boolean | number | string) =>
+  typeof value === 'boolean' ? (value ? 'complete' : 'not complete') : String(value);
+export function IntentSummary({ session, intent }: { session: SessionRecord; intent: Intent }) {
+  if (intent.kind === 'reflection')
+    return (
+      <>
+        <p className={styles.reflectionText}>{intent.payload.text || 'No written note.'}</p>
+        <p>Mood: {intent.payload.moods.join(', ') || 'None'}</p>
+      </>
+    );
+  if (intent.kind === 'practices')
+    return (
+      <ul>
+        {Object.entries(intent.payload.values).map(([id, value]) => (
+          <li key={id}>
+            {session.practices.find((practice) => practice.id === id)?.label ?? 'Practice'}:{' '}
+            {valueLabel(value)}
+          </li>
+        ))}
+      </ul>
+    );
+  if (intent.kind === 'completion')
+    return (
+      <p>Record completion for {formatInstant(intent.payload.performedAt, session.timeZone)}.</p>
+    );
+  return <p>Remove the completion record while retaining saved practice values.</p>;
 }
-
-function serverSummary(view: LocalView, operation: QueueOperation): string {
-  const conflict = operation.conflict;
-  if (!conflict?.currentAvailable) return 'Reconnect to load the current saved version.';
-  if (operation.stream === 'reflection') {
-    const reflection = conflict.currentReflection;
-    return reflection
-      ? `${reflection.text || 'No written note.'}${reflection.moods.length ? ` Mood: ${reflection.moods.join(', ')}.` : ''}`
-      : 'No reflection is saved on the server.';
-  }
-  const session = conflict.currentSession;
-  if (!session) return 'This practice is no longer available on the server.';
-  if (operation.intent.kind === 'practices') return practiceSummary(session, operation);
-  if (operation.intent.kind === 'completion')
-    return session.confirmed && session.performedAt
-      ? `Completion recorded for ${formatInstant(session.performedAt, session.timeZone)}.`
-      : 'No completion is recorded on the server.';
-  return session.confirmed
-    ? 'The completion remains recorded on the server.'
-    : 'No completion is recorded on the server.';
+export function DraftSummary({
+  session,
+  draft,
+}: {
+  session: SessionRecord;
+  draft: RawDraft | null;
+}) {
+  if (!draft || (!draft.reflection && !Object.keys(draft.numericValues ?? {}).length))
+    return <p>No unqueued draft.</p>;
+  return (
+    <>
+      {draft.numericValues && (
+        <ul>
+          {Object.entries(draft.numericValues).map(([id, value]) => (
+            <li key={id}>
+              {session.practices.find((practice) => practice.id === id)?.label ?? 'Practice'}:{' '}
+              {value || '(empty)'}
+            </li>
+          ))}
+        </ul>
+      )}
+      {draft.reflection && (
+        <IntentSummary
+          session={session}
+          intent={{ kind: 'reflection', payload: draft.reflection }}
+        />
+      )}
+    </>
+  );
 }
-
-function localSummary(view: LocalView, operation: QueueOperation): string {
-  if (operation.intent.kind === 'reflection') {
-    const payload = operation.intent.payload;
-    return `${payload.text || 'No written note.'}${payload.moods.length ? ` Mood: ${payload.moods.join(', ')}.` : ''}`;
-  }
-  if (operation.intent.kind === 'practices')
-    return practiceSummary(view.projectedSession, operation);
-  if (operation.intent.kind === 'completion')
-    return `Record completion for ${formatInstant(operation.intent.payload.performedAt, view.snapshot.session.timeZone)}.`;
-  return 'Remove the completion record while retaining saved practice values.';
+export function SavedSummary({ session }: { session: SessionRecord }) {
+  return (
+    <>
+      <ul>
+        {session.practices.map((practice) => (
+          <li key={practice.id}>
+            {practice.label}: {valueLabel(practice.value)}
+          </li>
+        ))}
+      </ul>
+      <p>
+        {session.confirmed && session.performedAt
+          ? `Completion recorded for ${formatInstant(session.performedAt, session.timeZone)}.`
+          : 'No completion is recorded.'}
+      </p>
+    </>
+  );
 }
-
 export function OfflineConflict({
   view,
   operation,
@@ -62,23 +94,60 @@ export function OfflineConflict({
   onUseServer(): void;
   onKeepLocal(): void;
 }) {
+  const comparison = operation.conflict;
+  const affected = view.operations.filter((item) => item.stream === operation.stream);
+  const draft =
+    operation.stream === 'reflection'
+      ? view.draft?.reflection
+        ? { reflection: view.draft.reflection }
+        : null
+      : view.draft?.numericValues
+        ? { numericValues: view.draft.numericValues }
+        : null;
   return (
     <section className={styles.conflict} role="alert" aria-labelledby="offline-conflict-title">
       <h2 id="offline-conflict-title">This saved practice changed elsewhere</h2>
       <p>
-        Your device kept its version. Review both versions and choose deliberately; Sankalpa will
-        not merge or move it to another session.
+        Review every queued change and the unqueued draft below. Other practice or reflection
+        changes are kept separately.
       </p>
       <div className={styles.versions}>
         <section className={styles.version} aria-label="Your unsynced version">
           <h3>Your unsynced version</h3>
-          <p>{localSummary(view, operation)}</p>
+          <ol aria-label="Changes in order">
+            {affected.map((item) => (
+              <li key={item.operationId}>
+                <IntentSummary session={view.snapshot.session} intent={item.intent} />
+              </li>
+            ))}
+          </ol>
+          <h4>Unqueued draft</h4>
+          <DraftSummary session={view.snapshot.session} draft={draft} />
         </section>
         <section className={styles.version} aria-label="Current saved version">
           <h3>Current saved version</h3>
-          <p>{serverSummary(view, operation)}</p>
+          {!comparison?.currentAvailable ? (
+            <p>Reconnect to load the current saved version.</p>
+          ) : operation.stream === 'reflection' ? (
+            comparison.currentReflection ? (
+              <IntentSummary
+                session={view.snapshot.session}
+                intent={{ kind: 'reflection', payload: comparison.currentReflection }}
+              />
+            ) : (
+              <p>No reflection is saved on the server.</p>
+            )
+          ) : comparison.currentSession ? (
+            <SavedSummary session={comparison.currentSession} />
+          ) : (
+            <p>This practice is no longer available on the server.</p>
+          )}
         </section>
       </div>
+      <p>
+        Keeping your version queues all {affected.length} reviewed change(s) in order and keeps the
+        unqueued draft. Using the saved version discards these listed changes and this draft.
+      </p>
       <div className={shared.actions}>
         <button
           type="button"
@@ -91,7 +160,12 @@ export function OfflineConflict({
         <button
           type="button"
           className={shared.button}
-          disabled={pending || !operation.conflict?.currentAvailable}
+          disabled={
+            pending ||
+            !comparison?.currentAvailable ||
+            !comparison.currentSession ||
+            Boolean(comparison.currentSession.supersededAt)
+          }
           onClick={onKeepLocal}
         >
           Keep my reviewed version
@@ -99,10 +173,10 @@ export function OfflineConflict({
         <button
           type="button"
           className={`${shared.button} ${shared.secondary}`}
-          disabled={pending || !operation.conflict?.currentAvailable}
+          disabled={pending || !comparison?.currentAvailable}
           onClick={onUseServer}
         >
-          Use saved version
+          Use saved version and discard these local changes
         </button>
       </div>
     </section>

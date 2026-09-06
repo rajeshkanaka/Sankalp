@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { deriveStatus, targetsMet } from '@/domain/status';
+import { deriveCompletionTiming, deriveStatus, targetsMet } from '@/domain/status';
 import type { ReflectionPayload, SessionPractice } from '@/domain/contracts';
 import {
   OfflineError,
@@ -25,7 +25,7 @@ import {
 } from '../core';
 import shared from '@/styles/sanctuary.module.css';
 import styles from './offline.module.css';
-import { OfflineConflict } from './conflict';
+import { DraftSummary, IntentSummary, OfflineConflict, SavedSummary } from './conflict';
 import { effectiveNow, formatInstant, instantFromLocalInput, localInputValue } from './format';
 import { OfflineReflectionEditor, reflectionError } from './reflection-controls';
 import { useOfflineAccount } from './account-context';
@@ -93,10 +93,7 @@ function streamRevision(view: LocalView, stream: Stream): number {
 
 function reviewedOperationIds(view: LocalView, operation: QueueOperation): string[] {
   return view.operations
-    .filter(
-      (candidate) =>
-        candidate.stream === operation.stream && candidate.sequence >= operation.sequence,
-    )
+    .filter((candidate) => candidate.stream === operation.stream)
     .map(({ operationId }) => operationId);
 }
 
@@ -159,7 +156,22 @@ function NumericPractice({
   );
 }
 
-export function OfflineSession({
+export function OfflineSession(props: {
+  snapshot: Snapshot;
+  now: string;
+  demo: boolean;
+  onCanonicalChange?: () => void;
+}) {
+  const { scope } = useOfflineAccount();
+  return (
+    <SessionEditor
+      key={`${scope?.generation ?? 'unavailable'}:${props.snapshot.session.id}`}
+      {...props}
+    />
+  );
+}
+
+function SessionEditor({
   snapshot,
   now,
   demo,
@@ -170,7 +182,8 @@ export function OfflineSession({
   demo: boolean;
   onCanonicalChange?: () => void;
 }) {
-  const { status, scope, frozen, flushNow } = useOfflineAccount();
+  const { status, scope, frozen, flushNow, registerEditor, isFrozen, invalidate, onlineOnly } =
+    useOfflineAccount();
   const [view, setView] = useState<LocalView | null>(null);
   const viewRef = useRef<LocalView | null>(null);
   const [numeric, setNumeric] = useState<Record<string, string>>({});
@@ -193,14 +206,46 @@ export function OfflineSession({
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
   const [performedInput, setPerformedInput] = useState('');
   const [performedError, setPerformedError] = useState<string | null>(null);
+  const [deviceNow, setDeviceNow] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    if (demo) return;
+    const timer = window.setInterval(() => setDeviceNow(new Date().toISOString()), 1000);
+    return () => window.clearInterval(timer);
+  }, [demo]);
   const initialized = useRef(false);
+  const alive = useRef(true);
+  const readSequence = useRef(0);
+  const commitRef = useRef<Promise<void> | null>(null);
+  const draftBlocked = useRef(false);
+  const [draftFailure, setDraftFailure] = useState(false);
+  const [draftComparison, setDraftComparison] = useState<LocalView | null>(null);
+  const [enqueueComparison, setEnqueueComparison] = useState<LocalView | null>(null);
+  const pendingRetry = useRef<{ input: EnqueueInput; draftAfter: RawDraft | null } | null>(null);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  useEffect(
+    () =>
+      registerEditor({
+        settle: async () => {
+          await draftQueue.current;
+          await commitRef.current;
+        },
+        hasUnstoredInput: () => inputDirty.current || Boolean(pendingRetry.current),
+      }),
+    [registerEditor],
+  );
 
   const applyView = useCallback((next: LocalView) => {
+    if (!alive.current) return;
     viewRef.current = next;
     setView(next);
-    draftRevisionRef.current = next.draftRevision;
-    rawDraftRef.current = next.draft;
     if (!inputDirty.current) {
+      draftRevisionRef.current = next.draftRevision;
+      rawDraftRef.current = next.draft;
       const nextNumeric = numericInputs(next);
       const nextReflection = reflectionInput(next);
       numericRef.current = nextNumeric;
@@ -212,9 +257,11 @@ export function OfflineSession({
 
   const load = useCallback(
     async (activeScope: AccountScope, notifyCanonical = false) => {
+      const ticket = ++readSequence.current;
       const before = viewRef.current;
       const next = await read(activeScope, snapshot.session.id);
       if (!next) throw new OfflineError('SNAPSHOT_MISSING', 'Open this practice online once more.');
+      if (!alive.current || ticket !== readSequence.current) return next;
       applyView(next);
       if (notifyCanonical && before && canonicalChanged(before, next)) onCanonicalChange?.();
       return next;
@@ -230,18 +277,30 @@ export function OfflineSession({
       setRetryAt(result.retryAt);
       const next = await load(scope, true);
       const waiting = pendingCount(next);
-      const nextMessage = waiting ? retryMessage(result) : 'Saved.';
+      const nextMessage =
+        result.blocked ||
+        next.operations.some(({ state }) => state === 'conflict' || state === 'review_required')
+          ? 'Saved on this device. Review the conflict below.'
+          : waiting
+            ? retryMessage(result)
+            : result.reason === 'drained'
+              ? 'Saved.'
+              : retryMessage(result);
       setMessage(nextMessage);
       setReflectionMessage(nextMessage);
       setError(null);
     } catch (cause) {
+      if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
+        invalidate();
+        return;
+      }
       setError(safeLocalError(cause));
       setMessage('Saved on this device. Sync needs attention.');
       setReflectionMessage('Saved on this device. Sync needs attention.');
     } finally {
       setWorking(false);
     }
-  }, [flushNow, frozen, load, scope]);
+  }, [flushNow, frozen, invalidate, load, scope]);
 
   useEffect(() => {
     if (status !== 'ready' || !scope) return;
@@ -288,19 +347,42 @@ export function OfflineSession({
         if (waiting) void flushAndRefresh();
       } catch (cause) {
         if (!active) return;
+        if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
+          invalidate();
+          return;
+        }
+        if (!viewRef.current && !inputDirty.current)
+          onlineOnly(
+            'This device could not prepare offline saving. Use the online controls to continue.',
+          );
         setError(safeLocalError(cause));
       }
     };
     void prepare();
     const stop = subscribe(scope, () => {
-      if (initialized.current && !inputDirty.current) void load(scope);
+      if (initialized.current && !inputDirty.current)
+        void load(scope).catch((cause) => {
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate();
+          else setError(safeLocalError(cause));
+        });
     });
     return () => {
       active = false;
       initialized.current = false;
       stop();
     };
-  }, [applyView, demo, flushAndRefresh, load, now, scope, snapshot, status]);
+  }, [
+    applyView,
+    demo,
+    flushAndRefresh,
+    invalidate,
+    load,
+    now,
+    onlineOnly,
+    scope,
+    snapshot,
+    status,
+  ]);
 
   useEffect(() => {
     if (!scope || frozen) return;
@@ -329,7 +411,7 @@ export function OfflineSession({
 
   const persistDraft = useCallback(
     (next: RawDraft | null, target: 'practice' | 'reflection') => {
-      if (!scope) return Promise.reject(new OfflineError('ACCOUNT_CHANGED'));
+      if (!scope || !alive.current) return Promise.reject(new OfflineError('ACCOUNT_CHANGED'));
       rawDraftRef.current = next;
       inputDirty.current = true;
       const sequence = ++draftSequence.current;
@@ -339,6 +421,12 @@ export function OfflineSession({
       const previous = draftQueue.current.catch(() => undefined);
       const job = previous
         .then(async () => {
+          if (!alive.current) throw new OfflineError('ACCOUNT_CHANGED');
+          if (draftBlocked.current)
+            throw new OfflineError(
+              'LOCAL_CONFLICT',
+              'Your unsaved input needs review before another draft write.',
+            );
           const revision = await saveDraft(
             scope,
             snapshot.session.id,
@@ -346,16 +434,24 @@ export function OfflineSession({
             draftRevisionRef.current,
           );
           draftRevisionRef.current = revision;
-          if (sequence === draftSequence.current) {
+          if (alive.current && sequence === draftSequence.current) {
             inputDirty.current = false;
+            setDraftFailure(false);
+            setDraftComparison(null);
             setDraftSaving(false);
             if (target === 'practice') setMessage('Draft saved on this device.');
             else setReflectionMessage('Draft saved on this device.');
           }
         })
         .catch((cause) => {
-          if (sequence === draftSequence.current) {
-            inputDirty.current = false;
+          draftBlocked.current = true;
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
+            invalidate();
+            throw cause;
+          }
+          if (alive.current && sequence === draftSequence.current) {
+            inputDirty.current = true;
+            setDraftFailure(true);
             setDraftSaving(false);
             setError(safeLocalError(cause));
             if (target === 'practice') setMessage('Not saved on this device. Keep this page open.');
@@ -366,43 +462,61 @@ export function OfflineSession({
       draftQueue.current = job.catch(() => undefined);
       return job;
     },
-    [scope, snapshot.session.id],
+    [invalidate, scope, snapshot.session.id],
   );
 
   const commit = useCallback(
     async (input: EnqueueInput, draftAfter: RawDraft | null = rawDraftRef.current) => {
-      if (!scope) return;
+      if (!scope || isFrozen() || commitRef.current) return;
+      pendingRetry.current = { input, draftAfter };
       setPendingLocal(input);
       setWorking(true);
       setError(null);
-      try {
-        await enqueue(scope, input);
-        setPendingLocal(null);
-        if (draftAfter !== rawDraftRef.current) {
-          rawDraftRef.current = draftAfter;
-          await persistDraft(
-            draftAfter,
-            input.intent.kind === 'reflection' ? 'reflection' : 'practice',
-          );
+      const job = (async () => {
+        let queued = false;
+        try {
+          await draftQueue.current;
+          await enqueue(scope, input);
+          queued = true;
+          pendingRetry.current = null;
+          setPendingLocal(null);
+          setEnqueueComparison(null);
+          if (draftAfter !== rawDraftRef.current)
+            await persistDraft(
+              draftAfter,
+              input.intent.kind === 'reflection' ? 'reflection' : 'practice',
+            );
+          const next = await load(scope);
+          const text = `Saved on this device. ${pendingCount(next)} change(s) waiting to sync.`;
+          if (input.intent.kind === 'reflection') setReflectionMessage(text);
+          else setMessage(text);
+        } catch (cause) {
+          if (!alive.current) return;
+          if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') {
+            invalidate();
+            return;
+          }
+          setError(safeLocalError(cause));
+          if (!queued && cause instanceof OfflineError && cause.code === 'LOCAL_CONFLICT') {
+            const latest = await read(scope, snapshot.session.id).catch(() => null);
+            if (alive.current) setEnqueueComparison(latest);
+          }
+          const text = queued
+            ? 'Change saved on this device; its draft still needs attention.'
+            : 'Not saved on this device. Keep this page open and try again.';
+          if (input.intent.kind === 'reflection') setReflectionMessage(text);
+          else setMessage(text);
         }
-        const next = await load(scope);
-        const waiting = pendingCount(next);
-        const savedOnDevice = waiting
-          ? `Saved on this device. ${waiting} change(s) waiting to sync.`
-          : 'Saved on this device.';
-        if (input.intent.kind === 'reflection') setReflectionMessage(savedOnDevice);
-        else setMessage(savedOnDevice);
-        void flushAndRefresh();
-      } catch (cause) {
-        setError(safeLocalError(cause));
-        const localMessage = 'Not saved on this device. Keep this page open and try again.';
-        if (input.intent.kind === 'reflection') setReflectionMessage(localMessage);
-        else setMessage(localMessage);
-      } finally {
+      })();
+      commitRef.current = job;
+      await job;
+      commitRef.current = null;
+      if (alive.current) {
         setWorking(false);
+        if (!pendingRetry.current && !draftBlocked.current) void flushAndRefresh();
       }
     },
-    [flushAndRefresh, load, persistDraft, scope],
+    [flushAndRefresh, invalidate, isFrozen, load, persistDraft, scope, snapshot.session.id],
   );
 
   function makeInput(intent: Intent): EnqueueInput | null {
@@ -425,6 +539,7 @@ export function OfflineSession({
   }
 
   function changeNumeric(practiceId: string, value: string) {
+    if (isFrozen()) return;
     const nextNumeric = { ...numericRef.current, [practiceId]: value };
     numericRef.current = nextNumeric;
     setNumeric(nextNumeric);
@@ -438,6 +553,7 @@ export function OfflineSession({
 
   async function saveNumeric(practice: SessionPractice) {
     await draftQueue.current;
+    if (draftBlocked.current || isFrozen()) return;
     const raw = numericRef.current[practice.id] ?? '';
     const value = Number(raw);
     if (raw.trim() === '' || !Number.isInteger(value) || value < 0 || value > 1_000_000) {
@@ -451,10 +567,16 @@ export function OfflineSession({
       Object.keys(remaining).length || rawDraftRef.current?.reflection
         ? { ...(rawDraftRef.current ?? {}), numericValues: remaining }
         : null;
+    if (practice.value === value) {
+      await persistDraft(draftAfter, 'practice').catch(() => undefined);
+      if (!inputDirty.current && scope) await load(scope);
+      return;
+    }
     queueIntent({ kind: 'practices', payload: { values: { [practice.id]: value } } }, draftAfter);
   }
 
   function changeReflection(next: ReflectionPayload) {
+    if (isFrozen()) return;
     reflectionRef.current = next;
     setReflection(next);
     setError(null);
@@ -464,6 +586,7 @@ export function OfflineSession({
 
   async function saveReflection() {
     await draftQueue.current;
+    if (draftBlocked.current || isFrozen()) return;
     const payload = reflectionRef.current;
     const validation = reflectionError(payload);
     if (validation) {
@@ -474,11 +597,26 @@ export function OfflineSession({
     const draftAfter = rawDraftRef.current?.numericValues
       ? { numericValues: rawDraftRef.current.numericValues }
       : null;
+    if (JSON.stringify(payload) === JSON.stringify(viewRef.current?.projectedReflection)) {
+      await persistDraft(draftAfter, 'reflection').catch(() => undefined);
+      if (!inputDirty.current && scope) await load(scope);
+      return;
+    }
     queueIntent({ kind: 'reflection', payload }, draftAfter);
   }
 
   useEffect(() => {
-    if (!view || frozen || working || draftSaving || pendingLocal) return;
+    if (
+      !view ||
+      frozen ||
+      working ||
+      draftSaving ||
+      pendingLocal ||
+      draftFailure ||
+      view.operations.some(({ state }) => state === 'conflict' || state === 'review_required') ||
+      Date.parse(effectiveNow(view.snapshot.clock)) < Date.parse(view.snapshot.session.opensAt)
+    )
+      return;
     const payload = reflectionRef.current;
     if (
       reflectionError(payload) ||
@@ -490,7 +628,8 @@ export function OfflineSession({
   });
 
   async function retryLocalSave() {
-    if (pendingLocal) await commit(pendingLocal);
+    if (pendingRetry.current)
+      await commit(pendingRetry.current.input, pendingRetry.current.draftAfter);
   }
 
   async function resolveConflict(
@@ -501,10 +640,17 @@ export function OfflineSession({
     setWorking(true);
     setError(null);
     try {
+      if (!operation.conflict?.comparisonId || inputDirty.current)
+        throw new OfflineError(
+          'LOCAL_CONFLICT',
+          'Save or review your local draft before resolving this comparison.',
+        );
+      const expectedComparisonId = operation.conflict.comparisonId;
       const expectedOperationIds = reviewedOperationIds(view, operation);
       if (kind === 'use_server') {
         await resolve(scope, operation.operationId, {
           kind,
+          expectedComparisonId,
           expectedOperationIds,
           expectedDraftRevision: view.draftRevision,
         });
@@ -513,18 +659,20 @@ export function OfflineSession({
           operation.stream === 'reflection'
             ? operation.conflict?.currentReflection
             : operation.conflict?.currentSession;
-        if (!operation.conflict?.currentAvailable || !current)
+        if (!operation.conflict?.currentAvailable || !operation.conflict.currentSession)
           throw new OfflineError(
             'CURRENT_UNAVAILABLE',
             'Refresh the saved version before continuing.',
           );
         await resolve(scope, operation.operationId, {
           kind,
+          expectedComparisonId,
           expectedOperationIds,
           expectedDraftRevision: view.draftRevision,
-          operationId: crypto.randomUUID(),
-          intent: operation.intent,
-          currentRevision: current.revision,
+          replacements: view.operations
+            .filter((item) => item.stream === operation.stream)
+            .map((item) => ({ operationId: crypto.randomUUID(), intent: item.intent })),
+          currentRevision: current?.revision ?? 0,
         });
       }
       const next = await load(scope);
@@ -552,6 +700,53 @@ export function OfflineSession({
     }
   }
 
+  async function reviewDraft() {
+    if (!scope) return;
+    await draftQueue.current;
+    try {
+      const latest = await read(scope, snapshot.session.id);
+      if (alive.current) setDraftComparison(latest);
+    } catch (cause) {
+      if (cause instanceof OfflineError && cause.code === 'ACCOUNT_CHANGED') invalidate();
+      else setError(safeLocalError(cause));
+    }
+  }
+  async function retryDraft(keepLocal = false) {
+    if (!scope || isFrozen()) return;
+    await draftQueue.current;
+    if (keepLocal && draftComparison) draftRevisionRef.current = draftComparison.draftRevision;
+    draftBlocked.current = false;
+    await persistDraft(rawDraftRef.current, 'reflection').catch(() => undefined);
+    if (!inputDirty.current) await load(scope);
+  }
+  async function chooseStoredDraft() {
+    if (!scope || !draftComparison) return;
+    const latest = await read(scope, snapshot.session.id);
+    if (!latest || latest.draftRevision !== draftComparison.draftRevision) {
+      setDraftComparison(latest);
+      setError('The saved draft changed again. Review it before choosing.');
+      return;
+    }
+    inputDirty.current = false;
+    draftBlocked.current = false;
+    setDraftFailure(false);
+    setDraftComparison(null);
+    setError(null);
+    applyView(latest);
+  }
+  async function retryReviewedEnqueue() {
+    if (!pendingRetry.current || !enqueueComparison) return;
+    const previous = pendingRetry.current;
+    const stream = previous.input.intent.kind === 'reflection' ? 'reflection' : 'session';
+    const input = {
+      ...previous.input,
+      operationId: crypto.randomUUID(),
+      baseRevision: streamRevision(enqueueComparison, stream),
+      expectedLocalHead: enqueueComparison.heads[stream],
+    };
+    await commit(input, previous.draftAfter);
+  }
+
   if (status !== 'ready' || !scope) return null;
   if (!view)
     return (
@@ -563,7 +758,8 @@ export function OfflineSession({
 
   const projected = view.projectedSession;
   const canonical = view.snapshot.session;
-  const currentNow = effectiveNow(view.snapshot.clock);
+  const currentNow = effectiveNow(view.snapshot.clock, deviceNow);
+  const hasPracticeDraft = Object.keys(rawDraftRef.current?.numericValues ?? {}).length > 0;
   const beforeOpening = Date.parse(currentNow) < Date.parse(projected.opensAt);
   const closed = Date.parse(currentNow) >= Date.parse(projected.closesAt);
   const conflict = view.operations.find(
@@ -573,9 +769,11 @@ export function OfflineSession({
     frozen ||
     working ||
     Boolean(pendingLocal) ||
+    draftFailure ||
     Boolean(conflict) ||
     Boolean(projected.supersededAt);
   const canEditValues = !controlsDisabled && !beforeOpening && !projected.confirmed;
+  const timing = deriveCompletionTiming(canonical);
   const completionPending = projected.confirmed && !canonical.confirmed;
   const pending = view.operations.length;
   const statusLabel = deriveStatus(projected, currentNow);
@@ -706,6 +904,16 @@ export function OfflineSession({
           <div className={shared.success} role="status">
             <h2>Your practice is recorded.</h2>
             <p>Take this moment with you.</p>
+            {timing.practiceTiming === 'practiced_late' ? (
+              <p>Practiced late.</p>
+            ) : timing.recordedLater ? (
+              <p>Recorded later.</p>
+            ) : (
+              <p>On schedule.</p>
+            )}
+            <a className={shared.button} href={`/today?journey=${canonical.journeyId}`}>
+              Done
+            </a>
           </div>
         ) : completionPending ? (
           <div className={styles.pending} role="status">
@@ -719,7 +927,9 @@ export function OfflineSession({
             <button
               type="button"
               className={shared.button}
-              disabled={controlsDisabled || beforeOpening || !targetsMet(projected)}
+              disabled={
+                controlsDisabled || beforeOpening || hasPracticeDraft || !targetsMet(projected)
+              }
               onClick={recordCompletion}
             >
               Complete this session
@@ -760,7 +970,7 @@ export function OfflineSession({
               <button
                 type="button"
                 className={shared.button}
-                disabled={controlsDisabled || !targetsMet(projected)}
+                disabled={controlsDisabled || hasPracticeDraft || !targetsMet(projected)}
                 onClick={recordCompletion}
               >
                 {canonical.confirmed
@@ -842,6 +1052,92 @@ export function OfflineSession({
         )}
       </section>
 
+      {draftFailure && (
+        <section className={shared.panel} role="alert">
+          <h2>Your draft has not been saved</h2>
+          <p>
+            Your input remains in this page. Review the other local draft before replacing either
+            version.
+          </p>
+          <button
+            type="button"
+            className={shared.button}
+            disabled={working || frozen}
+            onClick={() => void reviewDraft()}
+          >
+            Review saved local draft
+          </button>
+          <button
+            type="button"
+            className={`${shared.button} ${shared.secondary}`}
+            disabled={working || frozen}
+            onClick={() => void retryDraft()}
+          >
+            Try saving draft again
+          </button>
+          {draftComparison && (
+            <>
+              <div className={styles.versions}>
+                <section aria-label="Your unsaved draft">
+                  <h3>Your unsaved draft</h3>
+                  <DraftSummary session={view.snapshot.session} draft={rawDraftRef.current} />
+                </section>
+                <section aria-label="Current local draft">
+                  <h3>Current local draft</h3>
+                  <DraftSummary session={view.snapshot.session} draft={draftComparison.draft} />
+                </section>
+              </div>
+              <button
+                type="button"
+                className={shared.button}
+                disabled={working || frozen}
+                onClick={() => void retryDraft(true)}
+              >
+                Keep my reviewed local draft
+              </button>
+              <button
+                type="button"
+                className={`${shared.button} ${shared.secondary}`}
+                disabled={working || frozen}
+                onClick={() => void chooseStoredDraft()}
+              >
+                Use saved local draft
+              </button>
+            </>
+          )}
+        </section>
+      )}
+      {enqueueComparison && pendingLocal && (
+        <section className={shared.panel} role="alert">
+          <h2>Another tab changed this local practice</h2>
+          <p>Your change was not queued. Review the latest state before applying it.</p>
+          <div className={styles.versions}>
+            <section aria-label="Your unqueued change">
+              <h3>Your unqueued change</h3>
+              <IntentSummary session={view.snapshot.session} intent={pendingLocal.intent} />
+            </section>
+            <section aria-label="Latest local practice">
+              <h3>Latest local practice</h3>
+              {pendingLocal.intent.kind === 'reflection' ? (
+                <IntentSummary
+                  session={view.snapshot.session}
+                  intent={{ kind: 'reflection', payload: enqueueComparison.projectedReflection }}
+                />
+              ) : (
+                <SavedSummary session={enqueueComparison.projectedSession} />
+              )}
+            </section>
+          </div>
+          <button
+            type="button"
+            className={shared.button}
+            disabled={working || frozen}
+            onClick={() => void retryReviewedEnqueue()}
+          >
+            Apply my change to this reviewed local state
+          </button>
+        </section>
+      )}
       {conflict && (
         <OfflineConflict
           view={view}

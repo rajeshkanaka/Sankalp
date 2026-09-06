@@ -49,3 +49,18 @@ No Next imports, server imports, private response caches or authentication data 
 3. Add `offline.module.css`, run typecheck/lint, and fix the current WIP source from observed diagnostics.
 4. Review account invalidation and draft-write races, then add focused browser-neutral tests plus `tests/ui/offline.spec.ts` for network-off reload/reconnect, one server completion, conflict choices, account quarantine, storage failure and sign-out/shared-device recovery.
 5. Hand the verified UI commits to the coordinator for `SessionExperience`, public-shell and production-build integration. Root alone runs the real M3 database/browser gates and records evidence.
+
+## Resume checkpoint: coherent UI exports, 2026-09-06
+
+New owner `/root/merge_review`, branch `rajesh_kanaka/offline-ui`, same worktree, recovered base148ca78. Core correctness4d8f68c is incorporated as50c34fb, with managementScope types677397d incorporated as3997c50. No shared source was independently edited.
+
+The missing CSS is now present and uses the existing dark/brass tokens. Current UI adds account-ID keyed boundaries, cancellable identity reads, management-scope adoption for shared-device changes, and an editor checkpoint barrier before account actions. Failed local drafts remain in memory with explicit saved-versus-local comparison; queued conflict choices show the complete affected stream plus raw draft, carry the comparison token, and preserve all ordered replacement intents. Server practice summaries use server values. An absent server reflection is revision0; blocked queues are never labeled acknowledged. Sign-out errors unfreeze controls. Timing labels, custom moods/prompts, completion/undo and the Done link are retained.
+
+Coordinator integration exports:
+
+- `OfflineAccountBoundary({accountId,children,ensureOfflineReady?:()=>Promise<boolean>})`: omitted/false readiness selects `online_only`; pass the real public-shell readiness function. Account/generation invalidation hides children. Do not substitute mock readiness in the application.
+- `useOfflineAccount().status`: coordinator's SessionExperience selects the existing online controls for `online_only`; the ready branch mounts `OfflineSession({snapshot,now,demo,onCanonicalChange?})`.
+- `OfflineSavedPage({asStandalone?:boolean})`: defaulttrue supplies main for the public shell; passfalse inside the authenticated app's existing main.
+- `OfflineAccountControls({onSignOut})`: owns device/sync/discard choices before invoking the coordinator's actual sign-out operation.
+
+Actual local checks: scoped ESLint/Prettier and full `npm run typecheck` PASS after source changes. Initial lint found the misleading usePrivateStorage name and unused useMemo; both corrected. `next typegen` only generated ignored types; no app or database runtime was started. Functional browser checks, screenshots and actual application integration remain NOT RUN at this export checkpoint; the worker is preparing tests next. This checkpoint is not SK-008 completion.

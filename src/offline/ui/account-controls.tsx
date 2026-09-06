@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { clearAccount, setSharedDevice } from '../core';
+import { clearAccount, getDeviceState, setSharedDevice } from '../core';
 import shared from '@/styles/sanctuary.module.css';
 import styles from './offline.module.css';
 import { useOfflineAccount } from './account-context';
@@ -10,65 +10,101 @@ import { useOfflineAccount } from './account-context';
 type Choice = 'sign_out' | 'shared_device' | null;
 
 export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise<void> }) {
-  const { scope, status, deviceState, frozen, refresh, flushNow, freeze, unfreeze } =
-    useOfflineAccount();
+  const {
+    scope,
+    status,
+    deviceState,
+    frozen,
+    adoptScope,
+    flushNow,
+    freeze,
+    unfreeze,
+    hasUnstoredInput,
+  } = useOfflineAccount();
   const [choice, setChoice] = useState<Choice>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const pending = (deviceState?.pendingOperations ?? 0) + (deviceState?.pendingDrafts ?? 0);
-
-  async function finishSignOut(action: 'synced' | 'discard_confirmed') {
-    if (!scope) {
+  async function finish(
+    action: 'synced' | 'discard_confirmed',
+    target: 'sign_out' | 'shared_device',
+  ) {
+    if (action === 'synced' && hasUnstoredInput())
+      throw new Error(
+        'Some input is not saved. Keep this page open and save or explicitly discard it.',
+      );
+    if (target === 'sign_out') {
+      if (scope) await clearAccount(scope, action);
       await onSignOut();
-      return;
+    } else {
+      if (!scope)
+        throw new Error('Reconnect to verify this account before changing device privacy.');
+      const nextScope = await setSharedDevice(scope, true, action);
+      await adoptScope(nextScope);
+      setMessage('Private local storage is now off on this shared device.');
     }
-    await clearAccount(scope, action);
-    await onSignOut();
   }
 
-  async function signOut() {
-    if (status !== 'ready' || !scope || pending === 0) {
-      setWorking(true);
-      setMessage(null);
+  async function begin(target: 'sign_out' | 'shared_device') {
+    if (working) return;
+    setWorking(true);
+    setMessage(null);
+    let needsChoice = false;
+    try {
       await freeze();
-      try {
-        await finishSignOut('synced');
-      } catch (error) {
-        setMessage(error instanceof Error ? error.message : 'Sign out could not finish.');
-      } finally {
-        setWorking(false);
-      }
-      return;
+      const latest = scope ? await getDeviceState() : null;
+      if (
+        (latest?.pendingOperations ?? 0) + (latest?.pendingDrafts ?? 0) > 0 ||
+        hasUnstoredInput()
+      ) {
+        needsChoice = true;
+        setChoice(target);
+        setConfirmDiscard(false);
+      } else await finish('synced', target);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'This account action could not finish. Your input remains here.',
+      );
+    } finally {
+      if (!needsChoice) unfreeze();
+      setWorking(false);
     }
-    await freeze();
-    setChoice('sign_out');
-    setConfirmDiscard(false);
   }
-
-  async function syncThenSignOut() {
+  async function syncThen(target: 'sign_out' | 'shared_device') {
     setWorking(true);
     setMessage('Syncing saved changes…');
     unfreeze();
     try {
       const result = await flushNow();
-      if (result.pending || result.blocked || result.reason !== 'drained') {
-        setMessage('Some local changes still need attention. You remain signed in.');
-        setChoice(null);
+      await freeze();
+      const latest = scope ? await getDeviceState() : null;
+      if (
+        hasUnstoredInput() ||
+        latest?.pendingDrafts ||
+        result.pending ||
+        result.blocked ||
+        result.reason !== 'drained'
+      ) {
+        setMessage(
+          'Some local changes or drafts still need attention. You remain signed in; save or review them before trying again.',
+        );
         return;
       }
-      await freeze();
-      await finishSignOut('synced');
+      await finish('synced', target);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Sync could not finish.');
-      setChoice(null);
+      setMessage(
+        error instanceof Error ? error.message : 'Sync could not finish. You remain signed in.',
+      );
     } finally {
+      setChoice(null);
+      unfreeze();
       setWorking(false);
     }
   }
-
-  async function discardThenSignOut() {
+  async function discardThen(target: 'sign_out' | 'shared_device') {
     if (!confirmDiscard) {
       setConfirmDiscard(true);
       return;
@@ -76,101 +112,44 @@ export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise
     setWorking(true);
     setMessage(null);
     try {
-      await finishSignOut('discard_confirmed');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Sign out could not finish.');
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function beginSharedDevice() {
-    if (!scope) return;
-    if (pending > 0) {
       await freeze();
-      setChoice('shared_device');
-      setConfirmDiscard(false);
-      return;
-    }
-    setWorking(true);
-    await freeze();
-    try {
-      await setSharedDevice(scope, true, 'synced');
-      setMessage('Private local storage is now off on this shared device.');
-      await refresh();
+      await finish('discard_confirmed', target);
+      setChoice(null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Shared-device mode could not be saved.');
-      unfreeze();
+      setMessage(error instanceof Error ? error.message : 'This account action could not finish.');
     } finally {
+      unfreeze();
       setWorking(false);
     }
   }
+  const signOut = () => begin('sign_out');
+  const beginSharedDevice = () => begin('shared_device');
+  const syncThenSignOut = () => syncThen('sign_out');
+  const syncThenShare = () => syncThen('shared_device');
+  const discardThenSignOut = () => discardThen('sign_out');
+  const discardThenShare = () => discardThen('shared_device');
 
-  async function syncThenShare() {
-    if (!scope) return;
-    setWorking(true);
-    setMessage('Syncing saved changes…');
-    unfreeze();
-    try {
-      const result = await flushNow();
-      if (result.pending || result.blocked || result.reason !== 'drained') {
-        setMessage('Some local changes still need attention. Shared-device mode was not enabled.');
-        setChoice(null);
-        return;
-      }
-      await freeze();
-      await setSharedDevice(scope, true, 'synced');
-      setChoice(null);
-      setMessage('Private local storage is now off on this shared device.');
-      await refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Shared-device mode could not be saved.');
-      setChoice(null);
-      unfreeze();
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function discardThenShare() {
-    if (!scope) return;
-    if (!confirmDiscard) {
-      setConfirmDiscard(true);
+  async function enablePrivateStorage() {
+    if (!scope) {
+      setMessage('Reconnect to verify this account before changing device privacy.');
       return;
     }
     setWorking(true);
     setMessage(null);
     try {
-      await setSharedDevice(scope, true, 'discard_confirmed');
-      setChoice(null);
-      setMessage('Private local storage is now off on this shared device.');
-      await refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Shared-device mode could not be saved.');
-      unfreeze();
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function usePrivateStorage() {
-    if (!scope) return;
-    setWorking(true);
-    setMessage(null);
-    try {
-      await setSharedDevice(scope, false);
-      unfreeze();
-      await refresh();
+      await freeze();
+      const nextScope = await setSharedDevice(scope, false);
+      await adoptScope(nextScope);
       setMessage('Private offline storage is enabled for this account on this device.');
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : 'Private local storage could not be enabled.',
       );
     } finally {
+      unfreeze();
       setWorking(false);
     }
   }
-
   function cancel() {
     setChoice(null);
     setConfirmDiscard(false);
@@ -194,7 +173,7 @@ export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise
             type="button"
             className={`${shared.button} ${shared.secondary}`}
             disabled={working}
-            onClick={() => void usePrivateStorage()}
+            onClick={() => void enablePrivateStorage()}
           >
             Use private local storage on this device
           </button>
@@ -225,7 +204,8 @@ export function OfflineAccountControls({ onSignOut }: { onSignOut: () => Promise
           </h3>
           <p>
             {deviceState?.pendingOperations ?? 0} pending change(s) and{' '}
-            {deviceState?.pendingDrafts ?? 0} draft(s) would otherwise remain on this device.
+            {deviceState?.pendingDrafts ?? 0} draft(s) remain on this device. Input that could not
+            be stored also needs an explicit choice.
           </p>
           <div className={shared.actions}>
             <button
