@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  canSkipPreferenceSave,
   createReminderAttempt,
   fieldsFromPreferences,
   formatPreviewTime,
@@ -9,6 +10,47 @@ import {
 } from './model';
 
 const preferences = { enabled: false, offsets: [] as number[], quietHours: null, detailed: false };
+
+test('unchanged valid preferences need no mutation, including equivalent raw minute text', () => {
+  assert.equal(canSkipPreferenceSave(fieldsFromPreferences(preferences), preferences, false), true);
+  const saved = { ...preferences, enabled: true, offsets: [-5, 0] };
+  const fields = { ...fieldsFromPreferences(saved), offsets: ['005', '00'] };
+  const before = structuredClone(fields);
+  assert.equal(canSkipPreferenceSave(fields, saved, false), true);
+  assert.deepEqual(fields, before);
+  assert.equal(canSkipPreferenceSave(fields, { ...saved, offsets: [-10, 0] }, false), false);
+  // Accepting a conflict's latest values can satisfy the existing local choice without a write.
+  assert.equal(canSkipPreferenceSave(fields, structuredClone(saved), false), true);
+});
+
+test('no-change detection never hides invalid raw input or suppresses an unchanged failed retry', () => {
+  const saved = { ...preferences, offsets: [-5] };
+  assert.equal(canSkipPreferenceSave(fieldsFromPreferences(saved), saved, true), false);
+  for (const value of ['', '1e-', '5.0', '1441']) {
+    const fields = { ...fieldsFromPreferences(saved), offsets: [value] };
+    assert.equal(canSkipPreferenceSave(fields, saved, false), false);
+    assert.equal(fields.offsets[0], value);
+  }
+});
+
+test('no-change detection includes every persisted preference and ordered offset', () => {
+  const saved = {
+    enabled: true,
+    offsets: [-15, 0],
+    detailed: false,
+    quietHours: { start: '22:00', end: '06:00' },
+  };
+  for (const changed of [
+    { ...saved, enabled: false },
+    { ...saved, offsets: [0, -15] },
+    { ...saved, offsets: [-15] },
+    { ...saved, detailed: true },
+    { ...saved, quietHours: null },
+    { ...saved, quietHours: { start: '21:00', end: '06:00' } },
+    { ...saved, quietHours: { start: '22:00', end: '07:00' } },
+  ])
+    assert.equal(canSkipPreferenceSave(fieldsFromPreferences(changed), saved, false), false);
+});
 
 test('blank choices never enable reminders or create a preset', () => {
   const fields = fieldsFromPreferences(preferences);

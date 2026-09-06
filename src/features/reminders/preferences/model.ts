@@ -65,6 +65,26 @@ export function validateFields(
   };
 }
 
+/** Invalid raw input still needs validation; an uncertain request still needs its exact retry. */
+export function canSkipPreferenceSave(
+  fields: PreferenceFields,
+  saved: ReminderPreferences,
+  hasPendingAttempt: boolean,
+): boolean {
+  if (hasPendingAttempt) return false;
+  const result = validateFields(fields);
+  if (!result.success) return false;
+  const current = result.preferences;
+  return (
+    current.enabled === saved.enabled &&
+    current.detailed === saved.detailed &&
+    current.offsets.length === saved.offsets.length &&
+    current.offsets.every((offset, index) => offset === saved.offsets[index]) &&
+    current.quietHours?.start === saved.quietHours?.start &&
+    current.quietHours?.end === saved.quietHours?.end
+  );
+}
+
 /** Retained privately; callers receive a clone so they cannot alter a later retry. */
 export function createReminderAttempt(
   preferences: ReminderPreferences,
