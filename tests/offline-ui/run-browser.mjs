@@ -9,7 +9,9 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { build } from 'vite';
 import { chromium, webkit, firefox, expect } from '@playwright/test';
+import { runAccountRaces } from './account-races.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
+const development = process.argv.includes('--development');
 const out = path.join(root, '.local/offline-ui-browser');
 const scenarioNames = [
   'failed-draft-preservation',
@@ -25,6 +27,17 @@ const scenarioNames = [
   'full-ordered-conflict-and-explicit-discard',
   'compact-privacy-320px',
   'unverified-storage-blocks-signout',
+  'verified-response-binding-CAS-race',
+  'stale-account-verification-denial',
+  'readiness-account-change-race',
+  'readiness-clear-does-not-resurrect',
+  'storage-failure-still-requires-identity',
+  'scope-less-online-mode-rechecks-identity',
+  'logout-failure-retains-retry-after-local-purge',
+  'initial-private-bind-requires-live-verification',
+  'verified-local-offline-focus-preserves-input',
+  'unavailable-identity-preserves-only-in-memory-input',
+  'authoritative-signed-out-retry-needs-no-post',
 ];
 const summary = {
   sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
@@ -32,6 +45,7 @@ const summary = {
     execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim(),
   ),
   integration: 'SIMULATED_BACKEND_AND_PUBLIC_SHELL_READINESS',
+  renderMode: development ? 'DEVELOPMENT_STRICT_MODE' : 'PRODUCTION',
   browsers: [],
 };
 let activeResult;
@@ -50,7 +64,7 @@ await build({
   root,
   envFile: false,
   envPrefix: 'SANKALPA_SYNTHETIC_',
-  define: { 'process.env.NODE_ENV': '"production"' },
+  define: { 'process.env.NODE_ENV': JSON.stringify(development ? 'development' : 'production') },
   logLevel: 'error',
   plugins: [
     {
@@ -520,6 +534,10 @@ try {
         }),
       );
       await context.close();
+      await runAccountRaces(browser, url, errors, (scenario) =>
+        log(JSON.stringify({ browser: name, status: 'PASS', scenario })),
+      );
+      assert.deepEqual(errors, []);
       result.status = 'PASS';
       result.pageErrors = errors.length;
     } catch (error) {
@@ -533,7 +551,12 @@ try {
 } finally {
   await mkdir(path.join(root, 'artifacts/offline-ui'), { recursive: true });
   await writeFile(
-    path.join(root, 'artifacts/offline-ui/summary.json'),
+    path.join(
+      root,
+      development
+        ? 'artifacts/offline-ui/strict-summary.json'
+        : 'artifacts/offline-ui/summary.json',
+    ),
     JSON.stringify(summary, null, 2) + '\n',
   );
   await new Promise((resolve) => server.close(resolve));

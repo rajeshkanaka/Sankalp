@@ -27,6 +27,40 @@ IDBObjectStore.prototype.put = function (...args: Parameters<IDBObjectStore['put
 };
 let switchAccount: (accountId: string) => void = () => undefined;
 let signOutFails = false;
+let verificationResult: core.AccountVerification = 'verified';
+let verificationCalls = 0;
+let offlineVerificationCalls = 0;
+let simulatedNetworkAvailable = !new URLSearchParams(location.search).has('noNetwork');
+let readinessCalls = 0;
+let signOutCalls = 0;
+let releaseVerification: ((value: boolean) => void) | undefined;
+let releaseReadiness: ((value: boolean) => void) | undefined;
+let releaseSignOut: (() => void) | undefined;
+let verificationGate = new URLSearchParams(location.search).has('holdVerify')
+  ? new Promise<boolean>((resolve) => {
+      releaseVerification = resolve;
+    })
+  : null;
+let readinessGate = new URLSearchParams(location.search).has('holdReady')
+  ? new Promise<boolean>((resolve) => {
+      releaseReadiness = resolve;
+    })
+  : null;
+let signOutGate: Promise<void> | null = null;
+async function verifySyntheticAccount(_accountId: string, allowOffline = false) {
+  verificationCalls++;
+  if (allowOffline) offlineVerificationCalls++;
+  if (!simulatedNetworkAvailable) return allowOffline ? 'verified' : 'unavailable';
+  return verificationGate
+    ? (await verificationGate)
+      ? 'verified'
+      : 'different_account'
+    : verificationResult;
+}
+async function prepareSyntheticShell() {
+  readinessCalls++;
+  return readinessGate ? readinessGate : true;
+}
 let denyAfterPrivacyMutation = false;
 function OnlineInput() {
   const { frozen, registerEditor } = useOfflineAccount();
@@ -71,6 +105,8 @@ function Content() {
       <OfflineAccountControls
         compact={new URLSearchParams(location.search).has('compact')}
         onSignOut={async () => {
+          signOutCalls++;
+          await signOutGate;
           if (signOutFails) throw new Error('Synthetic sign-out failure; try again.');
           document.title = 'Synthetic signed out';
         }}
@@ -87,8 +123,8 @@ function App() {
       <p>Actual React and browser storage; simulated backend and public-shell readiness.</p>
       <OfflineAccountBoundary
         accountId={accountId}
-        verifyAccount={async () => true}
-        ensureOfflineReady={async () => true}
+        verifyAccount={verifySyntheticAccount}
+        ensureOfflineReady={prepareSyntheticShell}
       >
         <Content />
       </OfflineAccountBoundary>
@@ -131,6 +167,43 @@ window.offlineUiHarness = {
   canonicalChanges() {
     return canonicalChanges;
   },
+  verificationCalls() {
+    return verificationCalls;
+  },
+  offlineVerificationCalls() {
+    return offlineVerificationCalls;
+  },
+  networkAvailable(value: boolean) {
+    simulatedNetworkAvailable = value;
+  },
+  readinessCalls() {
+    return readinessCalls;
+  },
+  signOutCalls() {
+    return signOutCalls;
+  },
+  verification(value: boolean | core.AccountVerification) {
+    verificationResult =
+      typeof value === 'boolean' ? (value ? 'verified' : 'different_account') : value;
+  },
+  releaseVerification(value: boolean) {
+    verificationGate = null;
+    verificationResult = value ? 'verified' : 'different_account';
+    releaseVerification?.(value);
+  },
+  releaseReadiness(value: boolean) {
+    readinessGate = null;
+    releaseReadiness?.(value);
+  },
+  holdSignOut() {
+    signOutGate = new Promise((resolve) => {
+      releaseSignOut = resolve;
+    });
+  },
+  releaseSignOut() {
+    signOutGate = null;
+    releaseSignOut?.();
+  },
   failSignOut(value: boolean) {
     signOutFails = value;
   },
@@ -142,7 +215,11 @@ window.offlineUiHarness = {
     switchAccount(OTHER);
   },
 };
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
 declare global {
   interface Window {
     offlineUiHarness: {
@@ -157,6 +234,16 @@ declare global {
       replaceDraftAfterEnqueue(draft: core.RawDraft): void;
       afterEnqueue(): Promise<void>;
       canonicalChanges(): number;
+      verificationCalls(): number;
+      offlineVerificationCalls(): number;
+      networkAvailable(value: boolean): void;
+      readinessCalls(): number;
+      signOutCalls(): number;
+      verification(value: boolean | core.AccountVerification): void;
+      releaseVerification(value: boolean): void;
+      releaseReadiness(value: boolean): void;
+      holdSignOut(): void;
+      releaseSignOut(): void;
       failSignOut(value: boolean): void;
       switchAccount(): Promise<void>;
     };

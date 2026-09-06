@@ -18,6 +18,7 @@ import {
   getDeviceState,
   subscribe,
   type AccountScope,
+  type AccountVerification,
   type ClearAction,
   type DeviceState,
   type FlushResult,
@@ -65,7 +66,7 @@ export function useOfflineAccount(): OfflineAccountContextValue {
 export function OfflineAccountBoundary(props: {
   accountId: string;
   children: ReactNode;
-  verifyAccount: (accountId: string) => Promise<boolean>;
+  verifyAccount: (accountId: string, allowOffline?: boolean) => Promise<AccountVerification>;
   ensureOfflineReady?: () => Promise<boolean>;
 }) {
   return <AccountProvider key={props.accountId} {...props} />;
@@ -79,7 +80,7 @@ function AccountProvider({
 }: {
   accountId: string;
   children: ReactNode;
-  verifyAccount: (accountId: string) => Promise<boolean>;
+  verifyAccount: (accountId: string, allowOffline?: boolean) => Promise<AccountVerification>;
   ensureOfflineReady?: () => Promise<boolean>;
 }) {
   const [scope, setScope] = useState<AccountScope | null>(null);
@@ -92,6 +93,7 @@ function AccountProvider({
   const [unverified, setUnverified] = useState(false);
   const unverifiedRef = useRef(false);
   const identityPending = useRef(false);
+  const identityCheckSequence = useRef(0);
   const frozenRef = useRef(false);
   const alive = useRef(true);
   const epoch = useRef(0);
@@ -214,10 +216,13 @@ function AccountProvider({
   );
   const verifyAndBindAccount = useCallback(
     async (discardPrevious = false): Promise<AccountScope> => {
-      // Capture the binding token before the network wait; never reclaim another tab's scope.
+      // Capture both guards before the network wait; cancelled verification cannot bind later.
+      const ticket = epoch.current;
       const before = await getDeviceState().catch(() => null);
-      const verified = await verification.current(accountId).catch(() => false);
-      if (!alive.current || !verified) {
+      const verified = await verification.current(accountId).catch(() => 'unavailable' as const);
+      if (!alive.current || ticket !== epoch.current)
+        throw new OfflineError('ACCOUNT_CHANGED', 'This account verification was cancelled.');
+      if (verified !== 'verified') {
         invalidate();
         throw new OfflineError('ACCOUNT_VERIFICATION_FAILED', 'Verify your account to continue.');
       }
@@ -232,7 +237,13 @@ function AccountProvider({
           expectedGeneration: before.bindingGeneration,
         });
       } catch (error) {
-        if (error instanceof OfflineError && error.code === 'ACCOUNT_CHANGED') invalidate();
+        if (
+          alive.current &&
+          ticket === epoch.current &&
+          error instanceof OfflineError &&
+          error.code === 'ACCOUNT_CHANGED'
+        )
+          invalidate();
         throw error;
       }
     },
@@ -300,41 +311,48 @@ function AccountProvider({
     void refresh();
     return stop;
   }, [refresh, scope]);
+  const checkVisibleAccount = useCallback(async () => {
+    const sequence = ++identityCheckSequence.current;
+    identityPending.current = true;
+    unverifiedRef.current = true;
+    setUnverified(true);
+    flushController.current?.abort();
+    const allowOffline = Boolean(scopeRef.current && readyRef.current);
+    const verified = await verification
+      .current(accountId, allowOffline)
+      .catch(() => 'unavailable' as const);
+    if (!alive.current || sequence !== identityCheckSequence.current) return;
+    identityPending.current = verified === 'unavailable';
+    if (verified === 'unavailable') return;
+    if (verified !== 'verified') {
+      invalidate();
+      return;
+    }
+    if (scopeRef.current) await refresh();
+    else {
+      // Online-only mode can have no readable local scope, but still requires fresh identity.
+      unverifiedRef.current = false;
+      setUnverified(false);
+    }
+  }, [accountId, invalidate, refresh]);
+  const cancelIdentityChecks = useCallback(() => {
+    identityCheckSequence.current++;
+    identityPending.current = false;
+  }, []);
   useEffect(() => {
-    let active = true;
-    let checkSequence = 0;
-    const check = async () => {
-      if (document.visibilityState !== 'visible') return;
-      const sequence = ++checkSequence;
-      identityPending.current = true;
-      unverifiedRef.current = true;
-      setUnverified(true);
-      flushController.current?.abort();
-      const verified = await verification.current(accountId).catch(() => false);
-      if (!active || !alive.current || sequence !== checkSequence) return;
-      identityPending.current = false;
-      if (!verified) {
-        invalidate();
-        return;
-      }
-      if (scopeRef.current) await refresh();
-      else {
-        // Online-only mode can have no readable local scope, but still requires fresh identity.
-        unverifiedRef.current = false;
-        setUnverified(false);
-      }
+    const checkVisible = () => {
+      if (document.visibilityState === 'visible') void checkVisibleAccount();
     };
-    const checkVisible = () => void check();
     window.addEventListener('pageshow', checkVisible);
     window.addEventListener('focus', checkVisible);
     document.addEventListener('visibilitychange', checkVisible);
     return () => {
-      active = false;
+      cancelIdentityChecks();
       window.removeEventListener('pageshow', checkVisible);
       window.removeEventListener('focus', checkVisible);
       document.removeEventListener('visibilitychange', checkVisible);
     };
-  }, [accountId, invalidate, refresh]);
+  }, [cancelIdentityChecks, checkVisibleAccount]);
   const flushNow = useCallback(async (): Promise<FlushResult> => {
     const current = scopeRef.current;
     if (!current || frozenRef.current || unverifiedRef.current)
@@ -387,8 +405,12 @@ function AccountProvider({
     logoutInFlight.current = true;
     setLogout('pending');
     try {
-      const verified = await verification.current(accountId).catch(() => false);
-      if (!verified) throw new OfflineError('ACCOUNT_VERIFICATION_FAILED');
+      const verified = await verification.current(accountId).catch(() => 'unavailable' as const);
+      if (verified === 'signed_out') {
+        if (alive.current) setLogout('done');
+        return;
+      }
+      if (verified !== 'verified') throw new OfflineError('ACCOUNT_VERIFICATION_FAILED');
       await logoutCallback.current();
       if (alive.current) setLogout('done');
     } catch {
@@ -561,10 +583,14 @@ function AccountProvider({
         <section className={styles.notice} role="alert">
           <h1>Verify local storage to continue</h1>
           <p>
-            Private content is temporarily hidden while this device cannot verify its saved account.
-            Unsaved input remains in this page.
+            Private content is temporarily hidden while your account or local storage cannot be
+            verified. Unsaved input remains in this page.
           </p>
-          <button type="button" className={shared.button} onClick={() => void refresh()}>
+          <button
+            type="button"
+            className={shared.button}
+            onClick={() => void checkVisibleAccount()}
+          >
             Retry verification
           </button>
         </section>
