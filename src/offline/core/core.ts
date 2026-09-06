@@ -1,4 +1,5 @@
-import type { ReflectionRecord } from '../../domain/contracts';
+import type { ReflectionRecord, SessionRecord } from '../../domain/contracts';
+import { targetsMet } from '../../domain/status';
 import {
   Storage,
   counts,
@@ -286,6 +287,136 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
       await prune(tx, scope.accountId);
     });
     announce(scope, operation.sessionId);
+  }
+  async function satisfyUnchanged(
+    scope: AccountScope,
+    operation: OperationRow,
+    value: unknown,
+  ): Promise<boolean> {
+    let current:
+      { kind: 'session'; record: SessionRecord } | { kind: 'reflection'; record: ReflectionRecord };
+    try {
+      if (operation.stream === 'session') {
+        const record = parseSession(value);
+        if (
+          (record.confirmed
+            ? record.performedAt === null ||
+              record.recordedAt === null ||
+              Date.parse(record.performedAt) < Date.parse(record.opensAt) ||
+              Date.parse(record.performedAt) > Date.parse(record.recordedAt)
+            : record.performedAt !== null || record.recordedAt !== null) ||
+          record.practices.some((practice) =>
+            practice.kind === 'checkbox'
+              ? typeof practice.value !== 'boolean'
+              : typeof practice.value !== 'number' ||
+                !Number.isInteger(practice.value) ||
+                practice.value < 0 ||
+                practice.value > 1_000_000,
+          )
+        )
+          return false;
+        const intent = operation.intent;
+        const equivalent =
+          intent.kind === 'practices'
+            ? !record.confirmed &&
+              Object.entries(intent.payload.values).every(
+                ([id, expected]) =>
+                  record.practices.find((practice) => practice.id === id)?.value === expected,
+              )
+            : intent.kind === 'completion'
+              ? record.confirmed &&
+                targetsMet(record) &&
+                record.recordedAt !== null &&
+                record.performedAt !== null &&
+                Date.parse(record.performedAt) === Date.parse(intent.payload.performedAt)
+              : intent.kind === 'completion_undo' &&
+                !record.confirmed &&
+                record.performedAt === null &&
+                record.recordedAt === null;
+        if (!equivalent || record.id !== operation.sessionId || record.supersededAt !== null)
+          return false;
+        current = { kind: 'session', record };
+      } else {
+        const record = parseReflection(value);
+        if (
+          !record ||
+          record.revision < 1 ||
+          Date.parse(record.createdAt) > Date.parse(record.updatedAt) ||
+          operation.intent.kind !== 'reflection' ||
+          record.sessionId !== operation.sessionId ||
+          record.text !== operation.intent.payload.text ||
+          stableJson(record.moods) !== stableJson(operation.intent.payload.moods)
+        )
+          return false;
+        current = { kind: 'reflection', record };
+      }
+      if (
+        operation.accountId !== scope.accountId ||
+        current.record.scheduleVersionId !== operation.scheduleVersionId ||
+        current.record.revision !== operation.request!.baseRevision ||
+        stableJson(operation.request!.payload) !== stableJson(operation.intent.payload)
+      )
+        return false;
+    } catch {
+      return false;
+    }
+    const satisfied = await storage.run(scope, async (tx) => {
+      const row = await tx.objectStore('operations').get(key(scope, operation.operationId));
+      if (!row || stableJson(row.request) !== stableJson(operation.request))
+        throw new OfflineError('LOCAL_CONFLICT');
+      const saved = await tx.objectStore('sessions').get(key(scope, operation.sessionId));
+      if (!saved) throw new OfflineError('SNAPSHOT_MISSING');
+      if (current.record.journeyId !== saved.snapshot.session.journeyId) return false;
+      if (current.kind === 'session') {
+        const layout = (session: SessionRecord) => {
+          const { confirmed, performedAt, recordedAt, revision, practices, ...fixed } = session;
+          void confirmed;
+          void performedAt;
+          void recordedAt;
+          void revision;
+          return {
+            ...fixed,
+            practices: practices.map(({ value, ...definition }) => {
+              void value;
+              return definition;
+            }),
+          };
+        };
+        if (stableJson(layout(current.record)) !== stableJson(layout(saved.snapshot.session)))
+          return false;
+      }
+      const savedRevision =
+        current.kind === 'session'
+          ? saved.snapshot.session.revision
+          : (saved.snapshot.reflection?.revision ?? 0);
+      // A newer local canonical comparison must be reviewed, never overwritten by an older response.
+      if (savedRevision > current.record.revision) return false;
+      const operations = await sessionOperations(tx, scope.accountId, operation.sessionId);
+      if (
+        row.predecessorId !== null ||
+        operations.find((item) => item.stream === row.stream)?.operationId !== row.operationId
+      )
+        throw new OfflineError('QUEUE_INVARIANT');
+      if (current.kind === 'session') saved.snapshot.session = current.record;
+      else saved.snapshot.reflection = current.record;
+      saved.snapshot.lastSyncedAt = now();
+      await tx.objectStore('sessions').put(saved);
+      // The server verified the exact intent was already satisfied. It made no mutation,
+      // so release only this head and keep the same revision for its direct successor.
+      for (const next of operations) {
+        if (next.predecessorId === operation.operationId) {
+          if (next.request) throw new OfflineError('QUEUE_INVARIANT');
+          next.predecessorId = null;
+          next.baseRevision = current.record.revision;
+          await tx.objectStore('operations').put(next);
+        }
+      }
+      await tx.objectStore('operations').delete(key(scope, operation.operationId));
+      await prune(tx, scope.accountId);
+      return true;
+    });
+    if (satisfied) announce(scope, operation.sessionId);
+    return satisfied;
   }
   const core: OfflineCore = {
     async bindAccount(accountId, bindOptions = {}) {
@@ -583,6 +714,13 @@ export function createOfflineCore(options: CoreOptions = {}): OfflineCore {
                   acknowledged += 1;
                 } catch (error) {
                   if (error instanceof OfflineError) throw error;
+                  if (
+                    error instanceof ReplayError &&
+                    error.status === 409 &&
+                    error.code === 'NO_CHANGE' &&
+                    (await satisfyUnchanged(scope, prepared, error.current))
+                  )
+                    continue;
                   if (
                     error instanceof ReplayError &&
                     (error.status === 401 || error.code === 'ACCOUNT_CHANGED')

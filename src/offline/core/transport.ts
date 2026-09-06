@@ -7,6 +7,7 @@ export class ReplayError extends Error {
     public readonly status: number,
     public readonly code: string,
     public readonly retryAfterSeconds = 0,
+    public readonly current?: unknown,
   ) {
     super('The server could not acknowledge this change.');
     this.name = 'ReplayError';
@@ -42,7 +43,12 @@ async function json(
   }
   if (!response.ok) {
     const parsed = z
-      .object({ error: z.object({ code: z.string().regex(/^[A-Z_]{1,80}$/) }) })
+      .object({
+        error: z.object({
+          code: z.string().regex(/^[A-Z_]{1,80}$/),
+          current: z.unknown().optional(),
+        }),
+      })
       .safeParse(body);
     const retry = response.headers.get('Retry-After');
     const seconds = retry && /^\d+$/.test(retry) ? Number(retry) : 0;
@@ -50,6 +56,7 @@ async function json(
       response.status,
       parsed.success ? parsed.data.error.code : 'REQUEST_FAILED',
       Math.min(300, seconds),
+      parsed.success ? parsed.data.error.current : undefined,
     );
   }
   return body;

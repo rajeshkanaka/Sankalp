@@ -75,3 +75,27 @@ Actual verification after the fix:
 The browser evidence still uses real IndexedDB/Web Locks with a synthetic replay transport; integrated app verification remains coordinator-owned. Safe results are in ignored `artifacts/offline-core/summary.json`, recording base `4621edd` with dirty=true while this regression/fix was under test. No assertions were removed, no errors suppressed at the page boundary, no root runtime accessed, and all owned processes closed. The separate actual network-cutoff fixture and browser-emulation diagnosis are documented in [SK-008-network-testing](SK-008-network-testing.md).
 
 Exact next action: coordinator/UI owner cherry-picks this focused core/regression/report commit, reruns the previously failing provider recovery scenario and the integrated M3 UI suite. This report does not mark the application task DONE.
+
+## Verified redundant replay heads preserve later intentions
+
+2026-09-06, 13:03 Asia/Kolkata. Production base `eb7ab42`; reminder preflight documentation separately committed at `f6c12d2`. Coordinator approved this bounded core fix after the UI worker identified a real-API mismatch in the synthetic transport.
+
+Actual service inspection established that all four mutation kinds can return HTTP409 `NO_CHANGE` with `error.current`, after authentication, account/ownership, revision and target checks. The transaction rolls back and creates no operation receipt. Previously the core discarded that current value and permanently paused a reviewed ordered sequence such as true→false when the reviewed server state was already true. The first regression reproduced that exact blocking outcome before the fix; its assertion failed in Chromium against API-shaped synthetic responses passed through the real fetch transport.
+
+The core now consumes a redundant head only when an actual409/NO_CHANGE response includes a structurally and semantically valid canonical record matching the account-scoped session/journey/version, attempted base revision, immutable session layout and exact attempted intent. Reflection equivalence includes text and ordered moods; completion requires matching performed time; undo requires the unconfirmed/null timestamp state. Missing, malformed, mismatched or older-than-local canonical responses remain reviewable conflicts.
+
+The satisfied-head transaction preserves raw drafts and the other revision stream, removes only that verified head and releases its direct unattempted successor against the **same** canonical revision. It creates no server receipt, does not increment a revision and does not increase the actual-mutation acknowledgment count. Successors are sent normally. An aborted local removal rolls back the entire head/successor change and permits exact retry. No shared types, server APIs or database behavior changed.
+
+New regression coverage uses real browser IndexedDB/Web Locks and the actual fetch adapter's error parsing with explicitly synthetic API-shaped responses. It is not an authenticated Next/PostgreSQL integration test. Five scenarios cover reviewed true→false plus an independent reflection/raw draft; identical reflection→latest; redundant confirm/undo in both directions; nineteen malformed/mismatched/stale response variants across session/reflection; and transaction rollback/retry. Every scenario asserts functional outcomes; the harness retains its zero-page-error requirement. The strict synthetic mode models NO_CHANGE without inventing a receipt; completion undo now reflects the real server's null recorded timestamp.
+
+Actual commands/results:
+
+- `OFFLINE_SCENARIOS=reviewedNoChange fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`: observed RED before the fix, then PASS in all three engines.
+- `OFFLINE_SCENARIOS=reviewedNoChange,noChangeReflection,noChangeCompletion,noChangeBoundaries,noChangeRollback fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`: focused PASS in all three engines.
+- `fnm exec --using 24.20.0 node tests/offline-core/run-browser.mjs`: final full23scenarios PASS in Chromium153.0.8010.12, WebKit26.6 and Firefox155.0, zero page errors, exit0.
+- `fnm exec --using 24.20.0 npm run test:unit`:118tests/10files PASS.
+- `fnm exec --using 24.20.0 npx eslint src/offline/core tests/offline-core --max-warnings 0`, full TypeScript no-emit, scoped Prettier and `git diff --check`: PASS.
+
+The safe local summary is `artifacts/offline-core/summary.json`, final source marker `f6c12d2` with dirty=true because this tested implementation was awaiting its commit. All owned probe processes closed. No root services, private runtime/environment, remote push or shared tracking file was touched.
+
+Exact next action: coordinator/UI owner integrates this core commit and runs the actual two-device UI/API case (queued10→30, other-device canonical10, preserved raw input and independent reflection). The real API must finish at revision2 with30, with no fabricated mutation for10. Actual app verification remains coordinator-owned and NOT RUN by this worker. SK-008 status remains exclusively in TASKS.

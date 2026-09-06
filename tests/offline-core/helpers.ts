@@ -22,7 +22,7 @@ export async function rejects(action: () => Promise<unknown>, code: string) {
   throw new Error(`Expected rejection ${code}`);
 }
 export const copy = <T>(value: T): T => structuredClone(value);
-export function environment(databaseName: string) {
+export function environment(databaseName: string, noChangeResponses = false) {
   let time = '2026-09-06T01:00:00.000Z';
   let server = copy(snapshot.session);
   let reflection = copy(snapshot.reflection);
@@ -61,6 +61,27 @@ export function environment(databaseName: string) {
         check(!!op.request, 'Wire request must have committed before send');
         const rev = op.stream === 'session' ? server.revision : (reflection?.revision ?? 0);
         if (op.request!.baseRevision !== rev) throw new ReplayError(409, 'REVISION_CONFLICT');
+        if (noChangeResponses) {
+          const unchanged =
+            op.intent.kind === 'practices'
+              ? Object.entries(op.intent.payload.values).every(
+                  ([id, value]) => server.practices.find((item) => item.id === id)?.value === value,
+                )
+              : op.intent.kind === 'completion'
+                ? server.confirmed && server.performedAt === op.intent.payload.performedAt
+                : op.intent.kind === 'completion_undo'
+                  ? !server.confirmed
+                  : reflection &&
+                    reflection.text === op.intent.payload.text &&
+                    JSON.stringify(reflection.moods) === JSON.stringify(op.intent.payload.moods);
+          if (unchanged)
+            throw new ReplayError(
+              409,
+              'NO_CHANGE',
+              0,
+              copy(op.stream === 'session' ? server : reflection),
+            );
+        }
         if (op.intent.kind === 'reflection') {
           reflection = {
             ...copy(op.intent.payload),
@@ -86,7 +107,7 @@ export function environment(databaseName: string) {
           if (op.intent.kind === 'completion_undo') {
             server.confirmed = false;
             server.performedAt = null;
-            server.recordedAt = time;
+            server.recordedAt = null;
           }
           server.revision += 1;
           reply = { kind: 'session', session: copy(server) };

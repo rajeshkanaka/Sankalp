@@ -16,7 +16,7 @@ const review = (view: LocalView, row: QueueOperation) => ({
   expectedDraftRevision: view.draftRevision,
 });
 /** Fault injection is scoped to this isolated document and restored before the next assertion. */
-async function abortWrite<T>(
+export async function abortWrite<T>(
   store: string,
   method: 'put' | 'delete' | 'clear',
   action: () => Promise<T>,

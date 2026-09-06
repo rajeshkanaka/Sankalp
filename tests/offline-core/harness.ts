@@ -3,6 +3,7 @@ import { ACCOUNT, OTHER, snapshot } from './fixtures';
 import { check, rejects, copy, environment, enqueue, values } from './helpers';
 import { regressions } from './regressions';
 import { failures } from './failures';
+import { noChangeRegressions } from './no-change';
 
 let held: {
   core: OfflineCore;
@@ -13,6 +14,7 @@ let held: {
 const harness = {
   ...regressions,
   ...failures,
+  ...noChangeRegressions,
   async basic(name: string) {
     const env = environment(name);
     const core = env.create();
