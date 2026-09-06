@@ -161,7 +161,9 @@ test('@M3 @M3-offline online-only sign-out waits for a real reflection write ack
     expect((await savedResponse).status()).toBe(200);
     await expect.poll(() => signOutRequests).toBe(1);
     expect(writeRequests).toBe(1);
-    await expect(reflection.getByRole('status')).toHaveText('Saved.');
+    // Successful local cleanup hides private inputs before logout is sent.
+    await expect(reflection).toHaveCount(0);
+    await expect(note).toHaveCount(0);
     // Hold only transmission of the real logout request long enough to verify
     // the acknowledged write through the authenticated canonical read API.
     const saved = await page.request.get(reflectionPath);

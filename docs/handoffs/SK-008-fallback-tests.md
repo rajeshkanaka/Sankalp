@@ -39,3 +39,11 @@ Expected: nine cases across Chromium, WebKit and Firefox, with real authenticati
 When actually run, the existing reporter retains the safe result summary. Screenshots are written through the existing convention to `docs/evidence/M3/<UI_RUN_ID>/<browser>/online-only-pending-signout.png` and `online-only-correction-draft-signout.png`. Review any failure without weakening acknowledgment ordering, canonical-data assertions or exact draft preservation. No evidence files have been invented or committed in this worker.
 
 Last single PR4 snapshot while starting this assignment: [34017887283](https://github.com/rajeshkanaka/Sankalp/actions/runs/34017887283) remained IN_PROGRESS on `1d15d81`; no later result or merge is claimed here.
+
+## Integrated run and assertion correction
+
+The coordinator's production run recorded in `artifacts/offline-functional-pass1.log` completed with 22 passes and 6 failures across its broader selection. The cancellation scenario passed on Chromium, WebKit and Firefox. The unresolved-write scenario reached a real PUT 200 and exactly one logout request on all three engines, then failed at its assertion that the removed reflection editor still displayed Saved. The authenticated account cleanup intentionally removes private UI before the held logout request is transmitted, so that assertion contradicted the privacy contract.
+
+The focused correction requires both the reflection editor and its private note input to be absent at that point. It retains the pre-ack Saving state, absence of premature logout, exact write counts, canonical whitespace/Unicode text, moods, revision 1, real logout release and final 401 assertions. No production hook or response is changed. The corrected UI scenario and its post-correction screenshots remain **NOT RUN / NOT CAPTURED** until the coordinator integrates this commit and repeats the actual production UI checks. The exact next action is that integrated rerun; prior failures must not be counted as passes.
+
+Worker reran the same Prettier, ESLint, full typecheck and `git diff --check` commands after this correction; all passed. The three-browser failure evidence was read from the existing sanitized coordinator console; no worker runtime was started.
