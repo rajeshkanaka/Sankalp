@@ -21,3 +21,7 @@ Observed worker verification:
 - Actual application/DB/browser execution and new screenshots — NOT RUN by this worker; the coordinator exclusively owns that runtime. No application code, config, migrations, dependencies or root runtime were changed.
 
 Next action: coordinator integrates this test-only checkpoint and runs `npm run test:ui -- --grep '@M3-journal|@M3-corrections'` with the allocated environment and a unique `UI_RUN_ID`, retaining the actual all-engine results and screenshots. Any newly exposed application defect must be diagnosed and fixed within assigned ownership; do not weaken assertions. This worker checkpoint does not make SK-008 DONE.
+
+## Coordinator-run follow-up
+
+The coordinator integrated af16adf as eeeec52 and ran the actual production migration suite. Its Chromium unified journal/corrections and fallback corrections passed. The legacy journal reached its final journal navigation after all earlier retry, immutable request, conflict and validation assertions, then hit its global60-second test deadline. The explicitly blocked service worker exercises the bounded readiness fallback at each fresh document; the accumulated cost exceeds60seconds. This follow-up sets only that legacy test's total budget to120seconds, matching the existing corrections budget. Individual10-second assertions and application readiness are unchanged. No application code or transport assertions were changed. Full browser execution remains coordinator-owned; rerun the focused suite after integration before claiming a pass.

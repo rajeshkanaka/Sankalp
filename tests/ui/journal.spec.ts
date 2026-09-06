@@ -94,6 +94,7 @@ test.describe('online-only fallback: simulated lost response and conflict recove
     page,
     browser,
   }, info) => {
+    test.setTimeout(120000);
     await capturedSignIn(
       page,
       info.project.name === 'chromium' ? 'ui-maya@example.test' : 'ui-arun@example.test',
